@@ -28,7 +28,7 @@
             <!-- Back Arrow -->
             <!-- Avatar -->
             <ImageView
-                android:id="@+id/viewImagebackBtn"
+                android:id="@+id/btnviewImageback"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:layout_gravity="left"
@@ -406,15 +406,13 @@
 
         <!-- Forward -->
         <LinearLayout
-            android:id="@+id/btnForwardViewImage"
+            android:id="@+id/btnForward"
             android:layout_width="100dp"
             android:layout_height="wrap_content"
             android:layout_marginBottom="10dp"
             android:gravity="center"
             android:orientation="vertical"
-            android:padding="10dp"
-            android:visibility="visible"
-            tools:visibility="gone">
+            android:padding="10dp">
 
             <ImageView
                 android:layout_width="24dp"
@@ -465,6 +463,12 @@
         tools:visibility="gone">
 
         <!-- Top Bar -->
+        <TextView
+            android:id="@+id/textView"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="git add .&#xA;git commit -m &quot;updated xml&quot;&#xA;git push --set-upstream origin eli" />
+
         <LinearLayout
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
@@ -510,7 +514,7 @@
 
             <!-- Forward Button -->
             <ImageView
-                android:id="@+id/btnForward"
+                android:id="@+id/btnForwardViewImage"
                 android:layout_width="28dp"
                 android:layout_height="28dp"
                 android:layout_marginStart="20dp"
