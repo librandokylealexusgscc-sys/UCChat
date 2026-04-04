@@ -1,0 +1,85 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:orientation="vertical"
+>
+
+    <!-- Top Bar -->
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="horizontal"
+        android:gravity="center_vertical"
+        android:paddingStart="12dp"
+        android:paddingEnd="12dp"
+        android:paddingTop="48dp"
+        android:paddingBottom="12dp">
+
+        <!-- Back Button -->
+        <!-- Avatar -->
+        <ImageView
+            android:id="@+id/backBtn"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_gravity="left"
+            android:layout_marginLeft="15dp"
+            android:paddingTop="7dp"
+            android:paddingRight="15dp"
+            android:scaleType="centerCrop"
+
+
+            android:src="@drawable/back" />
+
+        <!-- Spacer -->
+        <View
+            android:layout_width="0dp"
+            android:layout_height="1dp"
+            android:layout_weight="1" />
+
+        <!-- Save / Download Button -->
+        <ImageView
+            android:id="@+id/btnSaveDoc"
+            android:layout_width="28dp"
+            android:layout_height="28dp"
+            android:src="@drawable/savedoc"
+            android:scaleType="fitCenter"
+            android:contentDescription="Save"
+            android:clickable="true"
+            android:focusable="true"
+            android:padding="2dp" />
+
+        <!-- Forward Button -->
+        <ImageView
+            android:id="@+id/btnForward"
+            android:layout_width="28dp"
+            android:layout_height="28dp"
+            android:layout_marginStart="20dp"
+            android:src="@drawable/forward"
+            android:scaleType="fitCenter"
+            android:contentDescription="Forward"
+            android:clickable="true"
+            android:focusable="true"
+            android:padding="2dp" />
+
+    </LinearLayout>
+
+    <!-- Full-Screen Image Viewer -->
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="0dp"
+        android:layout_weight="1"
+        android:gravity="center"
+        android:orientation="vertical">
+
+        <ImageView
+            android:id="@+id/imgViewFull"
+            android:layout_width="match_parent"
+            android:layout_height="match_parent"
+            android:scaleType="fitCenter"
+            android:contentDescription="Full screen image"
+            android:adjustViewBounds="true" />
+
+    </LinearLayout>
+
+</LinearLayout>

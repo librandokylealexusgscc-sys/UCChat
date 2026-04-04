@@ -1,0 +1,188 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout
+    xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:orientation="vertical"
+    android:paddingLeft="10dp"
+    android:paddingRight="10dp"
+    android:background="#FFFFFF">
+
+    <!-- Top App Bar -->
+
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="horizontal"
+        android:paddingStart="12dp"
+        android:paddingEnd="16dp"
+        android:layout_marginTop="60.6dp"
+        android:paddingBottom="12dp"
+        android:gravity="center_vertical">
+
+        <!-- Back Arrow -->
+        <ImageView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_gravity="left"
+            android:paddingRight="15dp"
+
+            android:scaleType="centerCrop"
+            android:src="@drawable/back"
+            android:paddingTop="13dp"
+
+
+            />
+
+
+        <!-- Title -->
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:fontFamily="@font/bold"
+            android:paddingStart="6dp"
+            android:layout_marginTop="2dp"
+            android:text="New Chat"
+            android:textColor="#000000"
+            android:textSize="34sp"
+            android:textStyle="bold" />
+
+    </LinearLayout>
+
+    <!-- Group Name Input -->
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="vertical"
+        android:paddingStart="16dp"
+        android:paddingEnd="16dp"
+        android:paddingTop="4dp"
+        android:paddingBottom="4dp">
+
+        <EditText
+            android:id="@+id/ForwardMessage"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:background="@null"
+            android:fontFamily="@font/regular"
+            android:hint="Group name (optional)"
+            android:inputType="text"
+            android:paddingTop="6dp"
+            android:paddingBottom="8dp"
+            android:textColor="#000000"
+            android:textColorHint="#AAAAAA"
+            android:textSize="14sp" />
+
+        <!-- Underline -->
+        <View
+            android:layout_width="match_parent"
+            android:layout_height="1dp"
+            android:background="#CCCCCC" />
+
+    </LinearLayout>
+
+    <!-- Search Bar -->
+    <EditText
+        android:id="@+id/SearchStudent"
+        android:layout_width="match_parent"
+        android:layout_height="40dp"
+        android:layout_marginTop="5dp"
+        android:layout_marginEnd="10dp"
+        android:layout_marginStart="10dp"
+        android:layout_marginBottom="16dp"
+        android:background="@drawable/search_bar_background"
+        android:fontFamily="@font/regular"
+        android:hint="Search"
+        android:inputType="text"
+        android:maxLines="1"
+        android:paddingStart="20dp"
+        android:paddingEnd="16dp"
+        android:textColor="@android:color/black"
+        android:textColorHint="#999999"
+        android:textSize="14sp" />
+    <!-- "Suggested" Label -->
+    <TextView
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:fontFamily="@font/regular"
+        android:paddingStart="16dp"
+
+        android:paddingEnd="16dp"
+        android:paddingBottom="6dp"
+        android:text="Suggested"
+        android:textColor="#888888"
+        android:textSize="13sp" />
+
+    <ScrollView
+        android:layout_width="match_parent"
+        android:layout_height="0dp"
+        android:layout_weight="1"
+        android:fillViewport="true">
+
+        <!-- Contact List -->
+        <LinearLayout
+            android:id="@+id/newChatScrollview"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="vertical">
+
+            <!-- Contact 1: Eli Jarder -->
+            <LinearLayout
+                android:id="@+id/studentItem"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:gravity="center_vertical"
+                android:orientation="horizontal"
+                android:paddingStart="16dp"
+                android:paddingTop="10dp"
+                android:paddingEnd="16dp"
+                android:paddingBottom="10dp">
+
+                <!-- Avatar -->
+                <ImageView
+                    android:id="@+id/userProfile"
+                    android:layout_width="44dp"
+                    android:layout_height="44dp"
+                    android:background="@drawable/circle_grey_bg"
+                    android:contentDescription="Eli Jarder avatar" />
+
+                <!-- Name -->
+                <TextView
+                    android:id="@+id/studentName"
+                    android:layout_width="0dp"
+                    android:layout_height="wrap_content"
+                    android:layout_weight="1"
+                    android:fontFamily="@font/regular"
+                    android:paddingStart="12dp"
+                    android:text="Eli Jarder"
+                    android:textColor="#000000"
+                    android:textSize="15sp" />
+
+                <RadioButton
+                    android:id="@+id/rbSelectedStudent"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content" />
+
+            </LinearLayout>
+
+            <!-- Radio Button -->
+        </LinearLayout>
+    </ScrollView>
+
+    <Button
+        android:id="@+id/btnNewchat"
+        android:layout_width="match_parent"
+        android:layout_height="55dp"
+        android:layout_marginTop="10dp"
+        android:layout_marginBottom="40dp"
+        android:backgroundTint="#000000"
+        android:fontFamily="@font/bold"
+        android:text="Create Group"
+        android:textColor="#FFFFFF" />
+
+    <!-- Contact 2: Xyrine Calip -->
+
+        <!-- Contact 3: Anna Salvador -->
+
+    </LinearLayout>
+
