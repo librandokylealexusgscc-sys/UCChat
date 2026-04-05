@@ -1,0 +1,849 @@
+<?xml version="1.0" encoding="utf-8"?>
+<androidx.constraintlayout.widget.ConstraintLayout
+    xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:background="@drawable/gradient_background">
+
+    <!-- ══════════════════════════════ -->
+    <!--        WELCOME PAGE           -->
+    <!-- ══════════════════════════════ -->
+
+    <androidx.constraintlayout.widget.ConstraintLayout
+        android:id="@+id/welcomeContent"
+        android:layout_width="0dp"
+        android:layout_height="0dp"
+        android:padding="24dp"
+        app:layout_constraintTop_toTopOf="parent"
+        app:layout_constraintBottom_toBottomOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintEnd_toEndOf="parent">
+
+        <ImageView
+            android:id="@+id/logoImage"
+            android:layout_width="32dp"
+            android:layout_height="32dp"
+            android:src="@drawable/ucchat_logo"
+            android:scaleType="fitCenter"
+            app:layout_constraintTop_toTopOf="parent"
+            app:layout_constraintStart_toStartOf="parent"
+            android:layout_marginTop="32dp"/>
+
+        <TextView
+            android:id="@+id/appName"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="UCChat"
+            android:textSize="20sp"
+            android:textColor="#2E7D32"
+            android:fontFamily="@font/sf_pro_display_medium"
+            app:layout_constraintTop_toTopOf="@id/logoImage"
+            app:layout_constraintBottom_toBottomOf="@id/logoImage"
+            app:layout_constraintStart_toEndOf="@id/logoImage"
+            android:layout_marginStart="8dp"/>
+
+        <LinearLayout
+            android:id="@+id/taglineLine1"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="48dp"
+            android:orientation="horizontal"
+            app:layout_constraintEnd_toEndOf="parent"
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintTop_toBottomOf="@id/logoImage">
+
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="Start"
+                android:textColor="#000000"
+                android:textSize="44sp"
+                android:lineSpacingExtra="2dp"
+                android:fontFamily="@font/sf_pro_display_bold"
+                android:textStyle="bold" />
+
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text=" your"
+                android:textColor="#000000"
+                android:textSize="44sp"
+                android:lineSpacingExtra="2dp"
+                android:fontFamily="@font/sf_pro_display_regular" />
+
+        </LinearLayout>
+
+        <TextView
+            android:id="@+id/taglineLine2"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:textColor="#000000"
+            android:textSize="44sp"
+            android:lineSpacingExtra="2dp"
+            android:text="communication"
+            android:fontFamily="@font/sf_pro_display_bold"
+            android:textStyle="bold"
+            app:layout_constraintEnd_toEndOf="parent"
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintTop_toBottomOf="@id/taglineLine1"/>
+
+        <TextView
+            android:id="@+id/taglineLine3"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:textColor="#000000"
+            android:textSize="44sp"
+            android:lineSpacingExtra="2dp"
+            android:text="with every"
+            android:fontFamily="@font/sf_pro_display_regular"
+            app:layout_constraintEnd_toEndOf="parent"
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintTop_toBottomOf="@id/taglineLine2"/>
+
+        <TextView
+            android:id="@+id/taglineLine4"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:textColor="#000000"
+            android:textSize="44sp"
+            android:lineSpacingExtra="2dp"
+            android:text="Yusisistas!"
+            android:fontFamily="@font/sf_pro_display_bold"
+            android:textStyle="bold"
+            app:layout_constraintEnd_toEndOf="parent"
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintTop_toBottomOf="@id/taglineLine3"/>
+        <com.google.android.material.button.MaterialButton
+            android:id="@+id/btnGoogle"
+            android:layout_width="0dp"
+            android:layout_height="56dp"
+            android:text="Sign up with Google"
+            android:textColor="#FFFFFF"
+            android:textSize="16sp"
+            app:fontFamily="@font/sf_pro_display_medium"
+            app:backgroundTint="#000000"
+            app:icon="@drawable/google_svgrepo_com"
+            app:iconTint="@null"
+            app:iconSize="20dp"
+            app:iconPadding="8dp"
+            app:iconGravity="textStart"
+            app:cornerRadius="12dp"
+            app:layout_constraintBottom_toTopOf="@id/btnFacebook"
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintEnd_toEndOf="parent"
+            android:layout_marginBottom="12dp"/>
+
+        <com.google.android.material.button.MaterialButton
+            android:id="@+id/btnFacebook"
+            android:layout_width="0dp"
+            android:layout_height="56dp"
+            android:text="Sign up with Facebook"
+            android:textColor="#FFFFFF"
+            android:textSize="16sp"
+            app:fontFamily="@font/sf_pro_display_medium"
+            app:backgroundTint="#000000"
+            app:icon="@drawable/facebook_svgrepo_com__1_"
+            app:iconTint="@null"
+            app:iconSize="20dp"
+            app:iconPadding="8dp"
+            app:iconGravity="textStart"
+            app:cornerRadius="12dp"
+            app:layout_constraintBottom_toTopOf="@id/btnHaveAccount"
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintEnd_toEndOf="parent"
+            android:layout_marginBottom="12dp"/>
+
+        <com.google.android.material.button.MaterialButton
+            android:id="@+id/btnHaveAccount"
+            android:layout_width="0dp"
+            android:layout_height="56dp"
+            android:text="I have an account"
+            android:textColor="#000000"
+            android:textSize="16sp"
+            app:fontFamily="@font/sf_pro_display_medium"
+            app:backgroundTint="#F5F5F5"
+            app:cornerRadius="12dp"
+            app:layout_constraintBottom_toTopOf="@id/tvSignIn"
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintEnd_toEndOf="parent"
+            android:layout_marginBottom="16dp"/>
+
+        <TextView
+            android:id="@+id/tvSignIn"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="Don\'t have an account? Sign In"
+            android:textSize="13sp"
+            android:fontFamily="@font/sf_pro_display_regular"
+            app:layout_constraintBottom_toTopOf="@id/tvTerms"
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintEnd_toEndOf="parent"
+            android:layout_marginBottom="12dp"/>
+
+        <TextView
+            android:id="@+id/tvTerms"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:text="By continuing you confirm that you agree to our Terms of Service, Privacy Policy and good behavior in chat with users. (make this a safe space :))"
+            android:textSize="11sp"
+            android:fontFamily="@font/sf_pro_display_regular"
+            android:textAlignment="center"
+            app:layout_constraintBottom_toBottomOf="parent"
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintEnd_toEndOf="parent"
+            android:layout_marginBottom="24dp"/>
+
+    </androidx.constraintlayout.widget.ConstraintLayout>
+
+    <!-- ══════════════════════════════ -->
+    <!--       TERMS OVERLAY            -->
+    <!-- ══════════════════════════════ -->
+
+    <!-- Dim background — tap to dismiss -->
+    <View
+        android:id="@+id/dimBackground"
+        android:layout_width="0dp"
+        android:layout_height="0dp"
+        android:background="#80000000"
+        android:visibility="gone"
+        app:layout_constraintTop_toTopOf="parent"
+        app:layout_constraintBottom_toBottomOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintEnd_toEndOf="parent"/>
+
+    <!-- White modal card -->
+    <androidx.constraintlayout.widget.ConstraintLayout
+        android:id="@+id/cardModal"
+        android:layout_width="0dp"
+        android:layout_height="wrap_content"
+        android:layout_marginStart="20dp"
+        android:layout_marginEnd="20dp"
+        android:background="@drawable/terms_card_background"
+        android:paddingStart="24dp"
+        android:paddingEnd="24dp"
+        android:paddingTop="24dp"
+        android:paddingBottom="24dp"
+        android:visibility="gone"
+        app:layout_constraintTop_toTopOf="parent"
+        app:layout_constraintBottom_toBottomOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintEnd_toEndOf="parent">
+
+        <View
+            android:id="@+id/accentBar"
+            android:layout_width="48dp"
+            android:layout_height="4dp"
+            android:background="#4CAF50"
+            app:layout_constraintTop_toTopOf="parent"
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintEnd_toEndOf="parent"/>
+
+        <TextView
+            android:id="@+id/tvTitle"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:text="Legal Documents"
+            android:textSize="20sp"
+            android:textColor="#000000"
+            android:fontFamily="@font/sf_pro_display_bold"
+            android:textAlignment="center"
+            android:layout_marginTop="14dp"
+            app:layout_constraintTop_toBottomOf="@id/accentBar"
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintEnd_toEndOf="parent"/>
+
+        <TextView
+            android:id="@+id/tvSubtitle"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:text="Terms of Use  ·  Privacy Policy"
+            android:textSize="12sp"
+            android:textColor="#4CAF50"
+            android:fontFamily="@font/sf_pro_display_medium"
+            android:textAlignment="center"
+            android:layout_marginTop="4dp"
+            app:layout_constraintTop_toBottomOf="@id/tvTitle"
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintEnd_toEndOf="parent"/>
+
+        <TextView
+            android:id="@+id/tvDate"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:text="Effective Date: April 1, 2026"
+            android:textSize="11sp"
+            android:textColor="#999999"
+            android:fontFamily="@font/sf_pro_display_regular"
+            android:textAlignment="center"
+            android:layout_marginTop="4dp"
+            app:layout_constraintTop_toBottomOf="@id/tvSubtitle"
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintEnd_toEndOf="parent"/>
+
+        <View
+            android:id="@+id/divider"
+            android:layout_width="0dp"
+            android:layout_height="1dp"
+            android:background="#E0E0E0"
+            android:layout_marginTop="14dp"
+            app:layout_constraintTop_toBottomOf="@id/tvDate"
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintEnd_toEndOf="parent"/>
+
+        <ScrollView
+            android:id="@+id/scrollTerms"
+            android:layout_width="0dp"
+            android:layout_height="340dp"
+            android:layout_marginTop="14dp"
+            android:scrollbars="vertical"
+            app:layout_constraintTop_toBottomOf="@id/divider"
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintEnd_toEndOf="parent">
+
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="vertical">
+
+                <TextView
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:text="TERMS OF USE"
+                    android:textSize="13sp"
+                    android:textColor="#4CAF50"
+                    android:fontFamily="@font/sf_pro_display_bold"
+                    android:letterSpacing="0.1"
+                    android:layout_marginBottom="8dp"/>
+
+                <TextView
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:text="Welcome to UCChat! These Terms of Use govern your access to and use of the UCChat mobile and web application, including all features, content, and services. By creating an account or using UCChat, you agree to be bound by these Terms."
+                    android:textSize="12sp"
+                    android:textColor="#333333"
+                    android:fontFamily="@font/sf_pro_display_regular"
+                    android:lineSpacingExtra="3dp"
+                    android:layout_marginBottom="14dp"/>
+
+                <TextView
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:text="1. Acceptance of Terms"
+                    android:textSize="13sp"
+                    android:textColor="#000000"
+                    android:fontFamily="@font/sf_pro_display_bold"
+                    android:layout_marginBottom="4dp"/>
+
+                <TextView
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:text="By downloading, installing, or using UCChat, you confirm that you are at least 13 years of age, have read and understood these Terms, and agree to be legally bound by them. If you do not agree, you must not use UCChat."
+                    android:textSize="12sp"
+                    android:textColor="#333333"
+                    android:fontFamily="@font/sf_pro_display_regular"
+                    android:lineSpacingExtra="3dp"
+                    android:layout_marginBottom="14dp"/>
+
+                <TextView
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:text="2. Description of Service"
+                    android:textSize="13sp"
+                    android:textColor="#000000"
+                    android:fontFamily="@font/sf_pro_display_bold"
+                    android:layout_marginBottom="4dp"/>
+
+                <TextView
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:text="UCChat is a real-time messaging and communication platform that allows users to send messages, share media, create group chats, and connect with other users. We reserve the right to modify, suspend, or discontinue any part of the service at any time."
+                    android:textSize="12sp"
+                    android:textColor="#333333"
+                    android:fontFamily="@font/sf_pro_display_regular"
+                    android:lineSpacingExtra="3dp"
+                    android:layout_marginBottom="14dp"/>
+
+                <TextView
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:text="3. User Accounts"
+                    android:textSize="13sp"
+                    android:textColor="#000000"
+                    android:fontFamily="@font/sf_pro_display_bold"
+                    android:layout_marginBottom="4dp"/>
+
+                <TextView
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:text="3.1 Registration — You must register with accurate, complete, and current information. You are responsible for maintaining the confidentiality of your login credentials.\n\n3.2 Account Security — Notify us immediately at support@ucchat.app of any unauthorized use of your account.\n\n3.3 One Account Per Person — Creating multiple accounts to circumvent restrictions or bans is prohibited."
+                    android:textSize="12sp"
+                    android:textColor="#333333"
+                    android:fontFamily="@font/sf_pro_display_regular"
+                    android:lineSpacingExtra="3dp"
+                    android:layout_marginBottom="14dp"/>
+
+                <TextView
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:text="4. Acceptable Use Policy"
+                    android:textSize="13sp"
+                    android:textColor="#000000"
+                    android:fontFamily="@font/sf_pro_display_bold"
+                    android:layout_marginBottom="4dp"/>
+
+                <TextView
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:text="You agree NOT to use UCChat to:\n\n• Send spam or unsolicited messages\n• Harass, bully, or threaten other users\n• Share illegal or infringing content\n• Distribute malware or harmful code\n• Impersonate another person or entity\n• Violate applicable local, national, or international laws\n• Gain unauthorized access to UCChat systems\n• Collect personal data of other users without consent"
+                    android:textSize="12sp"
+                    android:textColor="#333333"
+                    android:fontFamily="@font/sf_pro_display_regular"
+                    android:lineSpacingExtra="3dp"
+                    android:layout_marginBottom="14dp"/>
+
+                <TextView
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:text="5. Content Ownership and License"
+                    android:textSize="13sp"
+                    android:textColor="#000000"
+                    android:fontFamily="@font/sf_pro_display_bold"
+                    android:layout_marginBottom="4dp"/>
+
+                <TextView
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:text="You retain ownership of any content you create and share on UCChat. By posting content, you grant UCChat a non-exclusive, royalty-free, worldwide license to store, display, and transmit your content solely for providing and improving the service.\n\nAll intellectual property in the UCChat platform — including logos, design, software, and trademarks — is owned by UCChat or its licensors."
+                    android:textSize="12sp"
+                    android:textColor="#333333"
+                    android:fontFamily="@font/sf_pro_display_regular"
+                    android:lineSpacingExtra="3dp"
+                    android:layout_marginBottom="14dp"/>
+
+                <TextView
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:text="6. Privacy"
+                    android:textSize="13sp"
+                    android:textColor="#000000"
+                    android:fontFamily="@font/sf_pro_display_bold"
+                    android:layout_marginBottom="4dp"/>
+
+                <TextView
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:text="Your use of UCChat is governed by our Privacy Policy (see below). By using UCChat, you consent to the collection and use of your information as described therein."
+                    android:textSize="12sp"
+                    android:textColor="#333333"
+                    android:fontFamily="@font/sf_pro_display_regular"
+                    android:lineSpacingExtra="3dp"
+                    android:layout_marginBottom="14dp"/>
+
+                <TextView
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:text="7. Third-Party Services"
+                    android:textSize="13sp"
+                    android:textColor="#000000"
+                    android:fontFamily="@font/sf_pro_display_bold"
+                    android:layout_marginBottom="4dp"/>
+
+                <TextView
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:text="UCChat may integrate with or link to third-party services. We are not responsible for the content, privacy practices, or terms of any third-party services."
+                    android:textSize="12sp"
+                    android:textColor="#333333"
+                    android:fontFamily="@font/sf_pro_display_regular"
+                    android:lineSpacingExtra="3dp"
+                    android:layout_marginBottom="14dp"/>
+
+                <TextView
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:text="8. Disclaimers"
+                    android:textSize="13sp"
+                    android:textColor="#000000"
+                    android:fontFamily="@font/sf_pro_display_bold"
+                    android:layout_marginBottom="4dp"/>
+
+                <TextView
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:text="UCChat is provided on an &quot;as is&quot; and &quot;as available&quot; basis without warranties of any kind. We do not warrant that the service will be uninterrupted, error-free, or free of viruses or other harmful components."
+                    android:textSize="12sp"
+                    android:textColor="#333333"
+                    android:fontFamily="@font/sf_pro_display_regular"
+                    android:lineSpacingExtra="3dp"
+                    android:layout_marginBottom="14dp"/>
+
+                <TextView
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:text="9. Limitation of Liability"
+                    android:textSize="13sp"
+                    android:textColor="#000000"
+                    android:fontFamily="@font/sf_pro_display_bold"
+                    android:layout_marginBottom="4dp"/>
+
+                <TextView
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:text="To the maximum extent permitted by applicable law, UCChat and its officers, directors, employees, and agents shall not be liable for any indirect, incidental, special, or consequential damages arising from your use of the service."
+                    android:textSize="12sp"
+                    android:textColor="#333333"
+                    android:fontFamily="@font/sf_pro_display_regular"
+                    android:lineSpacingExtra="3dp"
+                    android:layout_marginBottom="14dp"/>
+
+                <TextView
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:text="10. Termination"
+                    android:textSize="13sp"
+                    android:textColor="#000000"
+                    android:fontFamily="@font/sf_pro_display_bold"
+                    android:layout_marginBottom="4dp"/>
+
+                <TextView
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:text="We reserve the right to suspend or terminate your account at our sole discretion, without notice, if you violate these Terms. You may also delete your account at any time through the app settings."
+                    android:textSize="12sp"
+                    android:textColor="#333333"
+                    android:fontFamily="@font/sf_pro_display_regular"
+                    android:lineSpacingExtra="3dp"
+                    android:layout_marginBottom="14dp"/>
+
+                <TextView
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:text="11. Changes to Terms"
+                    android:textSize="13sp"
+                    android:textColor="#000000"
+                    android:fontFamily="@font/sf_pro_display_bold"
+                    android:layout_marginBottom="4dp"/>
+
+                <TextView
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:text="We may update these Terms from time to time. We will notify you of significant changes via in-app notification or email. Your continued use of UCChat after the effective date constitutes your acceptance of the revised Terms."
+                    android:textSize="12sp"
+                    android:textColor="#333333"
+                    android:fontFamily="@font/sf_pro_display_regular"
+                    android:lineSpacingExtra="3dp"
+                    android:layout_marginBottom="14dp"/>
+
+                <TextView
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:text="12. Governing Law"
+                    android:textSize="13sp"
+                    android:textColor="#000000"
+                    android:fontFamily="@font/sf_pro_display_bold"
+                    android:layout_marginBottom="4dp"/>
+
+                <TextView
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:text="These Terms shall be governed by the laws of the Republic of the Philippines. Any disputes shall be subject to the exclusive jurisdiction of the courts of the Philippines."
+                    android:textSize="12sp"
+                    android:textColor="#333333"
+                    android:fontFamily="@font/sf_pro_display_regular"
+                    android:lineSpacingExtra="3dp"
+                    android:layout_marginBottom="14dp"/>
+
+                <TextView
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:text="13. Contact Us"
+                    android:textSize="13sp"
+                    android:textColor="#000000"
+                    android:fontFamily="@font/sf_pro_display_bold"
+                    android:layout_marginBottom="4dp"/>
+
+                <TextView
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:text="UCChat Support Team\nEmail: legal@ucchat.app\nWebsite: www.ucchat.app"
+                    android:textSize="12sp"
+                    android:textColor="#333333"
+                    android:fontFamily="@font/sf_pro_display_regular"
+                    android:lineSpacingExtra="3dp"
+                    android:layout_marginBottom="20dp"/>
+
+                <View
+                    android:layout_width="match_parent"
+                    android:layout_height="1dp"
+                    android:background="#E0E0E0"
+                    android:layout_marginBottom="16dp"/>
+
+                <TextView
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:text="PRIVACY POLICY"
+                    android:textSize="13sp"
+                    android:textColor="#4CAF50"
+                    android:fontFamily="@font/sf_pro_display_bold"
+                    android:letterSpacing="0.1"
+                    android:layout_marginBottom="8dp"/>
+
+                <TextView
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:text="At UCChat, your privacy is important to us. This Privacy Policy explains how we collect, use, disclose, and protect your personal information when you use our application and services."
+                    android:textSize="12sp"
+                    android:textColor="#333333"
+                    android:fontFamily="@font/sf_pro_display_regular"
+                    android:lineSpacingExtra="3dp"
+                    android:layout_marginBottom="14dp"/>
+
+                <TextView
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:text="1. Information We Collect"
+                    android:textSize="13sp"
+                    android:textColor="#000000"
+                    android:fontFamily="@font/sf_pro_display_bold"
+                    android:layout_marginBottom="4dp"/>
+
+                <TextView
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:text="1.1 Information You Provide — Account details (name, username, email, phone number, profile photo), messages and media, account preferences, and feedback.\n\n1.2 Automatically Collected — Device info, usage data, log data, and general location based on IP address.\n\n1.3 From Third Parties — If you connect via Google or Facebook, we may receive limited profile information as authorized by you."
+                    android:textSize="12sp"
+                    android:textColor="#333333"
+                    android:fontFamily="@font/sf_pro_display_regular"
+                    android:lineSpacingExtra="3dp"
+                    android:layout_marginBottom="14dp"/>
+
+                <TextView
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:text="2. How We Use Your Information"
+                    android:textSize="13sp"
+                    android:textColor="#000000"
+                    android:fontFamily="@font/sf_pro_display_bold"
+                    android:layout_marginBottom="4dp"/>
+
+                <TextView
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:text="We use your information to create and manage your account, provide and improve UCChat features, deliver messages, personalize your experience, send service notifications, respond to support inquiries, detect fraud and abuse, analyze usage trends, and comply with legal obligations."
+                    android:textSize="12sp"
+                    android:textColor="#333333"
+                    android:fontFamily="@font/sf_pro_display_regular"
+                    android:lineSpacingExtra="3dp"
+                    android:layout_marginBottom="14dp"/>
+
+                <TextView
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:text="3. How We Share Your Information"
+                    android:textSize="13sp"
+                    android:textColor="#000000"
+                    android:fontFamily="@font/sf_pro_display_bold"
+                    android:layout_marginBottom="4dp"/>
+
+                <TextView
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:text="3.1 With Other Users — Your username, profile photo, and messages are visible to users you communicate with.\n\n3.2 With Service Providers — Trusted third-party vendors who assist in operating the platform.\n\n3.3 For Legal Reasons — When required by law or to protect the safety of UCChat and its users.\n\n3.4 Business Transfers — In the event of a merger or acquisition, you will be notified before your data is transferred.\n\n3.5 No Sale of Personal Data — UCChat does not sell your personal information to advertisers or data brokers."
+                    android:textSize="12sp"
+                    android:textColor="#333333"
+                    android:fontFamily="@font/sf_pro_display_regular"
+                    android:lineSpacingExtra="3dp"
+                    android:layout_marginBottom="14dp"/>
+
+                <TextView
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:text="4. Data Retention"
+                    android:textSize="13sp"
+                    android:textColor="#000000"
+                    android:fontFamily="@font/sf_pro_display_bold"
+                    android:layout_marginBottom="4dp"/>
+
+                <TextView
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:text="We retain your personal information for as long as your account is active. If you delete your account, we will delete or anonymize your data within 30 days, except where required by law to retain it longer."
+                    android:textSize="12sp"
+                    android:textColor="#333333"
+                    android:fontFamily="@font/sf_pro_display_regular"
+                    android:lineSpacingExtra="3dp"
+                    android:layout_marginBottom="14dp"/>
+
+                <TextView
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:text="5. Data Security"
+                    android:textSize="13sp"
+                    android:textColor="#000000"
+                    android:fontFamily="@font/sf_pro_display_bold"
+                    android:layout_marginBottom="4dp"/>
+
+                <TextView
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:text="We implement reasonable technical and organizational measures including end-to-end encryption for private messages, secure HTTPS connections, access controls, and regular security audits. However, no method of transmission is 100% secure."
+                    android:textSize="12sp"
+                    android:textColor="#333333"
+                    android:fontFamily="@font/sf_pro_display_regular"
+                    android:lineSpacingExtra="3dp"
+                    android:layout_marginBottom="14dp"/>
+
+                <TextView
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:text="6. Your Rights and Choices"
+                    android:textSize="13sp"
+                    android:textColor="#000000"
+                    android:fontFamily="@font/sf_pro_display_bold"
+                    android:layout_marginBottom="4dp"/>
+
+                <TextView
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:text="You may have the right to access, correct, delete, or port your personal data, and to object to or restrict certain processing. To exercise these rights, contact us at privacy@ucchat.app. We will respond within 30 days."
+                    android:textSize="12sp"
+                    android:textColor="#333333"
+                    android:fontFamily="@font/sf_pro_display_regular"
+                    android:lineSpacingExtra="3dp"
+                    android:layout_marginBottom="14dp"/>
+
+                <TextView
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:text="7. Children\'s Privacy"
+                    android:textSize="13sp"
+                    android:textColor="#000000"
+                    android:fontFamily="@font/sf_pro_display_bold"
+                    android:layout_marginBottom="4dp"/>
+
+                <TextView
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:text="UCChat is not intended for children under 13. We do not knowingly collect personal information from children under 13. If you believe a child has provided us with personal data, contact us at privacy@ucchat.app."
+                    android:textSize="12sp"
+                    android:textColor="#333333"
+                    android:fontFamily="@font/sf_pro_display_regular"
+                    android:lineSpacingExtra="3dp"
+                    android:layout_marginBottom="14dp"/>
+
+                <TextView
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:text="8. International Users"
+                    android:textSize="13sp"
+                    android:textColor="#000000"
+                    android:fontFamily="@font/sf_pro_display_bold"
+                    android:layout_marginBottom="4dp"/>
+
+                <TextView
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:text="UCChat is operated from the Philippines. If you access UCChat from outside the Philippines, your information may be transferred to and processed in the Philippines or other countries where our service providers operate."
+                    android:textSize="12sp"
+                    android:textColor="#333333"
+                    android:fontFamily="@font/sf_pro_display_regular"
+                    android:lineSpacingExtra="3dp"
+                    android:layout_marginBottom="14dp"/>
+
+                <TextView
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:text="9. Cookies and Tracking Technologies"
+                    android:textSize="13sp"
+                    android:textColor="#000000"
+                    android:fontFamily="@font/sf_pro_display_bold"
+                    android:layout_marginBottom="4dp"/>
+
+                <TextView
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:text="UCChat and its web version may use cookies and similar tracking technologies to enhance your experience. You can control cookie settings through your browser preferences."
+                    android:textSize="12sp"
+                    android:textColor="#333333"
+                    android:fontFamily="@font/sf_pro_display_regular"
+                    android:lineSpacingExtra="3dp"
+                    android:layout_marginBottom="14dp"/>
+
+                <TextView
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:text="10. Changes to This Privacy Policy"
+                    android:textSize="13sp"
+                    android:textColor="#000000"
+                    android:fontFamily="@font/sf_pro_display_bold"
+                    android:layout_marginBottom="4dp"/>
+
+                <TextView
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:text="We may update this Privacy Policy periodically. We will notify you of material changes via in-app notification or email at least 14 days before the change takes effect."
+                    android:textSize="12sp"
+                    android:textColor="#333333"
+                    android:fontFamily="@font/sf_pro_display_regular"
+                    android:lineSpacingExtra="3dp"
+                    android:layout_marginBottom="14dp"/>
+
+                <TextView
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:text="11. Data Protection Officer"
+                    android:textSize="13sp"
+                    android:textColor="#000000"
+                    android:fontFamily="@font/sf_pro_display_bold"
+                    android:layout_marginBottom="4dp"/>
+
+                <TextView
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:text="UCChat Data Protection Officer\nEmail: privacy@ucchat.app\nAddress: UCChat Inc., Metro Manila, Philippines"
+                    android:textSize="12sp"
+                    android:textColor="#333333"
+                    android:fontFamily="@font/sf_pro_display_regular"
+                    android:lineSpacingExtra="3dp"
+                    android:layout_marginBottom="16dp"/>
+
+                <View
+                    android:layout_width="match_parent"
+                    android:layout_height="1dp"
+                    android:background="#E0E0E0"
+                    android:layout_marginBottom="12dp"/>
+
+                <TextView
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:text="© 2026 UCChat. All rights reserved.\nwww.ucchat.app  ·  support@ucchat.app"
+                    android:textSize="11sp"
+                    android:textColor="#999999"
+                    android:fontFamily="@font/sf_pro_display_regular"
+                    android:textAlignment="center"
+                    android:lineSpacingExtra="3dp"
+                    android:layout_marginBottom="8dp"/>
+
+            </LinearLayout>
+
+        </ScrollView>
+
+        <com.google.android.material.button.MaterialButton
+            android:id="@+id/btnAgree"
+            android:layout_width="0dp"
+            android:layout_height="52dp"
+            android:text="Agree"
+            android:textColor="#FFFFFF"
+            android:textSize="16sp"
+            android:fontFamily="@font/sf_pro_display_medium"
+            android:layout_marginTop="16dp"
+            app:backgroundTint="#4CAF50"
+            app:cornerRadius="12dp"
+            app:layout_constraintTop_toBottomOf="@id/scrollTerms"
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintEnd_toEndOf="parent"/>
+
+    </androidx.constraintlayout.widget.ConstraintLayout>
+
+</androidx.constraintlayout.widget.ConstraintLayout>

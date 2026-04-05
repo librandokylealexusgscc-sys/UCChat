@@ -1,0 +1,48 @@
+{
+  "project_info": {
+    "project_number": "353756892228",
+    "firebase_url": "https://ucchat-registration-default-rtdb.asia-southeast1.firebasedatabase.app",
+    "project_id": "ucchat-registration",
+    "storage_bucket": "ucchat-registration.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:353756892228:android:4e7466bbabe5efcec84011",
+        "android_client_info": {
+          "package_name": "com.example.uccchat"
+        }
+      },
+      "oauth_client": [
+        {
+          "client_id": "353756892228-b5o0u4l24v84bv6qq2fgt3uilb4m1msr.apps.googleusercontent.com",
+          "client_type": 1,
+          "android_info": {
+            "package_name": "com.example.uccchat",
+            "certificate_hash": "290e73a4aa8638fe8ea8cb2f97bf0d96f308bc48"
+          }
+        },
+        {
+          "client_id": "353756892228-tu3jseb24320efv534m3coctm7osjptf.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
+      "api_key": [
+        {
+          "current_key": "AIzaSyDSqptBM2Gk9Kc9a-_lG6FPtaA_rYChWRI"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": [
+            {
+              "client_id": "353756892228-tu3jseb24320efv534m3coctm7osjptf.apps.googleusercontent.com",
+              "client_type": 3
+            }
+          ]
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
