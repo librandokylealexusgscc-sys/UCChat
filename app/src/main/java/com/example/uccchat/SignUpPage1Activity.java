@@ -12,6 +12,7 @@ import androidx.appcompat.app.AppCompatActivity;
 import com.google.android.material.button.MaterialButton;
 import com.google.android.material.textfield.TextInputEditText;
 import com.google.android.material.textfield.TextInputLayout;
+import com.google.firebase.FirebaseApp;
 
 public class SignUpPage1Activity extends AppCompatActivity {
 
@@ -25,6 +26,7 @@ public class SignUpPage1Activity extends AppCompatActivity {
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.signup_page_1);
+        FirebaseApp.initializeApp(this);
 
         tilUsername        = findViewById(R.id.tilUsername);
         tilPassword        = findViewById(R.id.tilPassword);
