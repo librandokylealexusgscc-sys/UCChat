@@ -264,7 +264,7 @@
                 android:background="@drawable/input_rounded_bg"
                 android:fontFamily="@font/medium"
                 android:hint="Search messages..."
-                android:hintTextColor="#BBBBBB"
+                app:hintTextColor="#BBBBBB"
                 android:paddingStart="12dp"
                 android:textColor="#FFFFFF" />
         </LinearLayout>
