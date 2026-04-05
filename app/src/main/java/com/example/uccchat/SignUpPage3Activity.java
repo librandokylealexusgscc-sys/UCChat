@@ -37,9 +37,8 @@ public class SignUpPage3Activity extends AppCompatActivity {
     private FirebaseFirestore db;
     private MaterialButton btnSubmit;
 
-    // Used to run network work off the main thread
     private final ExecutorService executor = Executors.newSingleThreadExecutor();
-    private final Handler mainHandler   = new Handler(Looper.getMainLooper());
+    private final Handler mainHandler = new Handler(Looper.getMainLooper());
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -53,6 +52,7 @@ public class SignUpPage3Activity extends AppCompatActivity {
         TextView tvFullName    = findViewById(R.id.tvFullName);
         TextView tvUsername    = findViewById(R.id.tvUsername);
         TextView tvStudentId   = findViewById(R.id.tvStudentId);
+        TextView tvCourse      = findViewById(R.id.tvCourse);
         TextView tvEmail       = findViewById(R.id.tvEmail);
         TextView tvPhone       = findViewById(R.id.tvPhone);
         ImageView ivProfilePic = findViewById(R.id.ivProfilePic);
@@ -61,10 +61,10 @@ public class SignUpPage3Activity extends AppCompatActivity {
         tvFullName.setText(UserSession.firstName + " " + UserSession.lastName);
         tvUsername.setText("@" + UserSession.username);
         tvStudentId.setText(UserSession.studentId);
+        tvCourse.setText("Course: " + UserSession.course);  // ✅ Display selected course
         tvEmail.setText("Email: " + UserSession.email);
         tvPhone.setText("Phone Number: " + UserSession.phone);
 
-        // Show preview of whichever photo is available
         if (UserSession.profilePicUri != null) {
             Glide.with(this)
                     .load(UserSession.profilePicUri)
@@ -96,15 +96,10 @@ public class SignUpPage3Activity extends AppCompatActivity {
                     UserSession.firebaseUid = uid;
 
                     if (UserSession.profilePicUri != null) {
-                        // User manually picked a local photo — upload to Cloudinary
                         uploadLocalPhotoAndSaveUser(uid);
-
                     } else if (UserSession.googlePhotoUrl != null) {
-                        // ✅ FIX: Download Google photo first, then upload to Cloudinary
                         downloadGooglePhotoAndUpload(uid, UserSession.googlePhotoUrl);
-
                     } else {
-                        // No photo at all
                         saveUserToFirestore(uid, null);
                     }
                 })
@@ -116,11 +111,9 @@ public class SignUpPage3Activity extends AppCompatActivity {
                 });
     }
 
-    // ✅ NEW: Download the Google photo to a temp file, then upload that file to Cloudinary
     private void downloadGooglePhotoAndUpload(String uid, String googlePhotoUrl) {
         executor.execute(() -> {
             try {
-                // Step 1: Download the Google photo into a temp file
                 URL url = new URL(googlePhotoUrl);
                 HttpURLConnection connection = (HttpURLConnection) url.openConnection();
                 connection.setDoInput(true);
@@ -138,11 +131,9 @@ public class SignUpPage3Activity extends AppCompatActivity {
                 outputStream.close();
                 inputStream.close();
 
-                // Step 2: Upload the downloaded file to Cloudinary
                 mainHandler.post(() -> uploadFileToCloudinary(uid, tempFile));
 
             } catch (Exception e) {
-                // Download failed — save without photo
                 mainHandler.post(() -> {
                     Toast.makeText(SignUpPage3Activity.this,
                             "Could not fetch Google photo, saving without photo.",
@@ -153,7 +144,6 @@ public class SignUpPage3Activity extends AppCompatActivity {
         });
     }
 
-    // Upload a local File object to Cloudinary
     private void uploadFileToCloudinary(String uid, File file) {
         MediaManager.get()
                 .upload(file.getAbsolutePath())
@@ -166,7 +156,6 @@ public class SignUpPage3Activity extends AppCompatActivity {
                     @Override
                     public void onSuccess(String requestId, Map resultData) {
                         String cloudinaryUrl = (String) resultData.get("secure_url");
-                        // Clean up temp file
                         file.delete();
                         saveUserToFirestore(uid, cloudinaryUrl);
                     }
@@ -185,7 +174,6 @@ public class SignUpPage3Activity extends AppCompatActivity {
                 .dispatch();
     }
 
-    // Upload a local URI picked by the user to Cloudinary
     private void uploadLocalPhotoAndSaveUser(String uid) {
         MediaManager.get()
                 .upload(UserSession.profilePicUri)
@@ -222,6 +210,7 @@ public class SignUpPage3Activity extends AppCompatActivity {
         user.put("phone",     UserSession.phone);
         user.put("email",     UserSession.email);
         user.put("studentId", UserSession.studentId);
+        user.put("course",    UserSession.course);   // ✅ Save course to Firestore
         user.put("photoUrl",  photoUrl);
 
         db.collection("users").document(uid)
@@ -231,7 +220,12 @@ public class SignUpPage3Activity extends AppCompatActivity {
                     Toast.makeText(SignUpPage3Activity.this,
                             "Account created! Welcome, " + UserSession.firstName + "! 🎉",
                             Toast.LENGTH_SHORT).show();
-                    startActivity(new Intent(SignUpPage3Activity.this, LoginActivity.class));
+
+                    clearSession();
+
+                    Intent intent = new Intent(SignUpPage3Activity.this, LoginActivity.class);
+                    intent.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_ACTIVITY_CLEAR_TASK);
+                    startActivity(intent);
                     finish();
                 })
                 .addOnFailureListener(e -> {
@@ -240,6 +234,21 @@ public class SignUpPage3Activity extends AppCompatActivity {
                             "Failed to save user data: " + e.getMessage(),
                             Toast.LENGTH_LONG).show();
                 });
+    }
+
+    private void clearSession() {
+        UserSession.username       = null;
+        UserSession.password       = null;
+        UserSession.firstName      = null;
+        UserSession.lastName       = null;
+        UserSession.phone          = null;
+        UserSession.email          = null;
+        UserSession.studentId      = null;
+        UserSession.course         = null;
+        UserSession.firebaseUid    = null;
+        UserSession.profilePicUri  = null;
+        UserSession.googlePhotoUrl = null;
+        UserSession.isFromGoogle   = false;
     }
 
     @Override

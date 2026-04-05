@@ -122,7 +122,6 @@
                     android:textColor="#000000"
                     android:layout_marginBottom="6dp" />
 
-                <!-- ✅ FIX: replaced app:passwordToggleEnabled with app:endIconMode -->
                 <com.google.android.material.textfield.TextInputLayout
                     android:id="@+id/tilPassword"
                     style="@style/Widget.MaterialComponents.TextInputLayout.OutlinedBox"
@@ -165,7 +164,6 @@
                     android:textColor="#000000"
                     android:layout_marginBottom="6dp" />
 
-                <!-- ✅ FIX: replaced app:passwordToggleEnabled with app:endIconMode -->
                 <com.google.android.material.textfield.TextInputLayout
                     android:id="@+id/tilConfirmPassword"
                     style="@style/Widget.MaterialComponents.TextInputLayout.OutlinedBox"
@@ -373,40 +371,93 @@
 
         </LinearLayout>
 
-        <!-- Student ID Label -->
-        <TextView
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:text="Student ID"
-            android:textSize="13sp"
-            android:textColor="#000000"
-            android:layout_marginBottom="6dp" />
-
-        <!-- Student ID Field -->
-        <com.google.android.material.textfield.TextInputLayout
-            android:id="@+id/tilStudentId"
-            style="@style/Widget.MaterialComponents.TextInputLayout.OutlinedBox"
+        <!-- Student ID + Course Row -->
+        <LinearLayout
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:layout_marginBottom="4dp"
-            app:boxCornerRadiusBottomEnd="10dp"
-            app:boxCornerRadiusBottomStart="10dp"
-            app:boxCornerRadiusTopEnd="10dp"
-            app:boxCornerRadiusTopStart="10dp"
-            app:boxStrokeColor="#000000"
-            app:boxBackgroundColor="#FFFFFF"
-            app:hintTextColor="#000000"
-            app:errorEnabled="true">
+            android:orientation="horizontal"
+            android:layout_marginBottom="4dp">
 
-            <com.google.android.material.textfield.TextInputEditText
-                android:id="@+id/etStudentId"
-                android:layout_width="match_parent"
+            <!-- Student ID -->
+            <LinearLayout
+                android:layout_width="0dp"
                 android:layout_height="wrap_content"
-                android:inputType="text"
-                android:textSize="14sp"
-                android:textColor="#000000" />
+                android:layout_weight="3"
+                android:orientation="vertical"
+                android:layout_marginEnd="8dp">
 
-        </com.google.android.material.textfield.TextInputLayout>
+                <TextView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="Student ID"
+                    android:textSize="13sp"
+                    android:textColor="#000000"
+                    android:layout_marginBottom="6dp" />
+
+                <com.google.android.material.textfield.TextInputLayout
+                    android:id="@+id/tilStudentId"
+                    style="@style/Widget.MaterialComponents.TextInputLayout.OutlinedBox"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    app:boxCornerRadiusBottomEnd="10dp"
+                    app:boxCornerRadiusBottomStart="10dp"
+                    app:boxCornerRadiusTopEnd="10dp"
+                    app:boxCornerRadiusTopStart="10dp"
+                    app:boxStrokeColor="#000000"
+                    app:boxBackgroundColor="#FFFFFF"
+                    app:hintTextColor="#000000"
+                    app:errorEnabled="true">
+
+                    <com.google.android.material.textfield.TextInputEditText
+                        android:id="@+id/etStudentId"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:inputType="text"
+                        android:textSize="14sp"
+                        android:textColor="#000000" />
+
+                </com.google.android.material.textfield.TextInputLayout>
+
+            </LinearLayout>
+
+            <!-- Course Spinner -->
+            <LinearLayout
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_weight="2"
+                android:orientation="vertical">
+
+                <TextView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="Course"
+                    android:textSize="13sp"
+                    android:textColor="#000000"
+                    android:layout_marginBottom="6dp" />
+
+                <!-- Styled container to match other outlined fields -->
+                <LinearLayout
+                    android:id="@+id/spinnerContainer"
+                    android:layout_width="match_parent"
+                    android:layout_height="55dp"
+                    android:orientation="horizontal"
+                    android:gravity="center_vertical"
+                    android:background="@drawable/spinner_border"
+                    android:paddingStart="4dp"
+                    android:paddingEnd="4dp">
+
+                    <Spinner
+                        android:id="@+id/spinnerCourse"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:textSize="14sp"
+                        android:spinnerMode="dropdown" />
+
+                </LinearLayout>
+
+            </LinearLayout>
+
+        </LinearLayout>
 
         <!-- Student ID Error Text -->
         <TextView
@@ -416,7 +467,18 @@
             android:text="Uhmmmmm... Incorrect Student ID."
             android:textSize="12sp"
             android:textColor="#E53935"
-            android:layout_marginBottom="32dp"
+            android:layout_marginBottom="16dp"
+            android:visibility="gone" />
+
+        <!-- Course Error Text -->
+        <TextView
+            android:id="@+id/tvCourseError"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="Please select your course."
+            android:textSize="12sp"
+            android:textColor="#E53935"
+            android:layout_marginBottom="16dp"
             android:visibility="gone" />
 
         <!-- Next Button -->

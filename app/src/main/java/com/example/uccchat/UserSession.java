@@ -17,4 +17,5 @@ public class UserSession {
     // Google Sign-In extras
     public static String googlePhotoUrl;
     public static boolean isFromGoogle = false;
+    public static Object course;
 }
