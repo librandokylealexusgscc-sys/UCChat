@@ -1,4 +1,4 @@
-package com.example.searchmenu;
+package com.example.uccchat;
 
 import org.junit.Test;
 

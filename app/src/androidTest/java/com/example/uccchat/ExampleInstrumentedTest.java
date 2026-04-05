@@ -1,4 +1,4 @@
-package com.example.searchmenu;
+package com.example.uccchat;
 
 import android.content.Context;
 
@@ -21,6 +21,6 @@ public class ExampleInstrumentedTest {
     public void useAppContext() {
         // Context of the app under test.
         Context appContext = InstrumentationRegistry.getInstrumentation().getTargetContext();
-        assertEquals("com.example.searchmenu", appContext.getPackageName());
+        assertEquals("com.example.uccchat", appContext.getPackageName());
     }
 }
