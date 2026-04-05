@@ -2,9 +2,11 @@
 <project version="4">
   <component name="deploymentTargetSelector">
     <selectionStates>
-      <SelectionState runConfigName="app">
+      <SelectionState runConfigName="Search&amp;Menu.app.androidTest">
         <option name="selectionMode" value="DROPDOWN" />
-        <DialogSelection />
+      </SelectionState>
+      <SelectionState runConfigName="4-4-UI-UCChat.Search&amp;Menu.app">
+        <option name="selectionMode" value="DROPDOWN" />
       </SelectionState>
     </selectionStates>
   </component>
