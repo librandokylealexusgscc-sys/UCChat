@@ -14,6 +14,7 @@ import android.widget.ImageView;
 import android.widget.TextView;
 
 import com.google.android.material.button.MaterialButton;
+import com.google.firebase.FirebaseApp;
 
 public class SignUpPage2Activity extends AppCompatActivity {
 
@@ -34,6 +35,7 @@ public class SignUpPage2Activity extends AppCompatActivity {
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.signup_page_2);
+        FirebaseApp.initializeApp(this);
 
         ivProfilePreview = findViewById(R.id.ivProfilePreview);
         tvPlusIcon       = findViewById(R.id.tvPlusIcon);
