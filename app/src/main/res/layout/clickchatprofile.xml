@@ -156,39 +156,9 @@
                 android:paddingTop="16dp"
                 android:paddingBottom="16dp">
 
-                <!-- Clear Chat -->
-                <LinearLayout
-                    android:id="@+id/btnClearChat"
-                    android:layout_width="match_parent"
-                    android:layout_height="wrap_content"
-                    android:orientation="horizontal"
-                    android:gravity="center_vertical"
-                    android:paddingTop="14dp"
-                    android:paddingBottom="14dp"
-                    android:clickable="true"
-                    android:focusable="true"
-                    android:background="?attr/selectableItemBackground">
+                <!-- ── 1-ON-1 ONLY ── -->
 
-                    <ImageView
-                        android:layout_width="22dp"
-                        android:layout_height="22dp"
-                        android:src="@drawable/deleteconvo"
-                        android:scaleType="centerCrop"
-                        app:tint="#4CAF50"
-                        android:contentDescription="Clear Chat" />
-
-                    <TextView
-                        android:layout_width="wrap_content"
-                        android:layout_height="wrap_content"
-                        android:layout_marginStart="14dp"
-                        android:fontFamily="@font/regular"
-                        android:text="Delete Conversation"
-                        android:textColor="#000000"
-                        android:textSize="15sp" />
-
-                </LinearLayout>
-
-                <!-- Block -->
+                <!-- Block (1-on-1 only) -->
                 <LinearLayout
                     android:id="@+id/btnBlock"
                     android:layout_width="match_parent"
@@ -199,7 +169,8 @@
                     android:paddingBottom="14dp"
                     android:clickable="true"
                     android:focusable="true"
-                    android:background="?attr/selectableItemBackground">
+                    android:background="?attr/selectableItemBackground"
+                    android:visibility="visible">
 
                     <ImageView
                         android:layout_width="22dp"
@@ -215,7 +186,141 @@
                         android:layout_height="wrap_content"
                         android:layout_marginStart="14dp"
                         android:fontFamily="@font/regular"
-                        android:text="Block Eli"
+                        android:text="Block User"
+                        android:textColor="#E53935"
+                        android:textSize="15sp" />
+
+                </LinearLayout>
+
+                <!-- Delete Conversation (1-on-1 only) -->
+                <LinearLayout
+                    android:id="@+id/btnClearChat"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:orientation="horizontal"
+                    android:gravity="center_vertical"
+                    android:paddingTop="14dp"
+                    android:paddingBottom="14dp"
+                    android:clickable="true"
+                    android:focusable="true"
+                    android:background="?attr/selectableItemBackground"
+                    android:visibility="visible">
+
+                    <ImageView
+                        android:layout_width="22dp"
+                        android:layout_height="22dp"
+                        android:src="@drawable/deleteconvo"
+                        android:scaleType="centerCrop"
+                        app:tint="#4CAF50"
+                        android:contentDescription="Delete Conversation" />
+
+                    <TextView
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:layout_marginStart="14dp"
+                        android:fontFamily="@font/regular"
+                        android:text="Delete Conversation"
+                        android:textColor="#000000"
+                        android:textSize="15sp" />
+
+                </LinearLayout>
+
+                <!-- ── GROUP ONLY ── -->
+
+                <!-- Add Members (group only) -->
+                <LinearLayout
+                    android:id="@+id/btnAddMembers"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:orientation="horizontal"
+                    android:gravity="center_vertical"
+                    android:paddingTop="14dp"
+                    android:paddingBottom="14dp"
+                    android:clickable="true"
+                    android:focusable="true"
+                    android:background="?attr/selectableItemBackground"
+                    android:visibility="gone">
+
+                    <ImageView
+                        android:layout_width="22dp"
+                        android:layout_height="22dp"
+                        android:src="@drawable/add"
+                        android:scaleType="centerCrop"
+                        app:tint="#4CAF50"
+                        android:contentDescription="Add Members" />
+
+                    <TextView
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:layout_marginStart="14dp"
+                        android:fontFamily="@font/regular"
+                        android:text="Add Members"
+                        android:textColor="#000000"
+                        android:textSize="15sp" />
+
+                </LinearLayout>
+
+                <!-- Leave Group (group only) -->
+                <LinearLayout
+                    android:id="@+id/btnLeaveGroup"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:orientation="horizontal"
+                    android:gravity="center_vertical"
+                    android:paddingTop="14dp"
+                    android:paddingBottom="14dp"
+                    android:clickable="true"
+                    android:focusable="true"
+                    android:background="?attr/selectableItemBackground"
+                    android:visibility="gone">
+
+                    <ImageView
+                        android:layout_width="22dp"
+                        android:layout_height="22dp"
+                        android:src="@drawable/logoutt"
+                        android:scaleType="centerCrop"
+                        app:tint="#E53935"
+                        android:contentDescription="Leave Group" />
+
+                    <TextView
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:layout_marginStart="14dp"
+                        android:fontFamily="@font/regular"
+                        android:text="Leave Group"
+                        android:textColor="#E53935"
+                        android:textSize="15sp" />
+
+                </LinearLayout>
+
+                <!-- Delete Group (group creator only) -->
+                <LinearLayout
+                    android:id="@+id/btnDeleteGroup"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:orientation="horizontal"
+                    android:gravity="center_vertical"
+                    android:paddingTop="14dp"
+                    android:paddingBottom="14dp"
+                    android:clickable="true"
+                    android:focusable="true"
+                    android:background="?attr/selectableItemBackground"
+                    android:visibility="gone">
+
+                    <ImageView
+                        android:layout_width="22dp"
+                        android:layout_height="22dp"
+                        android:src="@drawable/delete"
+                        android:scaleType="centerCrop"
+                        app:tint="#E53935"
+                        android:contentDescription="Delete Group" />
+
+                    <TextView
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:layout_marginStart="14dp"
+                        android:fontFamily="@font/regular"
+                        android:text="Delete Group"
                         android:textColor="#E53935"
                         android:textSize="15sp" />
 
@@ -266,7 +371,7 @@
                 android:hint="Search messages..."
                 app:hintTextColor="#BBBBBB"
                 android:paddingStart="12dp"
-                android:textColor="#FFFFFF" />
+                android:textColor="#000000" />
         </LinearLayout>
 
         <!-- EMPTY STATE -->

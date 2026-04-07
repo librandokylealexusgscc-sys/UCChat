@@ -91,7 +91,8 @@ public class LoginActivity extends AppCompatActivity {
                                         Toast.makeText(LoginActivity.this,
                                                 "Welcome back, " + UserSession.firstName + "! 👋",
                                                 Toast.LENGTH_SHORT).show();
-                                        startActivity(new Intent(LoginActivity.this, WelcomePageActivity.class));
+                                        // ✅ NEW
+                                        startActivity(new Intent(LoginActivity.this, ChatHomeActivity.class));
                                         finish();
                                     })
                                     .addOnFailureListener(e -> {

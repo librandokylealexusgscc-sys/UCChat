@@ -53,7 +53,6 @@
             <LinearLayout
                 android:layout_width="0dp"
                 android:layout_height="wrap_content"
-                android:layout_marginLeft="0dp"
                 android:layout_weight="1"
                 android:orientation="vertical"
                 android:paddingStart="10dp">
@@ -62,18 +61,49 @@
                     android:id="@+id/studentName"
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
-                    android:text="Shimenet"
+                    android:fontFamily="@font/bold"
                     android:textColor="#000000"
                     android:textSize="16sp"
-                    android:textStyle="bold" />
+                    android:textStyle="bold"
+                    android:maxLines="1"
+                    android:ellipsize="end" />
 
-                <TextView
-                    android:id="@+id/status"
+                <!-- Online indicator row -->
+                <LinearLayout
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
-                    android:text="Online"
-                    android:textColor="#4CAF50"
-                    android:textSize="12sp" />
+                    android:orientation="horizontal"
+                    android:gravity="center_vertical">
+
+                    <!-- Green dot -->
+                    <View
+                        android:id="@+id/onlineDot"
+                        android:layout_width="7dp"
+                        android:layout_height="7dp"
+                        android:background="@drawable/circle_green_bg"
+                        android:layout_marginEnd="4dp"
+                        android:visibility="gone" />
+
+                    <!-- Status text: Online / Last seen X ago -->
+                    <TextView
+                        android:id="@+id/status"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:fontFamily="@font/regular"
+                        android:textColor="#4CAF50"
+                        android:textSize="12sp" />
+
+                </LinearLayout>
+
+                <!-- Program - Student ID -->
+                <TextView
+                    android:id="@+id/tvProgramId"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:fontFamily="@font/regular"
+                    android:textColor="#888888"
+                    android:textSize="11sp"
+                    android:visibility="gone" />
 
             </LinearLayout>
 
@@ -87,6 +117,7 @@
 
         <!-- Content Area: FrameLayout to stack empty state + message scroll -->
         <FrameLayout
+            android:id="@+id/messageContainer"
             android:layout_width="match_parent"
             android:layout_height="0dp"
             android:layout_weight="1"
@@ -450,25 +481,26 @@
                 android:text="Delete"
                 android:textColor="#4CAF50"
                 android:textSize="12sp" />
+
+
         </LinearLayout>
 
 
     </LinearLayout>
 
+    <!-- ═══════════════════════════════════════════
+     FULL SCREEN IMAGE VIEWER
+     GONE by default — shown when image tapped
+     ═══════════════════════════════════════════ -->
     <LinearLayout
         android:id="@+id/viewImageLayout"
         android:layout_width="match_parent"
         android:layout_height="match_parent"
         android:orientation="vertical"
-        tools:visibility="gone">
+        android:background="#000000"
+        android:visibility="gone">
 
         <!-- Top Bar -->
-        <TextView
-            android:id="@+id/textView"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:text="git add .&#xA;git commit -m &quot;updated xml&quot;&#xA;git push --set-upstream origin eli" />
-
         <LinearLayout
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
@@ -480,19 +512,17 @@
             android:paddingBottom="12dp">
 
             <!-- Back Button -->
-            <!-- Avatar -->
             <ImageView
-                android:id="@+id/backBtn"
+                android:id="@+id/imgViewBackBtn"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:layout_gravity="left"
-                android:layout_marginLeft="15dp"
+                android:layout_marginStart="8dp"
                 android:paddingTop="7dp"
-                android:paddingRight="15dp"
+                android:paddingEnd="15dp"
                 android:scaleType="centerCrop"
-
-
-                android:src="@drawable/back" />
+                android:src="@drawable/back"
+                android:contentDescription="Back"
+                app:tint="#FFFFFF" />
 
             <!-- Spacer -->
             <View
@@ -500,7 +530,7 @@
                 android:layout_height="1dp"
                 android:layout_weight="1" />
 
-            <!-- Save / Download Button -->
+            <!-- Save Button -->
             <ImageView
                 android:id="@+id/btnSaveDoc"
                 android:layout_width="28dp"
@@ -510,7 +540,8 @@
                 android:focusable="true"
                 android:padding="2dp"
                 android:scaleType="fitCenter"
-                android:src="@drawable/savedoc" />
+                android:src="@drawable/savedoc"
+                app:tint="#FFFFFF" />
 
             <!-- Forward Button -->
             <ImageView
@@ -523,11 +554,12 @@
                 android:focusable="true"
                 android:padding="2dp"
                 android:scaleType="fitCenter"
-                android:src="@drawable/forward" />
+                android:src="@drawable/forward"
+                app:tint="#FFFFFF" />
 
         </LinearLayout>
 
-        <!-- Full-Screen Image Viewer -->
+        <!-- Full Screen Image -->
         <LinearLayout
             android:layout_width="match_parent"
             android:layout_height="0dp"
@@ -546,11 +578,5 @@
         </LinearLayout>
 
     </LinearLayout>
-
-
-
-
-
-
 
 </FrameLayout>

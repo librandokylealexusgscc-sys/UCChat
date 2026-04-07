@@ -2,11 +2,14 @@
 <manifest xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:tools="http://schemas.android.com/tools">
 
-
     <uses-permission android:name="android.permission.INTERNET" />
     <uses-permission android:name="android.permission.READ_EXTERNAL_STORAGE" />
+    <uses-permission android:name="android.permission.READ_MEDIA_IMAGES" />
+    <uses-permission android:name="android.permission.READ_MEDIA_VIDEO" />
+    <uses-permission android:name="android.permission.READ_MEDIA_AUDIO" />
 
     <application
+        android:name=".App"
         android:allowBackup="true"
         android:dataExtractionRules="@xml/data_extraction_rules"
         android:fullBackupContent="@xml/backup_rules"
@@ -16,6 +19,7 @@
         android:supportsRtl="true"
         android:theme="@style/Theme.SearchMenu">
 
+        <!-- Splash / entry point -->
         <activity
             android:name=".MainActivity"
             android:exported="true">
@@ -25,12 +29,21 @@
             </intent-filter>
         </activity>
 
+        <!-- Auth screens -->
         <activity android:name=".LoginActivity" android:exported="false"/>
         <activity android:name=".WelcomePageActivity" android:exported="false"/>
         <activity android:name=".SignUpPage1Activity" android:exported="false"/>
         <activity android:name=".SignUpPage2Activity" android:exported="false"/>
         <activity android:name=".SignUpPage3Activity" android:exported="false"/>
 
+        <!-- Main app screens (we'll build these next) -->
+        <activity android:name=".ChatHomeActivity" android:exported="false"/>
+        <activity android:name=".ChatActivity" android:exported="false"/>
+        <activity android:name=".NewGroupChatActivity" android:exported="false"/>
+        <activity android:name=".ChatProfileActivity" android:exported="false"/>
+        <activity android:name=".SearchActivity" android:exported="false"/>
+        <activity android:name=".MenuActivity" android:exported="false"/>
+        <activity android:name=".NewChatActivity" android:exported="false"/>
 
     </application>
 

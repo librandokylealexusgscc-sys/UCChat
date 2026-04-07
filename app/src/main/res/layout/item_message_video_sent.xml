@@ -1,0 +1,100 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout
+    xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:orientation="vertical"
+    android:gravity="end"
+    android:paddingStart="64dp"
+    android:paddingEnd="12dp"
+    android:paddingTop="4dp"
+    android:paddingBottom="4dp">
+
+    <!-- Video bubble -->
+    <FrameLayout
+        android:id="@+id/bubbleContainer"
+        android:layout_width="200dp"
+        android:layout_height="150dp"
+        android:clickable="true"
+        android:focusable="true"
+        android:background="@drawable/bubble_sent">
+
+        <!-- Thumbnail -->
+        <ImageView
+            android:id="@+id/imgThumbnail"
+            android:layout_width="match_parent"
+            android:layout_height="match_parent"
+            android:scaleType="centerCrop"
+            android:contentDescription="Video thumbnail" />
+
+        <!-- Dark overlay -->
+        <View
+            android:layout_width="match_parent"
+            android:layout_height="match_parent"
+            android:background="#66000000" />
+
+        <!-- Play button -->
+        <LinearLayout
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_gravity="center"
+            android:orientation="vertical"
+            android:gravity="center">
+
+            <TextView
+                android:layout_width="56dp"
+                android:layout_height="56dp"
+                android:gravity="center"
+                android:text="▶"
+                android:textColor="#FFFFFF"
+                android:textSize="28sp"
+                android:background="@drawable/circle_green_bg" />
+
+        </LinearLayout>
+
+        <!-- Duration badge -->
+        <TextView
+            android:id="@+id/tvDuration"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_gravity="bottom|end"
+            android:layout_margin="6dp"
+            android:fontFamily="@font/bold"
+            android:textColor="#FFFFFF"
+            android:textSize="11sp"
+            android:paddingStart="6dp"
+            android:paddingEnd="6dp"
+            android:paddingTop="2dp"
+            android:paddingBottom="2dp"
+            android:background="#88000000" />
+
+    </FrameLayout>
+
+    <!-- Timestamp + status -->
+    <LinearLayout
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:orientation="horizontal"
+        android:gravity="end"
+        android:paddingTop="2dp">
+
+        <TextView
+            android:id="@+id/tvTimestamp"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:fontFamily="@font/regular"
+            android:textColor="#AAAAAA"
+            android:textSize="10sp"
+            android:paddingEnd="4dp" />
+
+        <TextView
+            android:id="@+id/tvStatus"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:fontFamily="@font/regular"
+            android:textColor="#AAAAAA"
+            android:textSize="10sp" />
+
+    </LinearLayout>
+
+</LinearLayout>

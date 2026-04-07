@@ -19,13 +19,13 @@ public class MainActivity extends AppCompatActivity {
 
         new Handler(Looper.getMainLooper()).postDelayed(() -> {
             if (FirebaseAuth.getInstance().getCurrentUser() != null) {
-                // User already logged in → skip welcome page
-                startActivity(new Intent(MainActivity.this, WelcomePageActivity.class));
+                // ✅ Already logged in → go straight to chat home
+                startActivity(new Intent(MainActivity.this, ChatHomeActivity.class));
             } else {
+                // ✅ Not logged in → go to welcome/sign up
                 startActivity(new Intent(MainActivity.this, WelcomePageActivity.class));
             }
             finish();
         }, 2000);
-
     }
 }
