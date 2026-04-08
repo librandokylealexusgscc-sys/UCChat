@@ -18,6 +18,8 @@ import com.cloudinary.android.callback.ErrorInfo;
 import com.cloudinary.android.callback.UploadCallback;
 import com.google.android.material.button.MaterialButton;
 import com.google.firebase.FirebaseApp;
+import com.google.firebase.auth.AuthCredential;
+import com.google.firebase.auth.FacebookAuthProvider;
 import com.google.firebase.auth.FirebaseAuth;
 import com.google.firebase.firestore.FirebaseFirestore;
 
@@ -90,25 +92,47 @@ public class SignUpPage3Activity extends AppCompatActivity {
     private void registerUser() {
         btnSubmit.setEnabled(false);
 
-        mAuth.createUserWithEmailAndPassword(UserSession.email, UserSession.password)
-                .addOnSuccessListener(authResult -> {
-                    String uid = authResult.getUser().getUid();
-                    UserSession.firebaseUid = uid;
+        if (UserSession.isFromFacebook && UserSession.facebookToken != null) {
+            mAuth.createUserWithEmailAndPassword(UserSession.email, UserSession.password)
+                    .addOnSuccessListener(authResult -> {
+                        String uid = authResult.getUser().getUid();
+                        UserSession.firebaseUid = uid;
 
-                    if (UserSession.profilePicUri != null) {
-                        uploadLocalPhotoAndSaveUser(uid);
-                    } else if (UserSession.googlePhotoUrl != null) {
-                        downloadGooglePhotoAndUpload(uid, UserSession.googlePhotoUrl);
-                    } else {
-                        saveUserToFirestore(uid, null);
-                    }
-                })
-                .addOnFailureListener(e -> {
-                    btnSubmit.setEnabled(true);
-                    Toast.makeText(this,
-                            "Registration failed: " + e.getMessage(),
-                            Toast.LENGTH_LONG).show();
-                });
+                        AuthCredential facebookCredential =
+                                FacebookAuthProvider.getCredential(UserSession.facebookToken);
+
+                        authResult.getUser().linkWithCredential(facebookCredential)
+                                .addOnCompleteListener(linkTask -> {
+                                    if (UserSession.profilePicUri != null) {
+                                        uploadLocalPhotoAndSaveUser(uid);
+                                    } else {
+                                        saveUserToFirestore(uid, null);
+                                    }
+                                });
+                    })
+                    .addOnFailureListener(e -> {
+                        btnSubmit.setEnabled(true);
+                        Toast.makeText(this, "Registration failed: " + e.getMessage(), Toast.LENGTH_LONG).show();
+                    });
+        } else {
+            mAuth.createUserWithEmailAndPassword(UserSession.email, UserSession.password)
+                    .addOnSuccessListener(authResult -> {
+                        String uid = authResult.getUser().getUid();
+                        UserSession.firebaseUid = uid;
+
+                        if (UserSession.profilePicUri != null) {
+                            uploadLocalPhotoAndSaveUser(uid);
+                        } else if (UserSession.googlePhotoUrl != null) {
+                            downloadGooglePhotoAndUpload(uid, UserSession.googlePhotoUrl);
+                        } else {
+                            saveUserToFirestore(uid, null);
+                        }
+                    })
+                    .addOnFailureListener(e -> {
+                        btnSubmit.setEnabled(true);
+                        Toast.makeText(this, "Registration failed: " + e.getMessage(), Toast.LENGTH_LONG).show();
+                    });
+        }
     }
 
     private void downloadGooglePhotoAndUpload(String uid, String googlePhotoUrl) {
@@ -223,7 +247,7 @@ public class SignUpPage3Activity extends AppCompatActivity {
 
                     clearSession();
 
-                    Intent intent = new Intent(SignUpPage3Activity.this, LoginActivity.class);
+                    Intent intent = new Intent(SignUpPage3Activity.this, ChatHomeActivity.class);
                     intent.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_ACTIVITY_CLEAR_TASK);
                     startActivity(intent);
                     finish();
@@ -246,6 +270,8 @@ public class SignUpPage3Activity extends AppCompatActivity {
         UserSession.studentId      = null;
         UserSession.course         = null;
         UserSession.firebaseUid    = null;
+        UserSession.isFromFacebook              = false;
+        UserSession.facebookEmailAlreadyExists  = false;
         UserSession.profilePicUri  = null;
         UserSession.googlePhotoUrl = null;
         UserSession.isFromGoogle   = false;

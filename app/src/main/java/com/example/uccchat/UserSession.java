@@ -11,6 +11,9 @@ public class UserSession {
     public static String email;
     public static String studentId;
     public static Uri profilePicUri;
+    public static boolean isFromFacebook = false;
+    public static String facebookToken = null;
+    public static boolean facebookEmailAlreadyExists = false;
     public static String firebaseUid;
     public static String photoUrl;
 

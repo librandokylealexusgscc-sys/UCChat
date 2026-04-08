@@ -35,6 +35,10 @@
         <activity android:name=".SignUpPage1Activity" android:exported="false"/>
         <activity android:name=".SignUpPage2Activity" android:exported="false"/>
         <activity android:name=".SignUpPage3Activity" android:exported="false"/>
+        <activity android:name=".PersonalDetailsActivity" />
+        <activity android:name=".DeleteAccountActivity" />
+        <activity android:name=".PrivacyPolicyActivity" />
+        <activity android:name=".TermsOfUseActivity" />
 
         <!-- Main app screens (we'll build these next) -->
         <activity android:name=".ChatHomeActivity" android:exported="false"/>
@@ -44,7 +48,27 @@
         <activity android:name=".SearchActivity" android:exported="false"/>
         <activity android:name=".MenuActivity" android:exported="false"/>
         <activity android:name=".NewChatActivity" android:exported="false"/>
+        <meta-data
+            android:name="com.facebook.sdk.ApplicationId"
+            android:value="@string/facebook_app_id" />
+        <meta-data
+            android:name="com.facebook.sdk.ClientToken"
+            android:value="@string/facebook_client_token" />
 
+        <activity
+            android:name="com.facebook.FacebookActivity"
+            android:configChanges="keyboard|keyboardHidden|screenLayout|screenSize|orientation"
+            android:label="@string/app_name" />
+        <activity
+            android:name="com.facebook.CustomTabActivity"
+            android:exported="true">
+            <intent-filter>
+                <action android:name="android.intent.action.VIEW" />
+                <category android:name="android.intent.category.DEFAULT" />
+                <category android:name="android.intent.category.BROWSABLE" />
+                <data android:scheme="@string/fb_login_protocol_scheme" />
+            </intent-filter>
+        </activity>
     </application>
 
 </manifest>

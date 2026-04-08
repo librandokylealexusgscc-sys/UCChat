@@ -80,7 +80,7 @@
                     android:fontFamily="@font/regular"
                     android:text="BSIT - 20240123-C"
                     android:textColor="#FFFFFF"
-                    android:textSize="13sp" />
+                    android:textSize="11sp" />
             </LinearLayout>
         </LinearLayout>
 

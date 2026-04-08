@@ -14,13 +14,19 @@ import android.widget.TextView;
 import android.widget.Toast;
 
 import androidx.activity.OnBackPressedCallback;
-import androidx.activity.result.ActivityResult;
 import androidx.activity.result.ActivityResultLauncher;
 import androidx.activity.result.contract.ActivityResultContracts;
 import androidx.annotation.NonNull;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.constraintlayout.widget.ConstraintLayout;
 
+import com.facebook.AccessToken;
+import com.facebook.CallbackManager;
+import com.facebook.FacebookCallback;
+import com.facebook.FacebookException;
+import com.facebook.GraphRequest;
+import com.facebook.login.LoginManager;
+import com.facebook.login.LoginResult;
 import com.google.android.gms.auth.api.signin.GoogleSignIn;
 import com.google.android.gms.auth.api.signin.GoogleSignInAccount;
 import com.google.android.gms.auth.api.signin.GoogleSignInClient;
@@ -28,12 +34,20 @@ import com.google.android.gms.auth.api.signin.GoogleSignInOptions;
 import com.google.android.gms.common.api.ApiException;
 import com.google.android.gms.tasks.Task;
 import com.google.android.material.button.MaterialButton;
+import com.google.firebase.firestore.FirebaseFirestore;
+import com.google.firebase.firestore.QuerySnapshot;
+
+import org.json.JSONException;
+import org.json.JSONObject;
+
+import java.util.Arrays;
 
 public class WelcomePageActivity extends AppCompatActivity {
 
     private View dimBackground;
     private ConstraintLayout cardModal;
     private GoogleSignInClient googleSignInClient;
+    private CallbackManager callbackManager;
 
     private final ActivityResultLauncher<Intent> googleSignInLauncher =
             registerForActivityResult(new ActivityResultContracts.StartActivityForResult(),
@@ -58,6 +72,9 @@ public class WelcomePageActivity extends AppCompatActivity {
                 .requestProfile()
                 .build();
         googleSignInClient = GoogleSignIn.getClient(this, gso);
+
+        // Setup Facebook CallbackManager
+        callbackManager = CallbackManager.Factory.create();
 
         dimBackground = findViewById(R.id.dimBackground);
         cardModal = findViewById(R.id.cardModal);
@@ -87,10 +104,34 @@ public class WelcomePageActivity extends AppCompatActivity {
             });
         });
 
-        // Facebook button — coming soon
+        // Facebook button
         MaterialButton btnFacebook = findViewById(R.id.btnFacebook);
-        btnFacebook.setOnClickListener(v ->
-                Toast.makeText(this, "Facebook sign-up coming soon!", Toast.LENGTH_SHORT).show());
+        btnFacebook.setOnClickListener(v -> {
+            LoginManager.getInstance().logOut();
+            LoginManager.getInstance().logInWithReadPermissions(
+                    this,
+                    callbackManager,
+                    Arrays.asList("public_profile", "email")
+            );
+        });
+
+        LoginManager.getInstance().registerCallback(callbackManager, new FacebookCallback<LoginResult>() {
+            @Override
+            public void onSuccess(LoginResult loginResult) {
+                UserSession.facebookToken = loginResult.getAccessToken().getToken(); // add this
+                fetchFacebookProfile(loginResult.getAccessToken());
+            }
+
+            @Override
+            public void onCancel() {
+                Toast.makeText(WelcomePageActivity.this, "Facebook login cancelled.", Toast.LENGTH_SHORT).show();
+            }
+
+            @Override
+            public void onError(@NonNull FacebookException error) {
+                Toast.makeText(WelcomePageActivity.this, "Facebook login failed: " + error.getMessage(), Toast.LENGTH_SHORT).show();
+            }
+        });
 
         MaterialButton btnHaveAccount = findViewById(R.id.btnHaveAccount);
         btnHaveAccount.setOnClickListener(v ->
@@ -139,8 +180,61 @@ public class WelcomePageActivity extends AppCompatActivity {
         tvTerms.setHighlightColor(Color.TRANSPARENT);
     }
 
+    @Override
+    protected void onActivityResult(int requestCode, int resultCode, Intent data) {
+        // Required for Facebook SDK to handle its result
+        callbackManager.onActivityResult(requestCode, resultCode, data);
+        super.onActivityResult(requestCode, resultCode, data);
+    }
+
+    private void fetchFacebookProfile(AccessToken accessToken) {
+        GraphRequest request = GraphRequest.newMeRequest(accessToken, (object, response) -> {
+            try {
+                String firstName = object.optString("first_name", "");
+                String lastName  = object.optString("last_name", "");
+                String email     = object.optString("email", "");
+
+                // Check if this FB email is already registered in Firestore
+                FirebaseFirestore db = FirebaseFirestore.getInstance();
+                db.collection("users")
+                        .whereEqualTo("email", email)
+                        .get()
+                        .addOnSuccessListener(querySnapshot -> {
+                            if (!querySnapshot.isEmpty() && !email.isEmpty()) {
+                                // Email already exists — store flag and go to SignUpPage1
+                                // SignUpPage1 will display the error message to the user
+                                UserSession.firstName       = firstName;
+                                UserSession.lastName        = lastName;
+                                UserSession.email           = email;
+                                UserSession.isFromFacebook  = true;
+                                UserSession.facebookEmailAlreadyExists = true;
+                                startActivity(new Intent(WelcomePageActivity.this, SignUpPage1Activity.class));
+                            } else {
+                                // Email is free — pre-fill and proceed normally
+                                UserSession.firstName       = firstName;
+                                UserSession.lastName        = lastName;
+                                UserSession.email           = email;
+                                UserSession.isFromFacebook  = true;
+                                UserSession.facebookEmailAlreadyExists = false;
+                                startActivity(new Intent(WelcomePageActivity.this, SignUpPage1Activity.class));
+                            }
+                        })
+                        .addOnFailureListener(e -> {
+                            Toast.makeText(this, "Could not verify email. Try again.", Toast.LENGTH_SHORT).show();
+                        });
+
+            } catch (Exception e) {
+                Toast.makeText(this, "Failed to get Facebook profile.", Toast.LENGTH_SHORT).show();
+            }
+        });
+
+        Bundle parameters = new Bundle();
+        parameters.putString("fields", "first_name,last_name,email");
+        request.setParameters(parameters);
+        request.executeAsync();
+    }
+
     private void handleGoogleAccount(GoogleSignInAccount account) {
-        // Pre-fill UserSession with Google data
         String fullName = account.getDisplayName();
         if (fullName != null && fullName.contains(" ")) {
             String[] parts = fullName.split(" ", 2);
@@ -151,12 +245,11 @@ public class WelcomePageActivity extends AppCompatActivity {
             UserSession.lastName  = "";
         }
 
-        UserSession.email      = account.getEmail();
+        UserSession.email         = account.getEmail();
         UserSession.googlePhotoUrl = account.getPhotoUrl() != null
                 ? account.getPhotoUrl().toString() : null;
-        UserSession.isFromGoogle = true;
+        UserSession.isFromGoogle   = true;
 
-        // Go straight to SignUpPage1 with fields pre-filled
         startActivity(new Intent(WelcomePageActivity.this, SignUpPage1Activity.class));
     }
 
