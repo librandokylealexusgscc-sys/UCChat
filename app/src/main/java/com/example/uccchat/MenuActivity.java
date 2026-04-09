@@ -2,6 +2,7 @@ package com.example.uccchat;
 
 import android.content.Intent;
 import android.os.Bundle;
+import android.view.View;
 import android.widget.LinearLayout;
 import android.widget.TextView;
 import android.widget.Toast;
@@ -13,27 +14,23 @@ import com.google.firebase.auth.FirebaseUser;
 import com.google.firebase.firestore.FirebaseFirestore;
 
 public class MenuActivity extends AppCompatActivity {
+    private LinearLayout centerConfirmPopup;
+    private TextView popupOK, popupCancel;
 
-    // Bottom nav buttons
     private LinearLayout btnTabChats, btnTabSearch, btnTabMenu;
-
-    // Menu option buttons
     private LinearLayout btnPersonalDetails, btnPrivacyPolicy, btnTerms, btnDltAcc, btnLogout;
-
-    // Student details layout views
     private LinearLayout studentDeets;
     private TextView studentName, course_studentNum;
 
-    // Firebase
     private FirebaseAuth mAuth;
     private FirebaseFirestore db;
+    private boolean isNavigating = false;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.menu);
 
-        // Initialize Firebase
         mAuth = FirebaseAuth.getInstance();
         db = FirebaseFirestore.getInstance();
 
@@ -42,28 +39,34 @@ public class MenuActivity extends AppCompatActivity {
         setListeners();
     }
 
-    private void initViews() {
+    @Override
+    protected void onResume() {
+        super.onResume();
+        isNavigating = false;
+    }
 
-        // Bottom nav
+    private void initViews() {
         btnTabChats  = findViewById(R.id.btnTabChats);
         btnTabSearch = findViewById(R.id.btnTabSearch);
         btnTabMenu   = findViewById(R.id.btnTabMenu);
 
-        // Menu options
         btnPersonalDetails = findViewById(R.id.btnPersonalDetails);
         btnPrivacyPolicy   = findViewById(R.id.btnPrivacyPolicy);
         btnTerms           = findViewById(R.id.btnTerms);
         btnDltAcc          = findViewById(R.id.btnDltAcc);
         btnLogout          = findViewById(R.id.btnLogout);
 
-        // Student details
         studentDeets      = findViewById(R.id.studentDeets);
         studentName       = findViewById(R.id.studentName);
         course_studentNum = findViewById(R.id.course_studentNum);
+        centerConfirmPopup = findViewById(R.id.centerConfirmPopup);
+        popupOK = findViewById(R.id.popupOK);
+        popupCancel = findViewById(R.id.popupCancel);
+        centerConfirmPopup.setVisibility(View.GONE);
+
     }
 
     private void loadStudentDetails() {
-
         FirebaseUser currentUser = mAuth.getCurrentUser();
 
         if (currentUser == null) {
@@ -77,37 +80,29 @@ public class MenuActivity extends AppCompatActivity {
                 .document(uid)
                 .get()
                 .addOnSuccessListener(documentSnapshot -> {
-
                     if (documentSnapshot.exists()) {
-
                         String firstName = documentSnapshot.getString("firstName");
                         String lastName  = documentSnapshot.getString("lastName");
                         String course    = documentSnapshot.getString("course");
                         String studentId = documentSnapshot.getString("studentId");
 
                         String fullName = "";
-
                         if (firstName != null) fullName += firstName;
                         if (lastName != null) fullName += " " + lastName;
 
                         studentName.setText(
                                 fullName.trim().isEmpty() ? "—" : fullName.trim()
                         );
-
                         course_studentNum.setText(
                                 (course != null ? course : "—")
                                         + " | "
                                         + (studentId != null ? studentId : "—")
                         );
-
                     } else {
-
                         studentName.setText("Unknown Student");
                         course_studentNum.setText("—");
-
                     }
                 })
-
                 .addOnFailureListener(e ->
                         Toast.makeText(
                                 this,
@@ -118,21 +113,15 @@ public class MenuActivity extends AppCompatActivity {
     }
 
     private void setListeners() {
-
-        // Bottom navigation
-
         btnTabChats.setOnClickListener(v ->
-                navigateTo(ChatActivity.class, false));
+                navigateTo(ChatHomeActivity.class, false));
 
         btnTabSearch.setOnClickListener(v ->
                 navigateTo(SearchActivity.class, false));
 
         btnTabMenu.setOnClickListener(v -> {
-            // already in MenuActivity
+            // already here
         });
-
-
-        // Menu options
 
         btnPersonalDetails.setOnClickListener(v ->
                 navigateTo(PersonalDetailsActivity.class, false));
@@ -146,41 +135,40 @@ public class MenuActivity extends AppCompatActivity {
         btnDltAcc.setOnClickListener(v ->
                 navigateTo(DeleteAccountActivity.class, false));
 
-
-        // Logout
-
         btnLogout.setOnClickListener(v -> {
-
-            mAuth.signOut();
-
-            navigateTo(WelcomePageActivity.class, true);
-
+            centerConfirmPopup.setVisibility(View.VISIBLE);
         });
+
+        popupOK.setOnClickListener(v -> {
+            mAuth.signOut();
+            navigateTo(WelcomePageActivity.class, true);
+        });
+
+        popupCancel.setOnClickListener(v -> {
+            centerConfirmPopup.setVisibility(View.GONE);
+        });
+
+
     }
 
-
-    /**
-     * Navigation helper
-     */
     private void navigateTo(Class<?> destination, boolean clearStack) {
-
-        // Prevent reopening same activity
+        if (isNavigating) return;
         if (this.getClass().equals(destination)) return;
+        isNavigating = true;
 
         Intent intent = new Intent(this, destination);
 
         if (clearStack) {
-
             intent.setFlags(
                     Intent.FLAG_ACTIVITY_NEW_TASK
                             | Intent.FLAG_ACTIVITY_CLEAR_TASK
             );
-
+        } else {
+            intent.addFlags(Intent.FLAG_ACTIVITY_REORDER_TO_FRONT);
         }
 
         startActivity(intent);
 
-        if (!clearStack)
-            overridePendingTransition(0, 0);
+        if (!clearStack) overridePendingTransition(0, 0);
     }
 }
