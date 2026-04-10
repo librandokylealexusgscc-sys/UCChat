@@ -222,6 +222,23 @@ public class ChatActivity extends AppCompatActivity {
     }
 
     @Override
+    protected void onResume() {
+        super.onResume();
+        // Suppress notifications for this chat while the user is actively reading it
+        ChatNotificationService.activeChatId = chatId;
+        if (chatId != null) {
+            NotificationHelper.cancelNotification(this, chatId);
+        }
+    }
+
+    @Override
+    protected void onPause() {
+        super.onPause();
+        // Re-enable notifications when user leaves the chat screen
+        ChatNotificationService.activeChatId = null;
+    }
+
+    @Override
     protected void onDestroy() {
         super.onDestroy();
         if (messageListener  != null) messageListener.remove();

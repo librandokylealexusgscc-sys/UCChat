@@ -7,7 +7,8 @@
     <uses-permission android:name="android.permission.READ_MEDIA_IMAGES" />
     <uses-permission android:name="android.permission.READ_MEDIA_VIDEO" />
     <uses-permission android:name="android.permission.READ_MEDIA_AUDIO" />
-
+    <uses-permission android:name="android.permission.POST_NOTIFICATIONS" />
+    <uses-permission android:name="android.permission.RECEIVE_BOOT_COMPLETED" />
     <application
         android:name=".App"
         android:allowBackup="true"
@@ -18,6 +19,10 @@
         android:roundIcon="@mipmap/ic_launcher_round"
         android:supportsRtl="true"
         android:theme="@style/Theme.SearchMenu">
+        <service
+            android:name=".ChatNotificationService"
+            android:enabled="true"
+            android:exported="false" />
 
         <!-- Splash / entry point -->
         <activity
@@ -48,8 +53,7 @@
         <activity android:name=".SearchActivity" android:exported="false"  android:theme="@style/NoAnimationTheme"/>
         <activity android:name=".MenuActivity" android:exported="false"  android:theme="@style/NoAnimationTheme"/>
         <activity android:name=".NewChatActivity" android:exported="false"/>
-        <activity android:name=".PrivacyPolicyActivity" />
-        <activity android:name=".TermsOfUseActivity" />
+
 
 
         <meta-data
