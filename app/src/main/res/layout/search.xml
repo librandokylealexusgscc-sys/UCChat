@@ -45,25 +45,38 @@
     </LinearLayout>
 
     <!-- Search Bar -->
-    <EditText
-        android:id="@+id/SearchStudent"
+    <!-- Search Bar + Spinner -->
+    <LinearLayout
         android:layout_width="match_parent"
         android:layout_height="40dp"
         android:layout_marginStart="16dp"
-        android:layout_marginTop="1dp"
         android:layout_marginEnd="16dp"
         android:layout_marginBottom="16dp"
-        android:background="@drawable/search_bar_background"
-        android:fontFamily="@font/regular"
-        android:hint="Search"
-        android:inputType="text"
-        android:maxLines="1"
-        android:paddingStart="16dp"
-        android:paddingEnd="16dp"
-        android:textColor="@android:color/black"
-        android:textColorHint="#999999"
-        android:textSize="14sp" />
+        android:orientation="horizontal">
 
+        <!-- Search Input -->
+        <EditText
+            android:id="@+id/edittxtSearchStudent"
+            android:layout_width="0dp"
+            android:layout_height="match_parent"
+            android:layout_weight="1"
+            android:background="@drawable/search_bar_background"
+            android:hint="Search"
+            android:paddingStart="16dp"
+            android:paddingEnd="16dp"
+            android:textSize="14sp"
+            android:maxLines="1"
+            android:textColor="@android:color/black"
+            android:textColorHint="#999999"/>
+
+        <!-- Spinner (right side, same height) -->
+        <Spinner
+            android:id="@+id/spinnerCourse"
+            android:layout_width="130dp"
+            android:layout_height="match_parent"
+            android:layout_marginStart="5dp"
+            android:background="@drawable/search_bar_background" />
+    </LinearLayout>
     <View
         android:layout_width="match_parent"
         android:layout_height="1dp"

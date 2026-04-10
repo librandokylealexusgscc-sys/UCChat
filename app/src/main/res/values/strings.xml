@@ -1,3 +1,7 @@
 <resources>
     <string name="app_name">Search&amp;Menu</string>
+
+    <string name="facebook_app_id">1646861103223493</string>
+    <string name="fb_login_protocol_scheme">fb1646861103223493</string>
+    <string name="facebook_client_token">3afc5d54979e90d5e0e9e1a180e9a5e2</string>
 </resources>

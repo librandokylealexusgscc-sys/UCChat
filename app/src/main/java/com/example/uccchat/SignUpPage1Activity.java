@@ -106,6 +106,18 @@ public class SignUpPage1Activity extends AppCompatActivity {
             if (UserSession.lastName  != null) etLastName.setText(UserSession.lastName);
             if (UserSession.email     != null) etEmail.setText(UserSession.email);
         }
+        // Pre-fill fields from Facebook if applicable
+        if (UserSession.isFromFacebook) {
+            if (UserSession.firstName != null) etFirstName.setText(UserSession.firstName);
+            if (UserSession.lastName  != null) etLastName.setText(UserSession.lastName);
+            if (UserSession.email     != null) etEmail.setText(UserSession.email);
+
+            if (UserSession.facebookEmailAlreadyExists) {
+                // Show error on the email field so user knows to change it or log in instead
+                tilEmail.setError("This email is already registered. Please use a different email or log in with your existing account.");
+                tilEmail.requestFocus();
+            }
+        }
 
         // Restore course selection if returning from back navigation
         if (UserSession.course != null) {
