@@ -42,8 +42,8 @@
                     android:background="@drawable/circle_grey_bg"
                     android:layout_marginTop="0dp"
                     android:contentDescription="Profile photo"
-                    android:padding="18dp"
-                    android:scaleType="center"
+                    android:scaleType="centerCrop"
+                    android:padding="0dp"
                     app:tint="#AAAAAA" />
 
                 <!-- Name -->
@@ -369,9 +369,9 @@
                 android:background="@drawable/input_rounded_bg"
                 android:fontFamily="@font/medium"
                 android:hint="Search messages..."
-                app:hintTextColor="#BBBBBB"
                 android:paddingStart="12dp"
-                android:textColor="#000000" />
+                android:textColor="#000000"
+                app:hintTextColor="#BBBBBB" />
         </LinearLayout>
 
         <!-- EMPTY STATE -->

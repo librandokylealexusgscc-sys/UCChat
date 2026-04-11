@@ -65,6 +65,25 @@ public class MessageAdapter extends RecyclerView.Adapter<RecyclerView.ViewHolder
     public void setOnMessageLongClickListener(OnMessageLongClickListener l) {
         this.longClickListener = l;
     }
+    // Add this field at the top of the class
+    private String highlightedMessageId = null;
+
+    // Add this method
+    public void setHighlightedMessage(String messageId) {
+        this.highlightedMessageId = messageId;
+        notifyDataSetChanged();
+    }
+
+    // Add this method
+    public int getPositionByMessageId(String messageId) {
+        if (messageId == null || messages == null) return -1;
+        for (int i = 0; i < messages.size(); i++) {
+            if (messageId.equals(messages.get(i).getMessageId())) {
+                return i;
+            }
+        }
+        return -1;
+    }
 
     public void setOnImageClickListener(OnImageClickListener l) {
         this.imageClickListener = l;
@@ -131,9 +150,18 @@ public class MessageAdapter extends RecyclerView.Adapter<RecyclerView.ViewHolder
     }
 
     @Override
-    public void onBindViewHolder(@NonNull RecyclerView.ViewHolder holder,
-                                 int position) {
+    public void onBindViewHolder(@NonNull RecyclerView.ViewHolder holder, int position) {
         MessageModel msg = messages.get(position);
+
+        boolean isHighlighted = msg.getMessageId() != null
+                && msg.getMessageId().equals(highlightedMessageId);
+
+        holder.itemView.setBackgroundColor(
+                isHighlighted
+                        ? 0x5566BB6A   // semi-transparent light green
+                        : android.graphics.Color.TRANSPARENT
+        );
+
         if      (holder instanceof TextSentVH)
             ((TextSentVH) holder).bind(msg);
         else if (holder instanceof TextReceivedVH)

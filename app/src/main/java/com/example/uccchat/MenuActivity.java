@@ -6,6 +6,9 @@ import android.view.View;
 import android.widget.LinearLayout;
 import android.widget.TextView;
 import android.widget.Toast;
+import com.bumptech.glide.Glide;
+import com.bumptech.glide.load.resource.bitmap.CircleCrop;
+import android.widget.ImageView;
 
 import androidx.appcompat.app.AppCompatActivity;
 
@@ -23,6 +26,7 @@ public class MenuActivity extends AppCompatActivity {
     private TextView studentName, course_studentNum;
 
     private FirebaseAuth mAuth;
+    private ImageView ImgProfile;
     private FirebaseFirestore db;
     private boolean isNavigating = false;
 
@@ -43,12 +47,14 @@ public class MenuActivity extends AppCompatActivity {
     protected void onResume() {
         super.onResume();
         isNavigating = false;
+        loadStudentDetails();
     }
 
     private void initViews() {
         btnTabChats  = findViewById(R.id.btnTabChats);
         btnTabSearch = findViewById(R.id.btnTabSearch);
         btnTabMenu   = findViewById(R.id.btnTabMenu);
+        ImgProfile  = findViewById(R.id.ImgProfile);
 
         btnPersonalDetails = findViewById(R.id.btnPersonalDetails);
         btnPrivacyPolicy   = findViewById(R.id.btnPrivacyPolicy);
@@ -98,6 +104,13 @@ public class MenuActivity extends AppCompatActivity {
                                         + " | "
                                         + (studentId != null ? studentId : "—")
                         );
+                        String photoUrl = documentSnapshot.getString("photoUrl");
+                        if (photoUrl != null && !photoUrl.isEmpty()) {
+                            Glide.with(this)
+                                    .load(photoUrl + "?t=" + System.currentTimeMillis())
+                                    .circleCrop()
+                                    .into(ImgProfile);
+                        }
                     } else {
                         studentName.setText("Unknown Student");
                         course_studentNum.setText("—");

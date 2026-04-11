@@ -43,17 +43,15 @@
                 android:gravity="center"
                 android:orientation="vertical">
 
+
                 <ImageButton
                     android:id="@+id/btnProfilePicture"
-                    android:layout_width="80dp"
-                    android:layout_height="80dp"
+                    android:layout_width="114dp"
+                    android:layout_height="114dp"
                     android:background="@drawable/bg_circle_gray"
-                    android:contentDescription="Profile Picture"
-                    android:onClick="onProfilePictureClick"
-                    android:padding="16dp"
-                    android:scaleType="centerInside"
-                    android:src="@android:drawable/ic_menu_gallery"
-                    app:tint="#B1ABAB" />
+                    android:scaleType="centerCrop"
+                    android:contentDescription="Profile Picture" />
+                  />
             </LinearLayout>
 
             <!-- Section Label -->

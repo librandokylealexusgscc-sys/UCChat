@@ -49,10 +49,8 @@
                     android:id="@+id/ImgProfile"
                     android:layout_width="68dp"
                     android:layout_height="68dp"
-                    android:layout_marginStart="8dp"
-                    android:layout_marginLeft="50dp"
-                    android:background="@drawable/circle_grey_bg"
-                    android:contentDescription="Contact avatar" />
+                    android:scaleType="centerCrop"
+                    android:src="@drawable/bg_circle_gray"/>
 
                 <LinearLayout
                     android:layout_width="wrap_content"
