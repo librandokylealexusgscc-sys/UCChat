@@ -53,7 +53,12 @@
         <activity android:name=".ChatProfileActivity" android:exported="false"/>
         <activity android:name=".SearchActivity" android:exported="false"  android:theme="@style/NoAnimationTheme"/>
         <activity android:name=".MenuActivity" android:exported="false"  android:theme="@style/NoAnimationTheme"/>
-        <activity android:name=".NewChatActivity" android:exported="false"/>
+
+        <activity android:name=".ForwardActivity"/>
+
+
+
+
 
 
 

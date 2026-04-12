@@ -1,0 +1,117 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+    dialog_image_options.xml
+    Long press menu for IMAGE / FILE / VIDEO messages.
+    Options: Reply · Copy Link · Forward · Delete (own messages only)
+-->
+<LinearLayout
+    xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="220dp"
+    android:layout_height="wrap_content"
+    android:orientation="vertical"
+    android:background="@drawable/bg_rounded_white"
+    android:elevation="8dp"
+    android:padding="4dp">
+
+    <!-- Reply -->
+    <LinearLayout
+        android:id="@+id/optionReply"
+        android:layout_width="match_parent"
+        android:layout_height="48dp"
+        android:orientation="horizontal"
+        android:gravity="center_vertical"
+        android:paddingStart="16dp"
+        android:paddingEnd="16dp"
+        android:background="?attr/selectableItemBackground"
+        android:clickable="true"
+        android:focusable="true">
+
+        <TextView
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_weight="1"
+            android:text="↩ Reply"
+            android:textSize="15sp"
+            android:textColor="#1A1A1A" />
+    </LinearLayout>
+
+    <!-- Divider -->
+    <View android:layout_width="match_parent" android:layout_height="0.5dp"
+        android:background="#E0E0E0" android:layout_marginStart="16dp" android:layout_marginEnd="16dp"/>
+
+    <!-- Copy link -->
+    <LinearLayout
+        android:id="@+id/optionCopy"
+        android:layout_width="match_parent"
+        android:layout_height="48dp"
+        android:orientation="horizontal"
+        android:gravity="center_vertical"
+        android:paddingStart="16dp"
+        android:paddingEnd="16dp"
+        android:background="?attr/selectableItemBackground"
+        android:clickable="true"
+        android:focusable="true">
+
+        <TextView
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_weight="1"
+            android:text="🔗 Copy Link"
+            android:textSize="15sp"
+            android:textColor="#1A1A1A" />
+    </LinearLayout>
+
+    <!-- Divider -->
+    <View android:layout_width="match_parent" android:layout_height="0.5dp"
+        android:background="#E0E0E0" android:layout_marginStart="16dp" android:layout_marginEnd="16dp"/>
+
+    <!-- Forward -->
+    <LinearLayout
+        android:id="@+id/optionForward"
+        android:layout_width="match_parent"
+        android:layout_height="48dp"
+        android:orientation="horizontal"
+        android:gravity="center_vertical"
+        android:paddingStart="16dp"
+        android:paddingEnd="16dp"
+        android:background="?attr/selectableItemBackground"
+        android:clickable="true"
+        android:focusable="true">
+
+        <TextView
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_weight="1"
+            android:text="➡ Forward"
+            android:textSize="15sp"
+            android:textColor="#1A1A1A" />
+    </LinearLayout>
+
+    <!-- Divider -->
+    <View android:layout_width="match_parent" android:layout_height="0.5dp"
+        android:background="#E0E0E0" android:layout_marginStart="16dp" android:layout_marginEnd="16dp"/>
+
+    <!-- Delete (hidden by default — shown only for own messages) -->
+    <LinearLayout
+        android:id="@+id/optionDelete"
+        android:layout_width="match_parent"
+        android:layout_height="48dp"
+        android:orientation="horizontal"
+        android:gravity="center_vertical"
+        android:paddingStart="16dp"
+        android:paddingEnd="16dp"
+        android:background="?attr/selectableItemBackground"
+        android:clickable="true"
+        android:focusable="true"
+        android:visibility="visible">
+
+        <TextView
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_weight="1"
+            android:text="🗑 Delete"
+            android:textSize="15sp"
+            android:textColor="#E53935" />
+    </LinearLayout>
+
+</LinearLayout>

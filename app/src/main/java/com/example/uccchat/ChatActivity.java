@@ -1,13 +1,18 @@
 package com.example.uccchat;
 
+import android.Manifest;
 import android.content.ClipData;
 import android.content.ClipboardManager;
 import android.content.Context;
 import android.content.Intent;
+import android.content.pm.PackageManager;
 import android.net.Uri;
+import android.os.Build;
 import android.os.Bundle;
-import android.text.Editable;
-import android.text.TextWatcher;
+import android.os.Environment;
+import android.os.Handler;
+import android.os.Looper;
+import android.view.LayoutInflater;
 import android.view.View;
 import android.widget.EditText;
 import android.widget.FrameLayout;
@@ -17,11 +22,11 @@ import android.widget.ScrollView;
 import android.widget.TextView;
 import android.widget.Toast;
 
-import android.view.LayoutInflater;
-
 import androidx.activity.result.ActivityResultLauncher;
 import androidx.activity.result.contract.ActivityResultContracts;
 import androidx.appcompat.app.AppCompatActivity;
+import androidx.core.app.ActivityCompat;
+import androidx.core.content.ContextCompat;
 import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 
@@ -35,6 +40,11 @@ import com.google.firebase.firestore.DocumentSnapshot;
 import com.google.firebase.firestore.FirebaseFirestore;
 import com.google.firebase.firestore.ListenerRegistration;
 
+import java.io.File;
+import java.io.FileOutputStream;
+import java.io.InputStream;
+import java.net.HttpURLConnection;
+import java.net.URL;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
@@ -43,28 +53,22 @@ public class ChatActivity extends AppCompatActivity {
 
     // ── Presence ──────────────────────────────────────────────
     private View onlineDot;
-    private String highlightedMessageId = null;
-    private String highlightMessageId;
     private TextView tvProgramId;
     private ListenerRegistration presenceListener;
     private String otherUid;
-
-    // ── Image viewer views ────────────────────────────────────
-    private LinearLayout viewImageLayout;
-    private ImageView imgViewFull;
-    private ImageView imgViewBackBtn;
 
     // ── Intent extras ─────────────────────────────────────────
     private String chatId;
     private String chatName;
     private String chatPhoto;
     private boolean isGroup;
+    private String highlightMessageId;
 
     // ── Auth ──────────────────────────────────────────────────
     private String myUid;
 
-    // ── Request code for ChatProfileActivity ──────────────────
-    private static final int REQ_CHAT_PROFILE = 201;
+    private static final int REQ_CHAT_PROFILE  = 201;
+    private static final int REQ_WRITE_STORAGE = 202;
 
     // ── Views ─────────────────────────────────────────────────
     private ImageView imgProfile;
@@ -73,129 +77,55 @@ public class ChatActivity extends AppCompatActivity {
     private RecyclerView recyclerMessages;
     private EditText etTypingBox;
     private ImageView btnSendMessage, btnSendFile, btnBack;
-    private LinearLayout popupLongPress;
-    private LinearLayout btnReply, btnCopy, btnForward, btnDelete;
+
+    // ── Image viewer ──────────────────────────────────────────
+    private LinearLayout viewImageLayout;
+    private ImageView imgViewFull, imgViewBackBtn;
+    private String currentViewedImageUrl;
+
+    // ── Reply bar ─────────────────────────────────────────────
+    private LinearLayout replyBar;
+    private TextView tvReplyName, tvReplyPreview;
+    private ImageView btnCloseReply;
+    private MessageModel replyingTo = null;
+
+    // ── Long press state ──────────────────────────────────────
+    private MessageModel selectedMessage;
 
     // ── Adapter ───────────────────────────────────────────────
     private MessageAdapter messageAdapter;
-
-    // ── Firebase ──────────────────────────────────────────────
     private ListenerRegistration messageListener;
 
-    // ── Selected message for long press ───────────────────────
-    private MessageModel selectedMessage;
+    // ── Undo ──────────────────────────────────────────────────
+    private String lastSentMessageId = null;
 
-    // ── Image picker ──────────────────────────────────────────
+    // ── Image / file pickers ──────────────────────────────────
     private final ActivityResultLauncher<String> imagePicker =
-            registerForActivityResult(
-                    new ActivityResultContracts.GetContent(),
+            registerForActivityResult(new ActivityResultContracts.GetContent(),
                     uri -> { if (uri != null) uploadImageAndSend(uri); });
+
+    private final ActivityResultLauncher<String> videoPicker =
+            registerForActivityResult(new ActivityResultContracts.GetContent(),
+                    uri -> { if (uri != null) handleVideoPicked(uri); });
+
+    private final ActivityResultLauncher<String[]> filePicker =
+            registerForActivityResult(new ActivityResultContracts.OpenDocument(),
+                    uri -> { if (uri != null) handleFilePicked(uri); });
 
     // ════════════════════════════════════════════════════════
     //  LIFECYCLE
     // ════════════════════════════════════════════════════════
 
-    private final ActivityResultLauncher<String> videoPicker =
-            registerForActivityResult(
-                    new ActivityResultContracts.GetContent(),
-                    uri -> { if (uri != null) handleVideoPicked(uri); });
-
-
-    private void handleVideoPicked(Uri uri) {
-        String fileName      = getFileName(uri);
-        String videoDuration = getVideoDuration(uri);
-
-        Toast.makeText(this, "Uploading video...", Toast.LENGTH_SHORT).show();
-
-        MediaManager.get()
-                .upload(uri)
-                .option("resource_type", "video")
-                .option("upload_preset", "ucchat_profiles")
-                .option("public_id", "videos/" + chatId + "/" + System.currentTimeMillis())
-                .callback(new com.cloudinary.android.callback.UploadCallback() {
-                    @Override public void onStart(String r) {}
-                    @Override public void onReschedule(String r,
-                                                       com.cloudinary.android.callback.ErrorInfo e) {}
-
-                    @Override
-                    public void onProgress(String requestId, long bytes, long totalBytes) {
-                        int percent = (int) ((bytes * 100) / totalBytes);
-                        runOnUiThread(() ->
-                                Toast.makeText(ChatActivity.this,
-                                        "Uploading... " + percent + "%",
-                                        Toast.LENGTH_SHORT).show());
-                    }
-
-                    @Override
-                    public void onSuccess(String requestId, java.util.Map resultData) {
-                        String videoUrl     = (String) resultData.get("secure_url");
-                        String thumbnailUrl = videoUrl
-                                .replace("/upload/", "/upload/w_400,h_300,c_fill/")
-                                .replace(".mp4", ".jpg")
-                                .replace(".mov", ".jpg");
-
-                        getOtherParticipants(otherUids ->
-                                FirestoreHelper.get().sendVideoMessage(
-                                        chatId, myUid,
-                                        videoUrl, thumbnailUrl,
-                                        videoDuration, otherUids,
-                                        new FirestoreHelper.OnMessageSent() {
-                                            @Override public void onSent(String id) {
-                                                runOnUiThread(() ->
-                                                        Toast.makeText(ChatActivity.this,
-                                                                "Video sent! ✅",
-                                                                Toast.LENGTH_SHORT).show());
-                                            }
-                                            @Override public void onFailure(String e) {
-                                                runOnUiThread(() ->
-                                                        Toast.makeText(ChatActivity.this,
-                                                                "Failed to send video.",
-                                                                Toast.LENGTH_SHORT).show());
-                                            }
-                                        }));
-                    }
-
-                    @Override
-                    public void onError(String r, com.cloudinary.android.callback.ErrorInfo e) {
-                        runOnUiThread(() ->
-                                Toast.makeText(ChatActivity.this,
-                                        "Upload failed.", Toast.LENGTH_SHORT).show());
-                    }
-                })
-                .dispatch();
-    }
-
-    private String getVideoDuration(Uri uri) {
-        try {
-            android.media.MediaMetadataRetriever retriever =
-                    new android.media.MediaMetadataRetriever();
-            retriever.setDataSource(this, uri);
-            String durationMs = retriever.extractMetadata(
-                    android.media.MediaMetadataRetriever.METADATA_KEY_DURATION);
-            retriever.release();
-
-            if (durationMs != null) {
-                long totalSecs = Long.parseLong(durationMs) / 1000;
-                long mins      = totalSecs / 60;
-                long secs      = totalSecs % 60;
-                return String.format(java.util.Locale.getDefault(), "%d:%02d", mins, secs);
-            }
-        } catch (Exception e) {
-            e.printStackTrace();
-        }
-        return "";
-    }
-
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.mainchat);
-        highlightMessageId = getIntent().getStringExtra("highlightMessageId");
 
-        chatId    = getIntent().getStringExtra("chatId");
-        chatName  = getIntent().getStringExtra("chatName");
-        chatPhoto = getIntent().getStringExtra("chatPhoto");
-        isGroup   = getIntent().getBooleanExtra("isGroup", false);
+        chatId             = getIntent().getStringExtra("chatId");
+        chatName           = getIntent().getStringExtra("chatName");
+        chatPhoto          = getIntent().getStringExtra("chatPhoto");
+        isGroup            = getIntent().getBooleanExtra("isGroup", false);
+        highlightMessageId = getIntent().getStringExtra("highlightMessageId");
 
         myUid = FirebaseAuth.getInstance().getCurrentUser() != null
                 ? FirebaseAuth.getInstance().getCurrentUser().getUid() : null;
@@ -207,38 +137,29 @@ public class ChatActivity extends AppCompatActivity {
         }
 
         bindViews();
+        setupReplyBar();
         setupImageViewer();
         replaceScrollViewWithRecyclerView();
         setupHeader();
         setupInputBar();
-        setupLongPressPopup();
         startListeningToMessages();
         FirestoreHelper.get().markChatAsRead(chatId, myUid);
     }
 
-    // ── Handle result from ChatProfileActivity ────────────────
     @Override
     protected void onActivityResult(int requestCode, int resultCode, Intent data) {
         super.onActivityResult(requestCode, resultCode, data);
-        if (requestCode == REQ_CHAT_PROFILE
-                && resultCode == RESULT_OK
-                && data != null) {
+        if (requestCode == REQ_CHAT_PROFILE && resultCode == RESULT_OK && data != null) {
             String updatedName = data.getStringExtra("updatedChatName");
-            if (updatedName != null) {
-                chatName = updatedName;
-                tvName.setText(updatedName);
-            }
+            if (updatedName != null) { chatName = updatedName; tvName.setText(updatedName); }
         }
     }
-
 
     @Override
     protected void onResume() {
         super.onResume();
         ChatNotificationService.activeChatId = chatId;
-        if (chatId != null) {
-            NotificationHelper.cancelNotification(this, chatId);
-        }
+        if (chatId != null) NotificationHelper.cancelNotification(this, chatId);
     }
 
     @Override
@@ -255,6 +176,15 @@ public class ChatActivity extends AppCompatActivity {
         App.setOnlineStatus(false);
     }
 
+    @Override
+    public void onBackPressed() {
+        if (viewImageLayout != null && viewImageLayout.getVisibility() == View.VISIBLE) {
+            closeImageViewer();
+        } else {
+            super.onBackPressed();
+        }
+    }
+
     // ════════════════════════════════════════════════════════
     //  BIND VIEWS
     // ════════════════════════════════════════════════════════
@@ -268,17 +198,44 @@ public class ChatActivity extends AppCompatActivity {
         btnSendMessage          = findViewById(R.id.SendMessage);
         btnSendFile             = findViewById(R.id.SendFile);
         btnBack                 = findViewById(R.id.btnviewImageback);
-        popupLongPress          = findViewById(R.id.popup_afterlongpress);
-        btnReply                = findViewById(R.id.btnReply);
-        btnCopy                 = findViewById(R.id.btnCopy);
-        btnForward              = findViewById(R.id.btnForward);
-        btnDelete               = findViewById(R.id.btnDelete);
         onlineDot               = findViewById(R.id.onlineDot);
         tvProgramId             = findViewById(R.id.tvProgramId);
     }
 
     // ════════════════════════════════════════════════════════
-    //  REPLACE SCROLLVIEW WITH RECYCLERVIEW
+    //  REPLY BAR
+    // ════════════════════════════════════════════════════════
+
+    private void setupReplyBar() {
+        replyBar       = findViewById(R.id.replyBar);
+        tvReplyName    = findViewById(R.id.tvReplyName);
+        tvReplyPreview = findViewById(R.id.tvReplyPreview);
+        btnCloseReply  = findViewById(R.id.btnCloseReply);
+
+        if (btnCloseReply != null) {
+            btnCloseReply.setOnClickListener(v -> cancelReply());
+        }
+    }
+
+    private void startReply(MessageModel msg) {
+        replyingTo = msg;
+        if (replyBar != null) {
+            replyBar.setVisibility(View.VISIBLE);
+            if (tvReplyName != null)
+                tvReplyName.setText(msg.getSenderId().equals(myUid) ? "You" : chatName);
+            if (tvReplyPreview != null)
+                tvReplyPreview.setText(msg.getPreviewText());
+            etTypingBox.requestFocus();
+        }
+    }
+
+    private void cancelReply() {
+        replyingTo = null;
+        if (replyBar != null) replyBar.setVisibility(View.GONE);
+    }
+
+    // ════════════════════════════════════════════════════════
+    //  RECYCLERVIEW + ADAPTER
     // ════════════════════════════════════════════════════════
 
     private void replaceScrollViewWithRecyclerView() {
@@ -304,19 +261,186 @@ public class ChatActivity extends AppCompatActivity {
         messageAdapter = new MessageAdapter(this, chatPhoto);
         recyclerMessages.setAdapter(messageAdapter);
 
-        messageAdapter.setOnImageClickListener(imageUrl -> openImageViewer(imageUrl));
+        messageAdapter.setOnImageClickListener((message, imageUrl) ->
+                openImageViewer(message, imageUrl));
 
         messageAdapter.setOnMessageLongClickListener((message, anchor) -> {
             selectedMessage = message;
-            showLongPressPopup();
-
+            showTextOptionsDialog(message);
         });
 
+        // ── Updated: now receives isMine flag ──
+        messageAdapter.setOnImageLongClickListener((message, anchor, isMine) -> {
+            selectedMessage = message;
+            showMediaOptionsDialog(message, isMine);
+        });
     }
 
-    private String getOtherUidFromChat() {
-        return getIntent().getStringExtra("otherUid") != null
-                ? getIntent().getStringExtra("otherUid") : "";
+    // ════════════════════════════════════════════════════════
+    //  LONG PRESS: TEXT OPTIONS DIALOG
+    // ════════════════════════════════════════════════════════
+
+    private void showTextOptionsDialog(MessageModel msg) {
+        android.app.Dialog dialog = new android.app.Dialog(this);
+        dialog.requestWindowFeature(android.view.Window.FEATURE_NO_TITLE);
+        View v = LayoutInflater.from(this).inflate(R.layout.dialog_message_options, null);
+        dialog.setContentView(v);
+        if (dialog.getWindow() != null) {
+            dialog.getWindow().setBackgroundDrawable(
+                    new android.graphics.drawable.ColorDrawable(android.graphics.Color.TRANSPARENT));
+        }
+
+        // Reply
+        v.findViewById(R.id.optionReply).setOnClickListener(x -> {
+            dialog.dismiss();
+            startReply(msg);
+        });
+
+        // Copy (text messages only)
+        View optionCopy = v.findViewById(R.id.optionCopy);
+        if (msg.isTextMessage()) {
+            optionCopy.setVisibility(View.VISIBLE);
+            optionCopy.setOnClickListener(x -> {
+                dialog.dismiss();
+                ClipboardManager cb = (ClipboardManager) getSystemService(Context.CLIPBOARD_SERVICE);
+                cb.setPrimaryClip(ClipData.newPlainText("message", msg.getText()));
+                Toast.makeText(this, "Copied!", Toast.LENGTH_SHORT).show();
+            });
+        } else {
+            optionCopy.setVisibility(View.GONE);
+        }
+
+        // Forward
+        v.findViewById(R.id.optionForward).setOnClickListener(x -> {
+            dialog.dismiss();
+            openForwardScreen(msg);
+        });
+
+        // Delete (only my messages)
+        View optionDelete = v.findViewById(R.id.optionDelete);
+        if (msg.getSenderId().equals(myUid)) {
+            optionDelete.setVisibility(View.VISIBLE);
+            optionDelete.setOnClickListener(x -> {
+                dialog.dismiss();
+                confirmDelete(msg);
+            });
+        } else {
+            optionDelete.setVisibility(View.GONE);
+        }
+
+        // Undo Send
+        View optionUndo = v.findViewById(R.id.optionUndo);
+        if (optionUndo != null) {
+            boolean isUndoable = msg.getSenderId().equals(myUid)
+                    && msg.getMessageId() != null
+                    && msg.getMessageId().equals(lastSentMessageId);
+            optionUndo.setVisibility(isUndoable ? View.VISIBLE : View.GONE);
+            if (isUndoable) {
+                optionUndo.setOnClickListener(x -> {
+                    dialog.dismiss();
+                    FirestoreHelper.get().deleteMessagePermanently(
+                            chatId, lastSentMessageId,
+                            () -> runOnUiThread(() -> {
+                                lastSentMessageId = null;
+                                Toast.makeText(this, "Message unsent.", Toast.LENGTH_SHORT).show();
+                            }),
+                            err -> runOnUiThread(() ->
+                                    Toast.makeText(this, "Could not undo.", Toast.LENGTH_SHORT).show())
+                    );
+                });
+            }
+        }
+
+        dialog.show();
+    }
+
+    // ════════════════════════════════════════════════════════
+    //  LONG PRESS: MEDIA OPTIONS DIALOG
+    //  isMine = true  → show Delete option
+    //  isMine = false → hide Delete option
+    // ════════════════════════════════════════════════════════
+
+    private void showMediaOptionsDialog(MessageModel msg, boolean isMine) {
+        android.app.Dialog dialog = new android.app.Dialog(this);
+        dialog.requestWindowFeature(android.view.Window.FEATURE_NO_TITLE);
+        View v = LayoutInflater.from(this).inflate(R.layout.dialog_image_options, null);
+        dialog.setContentView(v);
+        if (dialog.getWindow() != null) {
+            dialog.getWindow().setBackgroundDrawable(
+                    new android.graphics.drawable.ColorDrawable(android.graphics.Color.TRANSPARENT));
+        }
+
+        // Reply
+        v.findViewById(R.id.optionReply).setOnClickListener(x -> {
+            dialog.dismiss();
+            startReply(msg);
+        });
+
+        // Copy link
+        v.findViewById(R.id.optionCopy).setOnClickListener(x -> {
+            dialog.dismiss();
+            String url = msg.isImageMessage() ? msg.getImageUrl() : msg.getFileUrl();
+            if (url != null) {
+                ClipboardManager cb = (ClipboardManager) getSystemService(Context.CLIPBOARD_SERVICE);
+                cb.setPrimaryClip(ClipData.newPlainText("link", url));
+                Toast.makeText(this, "Link copied!", Toast.LENGTH_SHORT).show();
+            }
+        });
+
+        // Forward
+        v.findViewById(R.id.optionForward).setOnClickListener(x -> {
+            dialog.dismiss();
+            openForwardScreen(msg);
+        });
+
+        // Delete — only shown for my own messages
+        View optionDelete = v.findViewById(R.id.optionDelete);
+        if (optionDelete != null) {
+            if (isMine) {
+                optionDelete.setVisibility(View.VISIBLE);
+                optionDelete.setOnClickListener(x -> {
+                    dialog.dismiss();
+                    confirmDelete(msg);
+                });
+            } else {
+                optionDelete.setVisibility(View.GONE);
+            }
+        }
+
+        dialog.show();
+    }
+
+    // ════════════════════════════════════════════════════════
+    //  DELETE CONFIRM
+    // ════════════════════════════════════════════════════════
+
+    private void confirmDelete(MessageModel msg) {
+        new IosDialog(this)
+                .setTitle("Delete Message")
+                .setMessage("Delete this message for you?")
+                .setOkText("Delete")
+                .setDestructive()
+                .onOk(() -> {
+                    FirestoreHelper.get().deleteMessageFor(chatId, msg.getMessageId(), myUid);
+                    Toast.makeText(this, "Message deleted.", Toast.LENGTH_SHORT).show();
+                })
+                .show();
+    }
+
+    // ════════════════════════════════════════════════════════
+    //  FORWARD
+    // ════════════════════════════════════════════════════════
+
+    private void openForwardScreen(MessageModel msg) {
+        Intent intent = new Intent(this, ForwardActivity.class);
+        intent.putExtra("msgType",     msg.getType());
+        intent.putExtra("msgText",     msg.getText());
+        intent.putExtra("msgImageUrl", msg.getImageUrl());
+        intent.putExtra("msgFileUrl",  msg.getFileUrl());
+        intent.putExtra("msgFileName", msg.getFileName());
+        intent.putExtra("msgFileSize", msg.getFileSize());
+        intent.putExtra("msgFileType", msg.getFileType());
+        startActivity(intent);
     }
 
     // ════════════════════════════════════════════════════════
@@ -327,8 +451,7 @@ public class ChatActivity extends AppCompatActivity {
         tvName.setText(chatName != null ? chatName : "Chat");
 
         if (chatPhoto != null && !chatPhoto.isEmpty()) {
-            Glide.with(this)
-                    .load(chatPhoto)
+            Glide.with(this).load(chatPhoto)
                     .transform(new CircleCrop())
                     .placeholder(R.drawable.circle_grey_bg)
                     .into(imgProfile);
@@ -351,32 +474,26 @@ public class ChatActivity extends AppCompatActivity {
             }
         }
 
-        // Tap profile → ChatProfileActivity (use startActivityForResult to get name updates back)
         imgProfile.setOnClickListener(v -> {
             Intent intent = new Intent(this, ChatProfileActivity.class);
             intent.putExtra("chatId",    chatId);
             intent.putExtra("chatName",  chatName);
             intent.putExtra("chatPhoto", chatPhoto);
             intent.putExtra("isGroup",   isGroup);
-            if (!isGroup && otherUid != null) {
-                intent.putExtra("otherUid", otherUid);
-            }
-            startActivityForResult(intent, REQ_CHAT_PROFILE); // ← fixed
+            if (!isGroup && otherUid != null) intent.putExtra("otherUid", otherUid);
+            startActivityForResult(intent, REQ_CHAT_PROFILE);
         });
     }
 
     private void loadOtherUserInfo(String uid) {
         FirestoreHelper.get().getUser(uid, new FirestoreHelper.OnUserFetched() {
-            @Override
-            public void onSuccess(UserModel user) {
+            @Override public void onSuccess(UserModel user) {
                 if (tvProgramId != null) {
                     String info = "";
-                    if (user.getCourse() != null && !user.getCourse().isEmpty()) {
+                    if (user.getCourse()    != null && !user.getCourse().isEmpty())
                         info += user.getCourse();
-                    }
-                    if (user.getStudentId() != null && !user.getStudentId().isEmpty()) {
+                    if (user.getStudentId() != null && !user.getStudentId().isEmpty())
                         info += (info.isEmpty() ? "" : " · ") + user.getStudentId();
-                    }
                     if (!info.isEmpty()) {
                         tvProgramId.setText(info);
                         tvProgramId.setVisibility(View.VISIBLE);
@@ -391,22 +508,17 @@ public class ChatActivity extends AppCompatActivity {
         presenceListener = PresenceHelper.listenToPresence(uid,
                 (isOnline, statusText) -> runOnUiThread(() -> {
                     tvStatus.setText(statusText);
-                    if (onlineDot != null) {
-                        onlineDot.setVisibility(isOnline ? View.VISIBLE : View.GONE);
-                    }
+                    if (onlineDot != null) onlineDot.setVisibility(isOnline ? View.VISIBLE : View.GONE);
                     tvStatus.setTextColor(isOnline ? 0xFF4CAF50 : 0xFF888888);
                 }));
     }
 
     private void loadGroupMemberCount() {
         FirebaseFirestore.getInstance()
-                .collection(FirestoreHelper.COL_CHATS)
-                .document(chatId)
-                .get()
+                .collection(FirestoreHelper.COL_CHATS).document(chatId).get()
                 .addOnSuccessListener(doc -> {
                     if (!doc.exists()) return;
-                    java.util.List<String> p =
-                            (java.util.List<String>) doc.get("participants");
+                    List<String> p = (List<String>) doc.get("participants");
                     if (p != null && tvProgramId != null) {
                         tvProgramId.setText(p.size() + " members");
                         tvProgramId.setVisibility(View.VISIBLE);
@@ -421,218 +533,6 @@ public class ChatActivity extends AppCompatActivity {
     private void setupInputBar() {
         btnSendMessage.setOnClickListener(v -> sendTextMessage());
         btnSendFile.setOnClickListener(v -> showAttachmentDialog());
-
-        etTypingBox.setOnFocusChangeListener((v, hasFocus) -> {
-            if (hasFocus) dismissLongPressPopup();
-        });
-    }
-
-    // ════════════════════════════════════════════════════════
-    //  LONG PRESS POPUP
-    // ════════════════════════════════════════════════════════
-
-    private void setupLongPressPopup() {
-        btnReply.setOnClickListener(v -> {
-            Toast.makeText(this, "Reply coming soon!", Toast.LENGTH_SHORT).show();
-            dismissLongPressPopup();
-        });
-
-        btnCopy.setOnClickListener(v -> {
-            if (selectedMessage != null && selectedMessage.isTextMessage()) {
-                ClipboardManager cb =
-                        (ClipboardManager) getSystemService(Context.CLIPBOARD_SERVICE);
-                cb.setPrimaryClip(ClipData.newPlainText("message", selectedMessage.getText()));
-                Toast.makeText(this, "Copied!", Toast.LENGTH_SHORT).show();
-            }
-            dismissLongPressPopup();
-        });
-
-        btnForward.setOnClickListener(v -> {
-            Toast.makeText(this, "Forward coming soon!", Toast.LENGTH_SHORT).show();
-            dismissLongPressPopup();
-        });
-
-        btnDelete.setOnClickListener(v -> {
-            if (selectedMessage != null) {
-                new IosDialog(this)
-                        .setTitle("Delete Message")
-                        .setMessage("Delete this message for you?")
-                        .setOkText("Delete")
-                        .setDestructive()
-                        .onOk(() -> {
-                            FirestoreHelper.get().deleteMessageFor(
-                                    chatId,
-                                    selectedMessage.getMessageId(),
-                                    myUid);
-                            Toast.makeText(this, "Message deleted.", Toast.LENGTH_SHORT).show();
-                        })
-                        .show();
-            }
-            dismissLongPressPopup();
-        });
-    }
-
-    private void showAttachmentDialog() {
-        android.app.Dialog dialog = new android.app.Dialog(this);
-        dialog.requestWindowFeature(android.view.Window.FEATURE_NO_TITLE);
-
-        View dialogView = LayoutInflater.from(this)
-                .inflate(R.layout.dialog_attachment, null);
-        dialog.setContentView(dialogView);
-
-        if (dialog.getWindow() != null) {
-            dialog.getWindow().setBackgroundDrawable(
-                    new android.graphics.drawable.ColorDrawable(
-                            android.graphics.Color.TRANSPARENT));
-        }
-
-        dialogView.findViewById(R.id.btnAttachImage).setOnClickListener(v -> {
-            dialog.dismiss();
-            imagePicker.launch("image/*");
-        });
-
-        dialogView.findViewById(R.id.btnAttachVideo).setOnClickListener(v -> {
-            dialog.dismiss();
-            videoPicker.launch("video/*");
-        });
-
-        dialogView.findViewById(R.id.btnAttachFile).setOnClickListener(v -> {
-            dialog.dismiss();
-            filePicker.launch(new String[]{
-                    "application/pdf",
-                    "application/msword",
-                    "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
-                    "application/vnd.ms-excel",
-                    "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
-                    "application/vnd.ms-powerpoint",
-                    "application/vnd.openxmlformats-officedocument.presentationml.presentation",
-                    "text/plain",
-                    "application/zip"
-            });
-        });
-
-        dialogView.findViewById(R.id.btnAttachCancel).setOnClickListener(v -> dialog.dismiss());
-
-        dialog.show();
-    }
-
-    private void handleFilePicked(Uri uri) {
-        String fileName = getFileName(uri);
-        String fileSize = getFileSize(uri);
-        String fileType = getFileExtension(fileName);
-
-        Toast.makeText(this, "Uploading " + fileName + "...", Toast.LENGTH_SHORT).show();
-
-        MediaManager.get()
-                .upload(uri)
-                .option("resource_type", "raw")
-                .option("upload_preset", "ucchat_profiles")
-                .option("public_id", "files/" + chatId + "/"
-                        + System.currentTimeMillis() + "_" + fileName)
-                .callback(new com.cloudinary.android.callback.UploadCallback() {
-                    @Override public void onStart(String r) {}
-                    @Override public void onProgress(String r, long b, long t) {}
-                    @Override public void onReschedule(String r,
-                                                       com.cloudinary.android.callback.ErrorInfo e) {}
-
-                    @Override
-                    public void onSuccess(String requestId, java.util.Map resultData) {
-                        String fileUrl = (String) resultData.get("secure_url");
-                        getOtherParticipants(otherUids ->
-                                FirestoreHelper.get().sendFileMessage(
-                                        chatId, myUid, fileUrl,
-                                        fileName, fileSize, fileType,
-                                        otherUids,
-                                        new FirestoreHelper.OnMessageSent() {
-                                            @Override public void onSent(String id) {
-                                                runOnUiThread(() ->
-                                                        Toast.makeText(ChatActivity.this,
-                                                                "File sent! ✅",
-                                                                Toast.LENGTH_SHORT).show());
-                                            }
-                                            @Override public void onFailure(String e) {
-                                                runOnUiThread(() ->
-                                                        Toast.makeText(ChatActivity.this,
-                                                                "Failed to send file.",
-                                                                Toast.LENGTH_SHORT).show());
-                                            }
-                                        }));
-                    }
-
-                    @Override
-                    public void onError(String r, com.cloudinary.android.callback.ErrorInfo e) {
-                        runOnUiThread(() ->
-                                Toast.makeText(ChatActivity.this,
-                                        "Upload failed: " + e.getDescription(),
-                                        Toast.LENGTH_SHORT).show());
-                    }
-                })
-                .dispatch();
-    }
-
-    // ── File helpers ──────────────────────────────────────────
-
-    private String getFileName(Uri uri) {
-        String result = null;
-        if (uri.getScheme().equals("content")) {
-            try (android.database.Cursor cursor = getContentResolver()
-                    .query(uri, null, null, null, null)) {
-                if (cursor != null && cursor.moveToFirst()) {
-                    int idx = cursor.getColumnIndex(
-                            android.provider.OpenableColumns.DISPLAY_NAME);
-                    if (idx >= 0) result = cursor.getString(idx);
-                }
-            } catch (Exception e) {
-                e.printStackTrace();
-            }
-        }
-        if (result == null) {
-            result = uri.getPath();
-            int cut = result != null ? result.lastIndexOf('/') : -1;
-            if (cut != -1) result = result.substring(cut + 1);
-        }
-        return result != null ? result : "file";
-    }
-
-    private String getFileSize(Uri uri) {
-        try (android.database.Cursor cursor = getContentResolver()
-                .query(uri, null, null, null, null)) {
-            if (cursor != null && cursor.moveToFirst()) {
-                int sizeIdx = cursor.getColumnIndex(
-                        android.provider.OpenableColumns.SIZE);
-                if (sizeIdx >= 0) {
-                    long bytes = cursor.getLong(sizeIdx);
-                    if (bytes < 1024)
-                        return bytes + " B";
-                    else if (bytes < 1024 * 1024)
-                        return String.format(java.util.Locale.getDefault(),
-                                "%.1f KB", bytes / 1024.0);
-                    else
-                        return String.format(java.util.Locale.getDefault(),
-                                "%.1f MB", bytes / (1024.0 * 1024));
-                }
-            }
-        } catch (Exception e) {
-            e.printStackTrace();
-        }
-        return "";
-    }
-
-    private String getFileExtension(String fileName) {
-        if (fileName == null) return "";
-        int dot = fileName.lastIndexOf('.');
-        return dot >= 0 ? fileName.substring(dot + 1).toLowerCase() : "";
-    }
-
-    private void showLongPressPopup() {
-        if (popupLongPress != null)
-            popupLongPress.setVisibility(View.VISIBLE);
-    }
-
-    private void dismissLongPressPopup() {
-        if (popupLongPress != null)
-            popupLongPress.setVisibility(View.GONE);
-        selectedMessage = null;
     }
 
     // ════════════════════════════════════════════════════════
@@ -648,9 +548,7 @@ public class ChatActivity extends AppCompatActivity {
                     List<MessageModel> msgs = new ArrayList<>();
                     for (DocumentSnapshot doc : snapshots.getDocuments()) {
                         MessageModel msg = doc.toObject(MessageModel.class);
-                        if (msg != null && !msg.isDeletedFor(myUid)) {
-                            msgs.add(msg);
-                        }
+                        if (msg != null) msgs.add(msg);
                     }
 
                     messageAdapter.setMessages(msgs);
@@ -662,19 +560,13 @@ public class ChatActivity extends AppCompatActivity {
                         emptyConversationLayout.setVisibility(View.GONE);
                         recyclerMessages.setVisibility(View.VISIBLE);
 
-                        // ✅ Highlight specific message if requested
                         if (highlightMessageId != null) {
-
-                            int position = messageAdapter
-                                    .getPositionByMessageId(highlightMessageId);
-
+                            int position = messageAdapter.getPositionByMessageId(highlightMessageId);
                             if (position != -1) {
                                 recyclerMessages.scrollToPosition(position);
                                 messageAdapter.setHighlightedMessage(highlightMessageId);
-
-                                highlightMessageId = null; // prevent repeat scrolling
+                                highlightMessageId = null;
                             }
-
                         } else {
                             recyclerMessages.scrollToPosition(msgs.size() - 1);
                         }
@@ -682,9 +574,7 @@ public class ChatActivity extends AppCompatActivity {
 
                     FirestoreHelper.get().markChatAsRead(chatId, myUid);
                 });
-
     }
-
 
     // ════════════════════════════════════════════════════════
     //  SEND TEXT
@@ -695,14 +585,23 @@ public class ChatActivity extends AppCompatActivity {
         if (text.isEmpty()) return;
         etTypingBox.setText("");
 
+        final MessageModel replySnapshot = replyingTo;
+        cancelReply();
+
+        String replySenderLabel = (replySnapshot != null && replySnapshot.getSenderId().equals(myUid))
+                ? "You" : chatName;
+
         getOtherParticipants(otherUids ->
                 FirestoreHelper.get().sendTextMessage(
-                        chatId, myUid, text, otherUids,
+                        chatId, myUid, text, replySenderLabel, myUid, replySnapshot, otherUids,
                         new FirestoreHelper.OnMessageSent() {
-                            @Override public void onSent(String id) {}
+                            @Override public void onSent(String messageId) {
+                                runOnUiThread(() -> lastSentMessageId = messageId);
+                            }
                             @Override public void onFailure(String e) {
-                                Toast.makeText(ChatActivity.this,
-                                        "Failed to send.", Toast.LENGTH_SHORT).show();
+                                runOnUiThread(() ->
+                                        Toast.makeText(ChatActivity.this,
+                                                "Failed to send.", Toast.LENGTH_SHORT).show());
                             }
                         }));
     }
@@ -713,6 +612,8 @@ public class ChatActivity extends AppCompatActivity {
 
     private void uploadImageAndSend(Uri imageUri) {
         Toast.makeText(this, "Uploading image...", Toast.LENGTH_SHORT).show();
+        final MessageModel replySnapshot = replyingTo;
+        cancelReply();
 
         MediaManager.get()
                 .upload(imageUri)
@@ -727,13 +628,16 @@ public class ChatActivity extends AppCompatActivity {
                         String url = (String) resultData.get("secure_url");
                         getOtherParticipants(otherUids ->
                                 FirestoreHelper.get().sendImageMessage(
-                                        chatId, myUid, url, otherUids,
+                                        chatId, myUid, url, otherUids, replySnapshot, chatName, myUid,
                                         new FirestoreHelper.OnMessageSent() {
-                                            @Override public void onSent(String id) {}
+                                            @Override public void onSent(String id) {
+                                                runOnUiThread(() -> lastSentMessageId = id);
+                                            }
                                             @Override public void onFailure(String e) {
-                                                Toast.makeText(ChatActivity.this,
-                                                        "Failed to send image.",
-                                                        Toast.LENGTH_SHORT).show();
+                                                runOnUiThread(() ->
+                                                        Toast.makeText(ChatActivity.this,
+                                                                "Failed to send image.",
+                                                                Toast.LENGTH_SHORT).show());
                                             }
                                         }));
                     }
@@ -746,6 +650,144 @@ public class ChatActivity extends AppCompatActivity {
                     }
                 })
                 .dispatch();
+    }
+
+    // ════════════════════════════════════════════════════════
+    //  SEND VIDEO
+    // ════════════════════════════════════════════════════════
+
+    private void handleVideoPicked(Uri uri) {
+        String videoDuration = getVideoDuration(uri);
+        Toast.makeText(this, "Uploading video...", Toast.LENGTH_SHORT).show();
+
+        MediaManager.get()
+                .upload(uri)
+                .option("resource_type", "video")
+                .option("upload_preset", "ucchat_profiles")
+                .option("public_id", "videos/" + chatId + "/" + System.currentTimeMillis())
+                .callback(new UploadCallback() {
+                    @Override public void onStart(String r) {}
+                    @Override public void onReschedule(String r, ErrorInfo e) {}
+                    @Override public void onProgress(String requestId, long bytes, long totalBytes) {
+                        int percent = (int) ((bytes * 100) / totalBytes);
+                        runOnUiThread(() ->
+                                Toast.makeText(ChatActivity.this,
+                                        "Uploading... " + percent + "%",
+                                        Toast.LENGTH_SHORT).show());
+                    }
+                    @Override
+                    public void onSuccess(String requestId, Map resultData) {
+                        String videoUrl     = (String) resultData.get("secure_url");
+                        String thumbnailUrl = videoUrl
+                                .replace("/upload/", "/upload/w_400,h_300,c_fill/")
+                                .replace(".mp4", ".jpg").replace(".mov", ".jpg");
+
+                        getOtherParticipants(otherUids ->
+                                FirestoreHelper.get().sendVideoMessage(
+                                        chatId, myUid, videoUrl, thumbnailUrl, videoDuration, otherUids,
+                                        new FirestoreHelper.OnMessageSent() {
+                                            @Override public void onSent(String id) {
+                                                runOnUiThread(() ->
+                                                        Toast.makeText(ChatActivity.this,
+                                                                "Video sent! ✅", Toast.LENGTH_SHORT).show());
+                                            }
+                                            @Override public void onFailure(String e) {
+                                                runOnUiThread(() ->
+                                                        Toast.makeText(ChatActivity.this,
+                                                                "Failed to send video.",
+                                                                Toast.LENGTH_SHORT).show());
+                                            }
+                                        }));
+                    }
+                    @Override public void onError(String r, ErrorInfo e) {
+                        runOnUiThread(() ->
+                                Toast.makeText(ChatActivity.this,
+                                        "Upload failed.", Toast.LENGTH_SHORT).show());
+                    }
+                })
+                .dispatch();
+    }
+
+    // ════════════════════════════════════════════════════════
+    //  SEND FILE
+    // ════════════════════════════════════════════════════════
+
+    private void handleFilePicked(Uri uri) {
+        String fileName = getFileName(uri);
+        String fileSize = getFileSize(uri);
+        String fileType = getFileExtension(fileName);
+        Toast.makeText(this, "Uploading " + fileName + "...", Toast.LENGTH_SHORT).show();
+
+        MediaManager.get()
+                .upload(uri)
+                .option("resource_type", "raw")
+                .option("upload_preset", "ucchat_profiles")
+                .option("public_id", "files/" + chatId + "/" + System.currentTimeMillis() + "_" + fileName)
+                .callback(new UploadCallback() {
+                    @Override public void onStart(String r) {}
+                    @Override public void onProgress(String r, long b, long t) {}
+                    @Override public void onReschedule(String r, ErrorInfo e) {}
+                    @Override
+                    public void onSuccess(String requestId, Map resultData) {
+                        String fileUrl = (String) resultData.get("secure_url");
+                        getOtherParticipants(otherUids ->
+                                FirestoreHelper.get().sendFileMessage(
+                                        chatId, myUid, fileUrl, fileName, fileSize, fileType, otherUids,
+                                        new FirestoreHelper.OnMessageSent() {
+                                            @Override public void onSent(String id) {
+                                                runOnUiThread(() ->
+                                                        Toast.makeText(ChatActivity.this,
+                                                                "File sent! ✅", Toast.LENGTH_SHORT).show());
+                                            }
+                                            @Override public void onFailure(String e) {
+                                                runOnUiThread(() ->
+                                                        Toast.makeText(ChatActivity.this,
+                                                                "Failed to send file.",
+                                                                Toast.LENGTH_SHORT).show());
+                                            }
+                                        }));
+                    }
+                    @Override public void onError(String r, ErrorInfo e) {
+                        runOnUiThread(() ->
+                                Toast.makeText(ChatActivity.this,
+                                        "Upload failed: " + e.getDescription(),
+                                        Toast.LENGTH_SHORT).show());
+                    }
+                })
+                .dispatch();
+    }
+
+    // ════════════════════════════════════════════════════════
+    //  ATTACHMENT DIALOG
+    // ════════════════════════════════════════════════════════
+
+    private void showAttachmentDialog() {
+        android.app.Dialog dialog = new android.app.Dialog(this);
+        dialog.requestWindowFeature(android.view.Window.FEATURE_NO_TITLE);
+        View dialogView = LayoutInflater.from(this).inflate(R.layout.dialog_attachment, null);
+        dialog.setContentView(dialogView);
+        if (dialog.getWindow() != null) {
+            dialog.getWindow().setBackgroundDrawable(
+                    new android.graphics.drawable.ColorDrawable(android.graphics.Color.TRANSPARENT));
+        }
+        dialogView.findViewById(R.id.btnAttachImage).setOnClickListener(v -> {
+            dialog.dismiss(); imagePicker.launch("image/*"); });
+        dialogView.findViewById(R.id.btnAttachVideo).setOnClickListener(v -> {
+            dialog.dismiss(); videoPicker.launch("video/*"); });
+        dialogView.findViewById(R.id.btnAttachFile).setOnClickListener(v -> {
+            dialog.dismiss();
+            filePicker.launch(new String[]{
+                    "application/pdf", "application/msword",
+                    "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
+                    "application/vnd.ms-excel",
+                    "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+                    "application/vnd.ms-powerpoint",
+                    "application/vnd.openxmlformats-officedocument.presentationml.presentation",
+                    "text/plain", "application/zip"
+            });
+        });
+        dialogView.findViewById(R.id.btnAttachCancel).setOnClickListener(v -> dialog.dismiss());
+        dialog.show();
     }
 
     // ════════════════════════════════════════════════════════
@@ -763,48 +805,129 @@ public class ChatActivity extends AppCompatActivity {
 
         View btnSave = findViewById(R.id.btnSaveDoc);
         if (btnSave != null) {
-            btnSave.setOnClickListener(v ->
-                    Toast.makeText(this, "Save coming soon!", Toast.LENGTH_SHORT).show());
+            btnSave.setOnClickListener(v -> saveImageToGallery(currentViewedImageUrl));
         }
 
         View btnForwardImg = findViewById(R.id.btnForwardViewImage);
         if (btnForwardImg != null) {
-            btnForwardImg.setOnClickListener(v ->
-                    Toast.makeText(this, "Forward coming soon!", Toast.LENGTH_SHORT).show());
+            btnForwardImg.setOnClickListener(v -> {
+                if (selectedMessage != null) {
+                    openForwardScreen(selectedMessage);
+                } else if (currentViewedImageUrl != null) {
+                    MessageModel temp = new MessageModel();
+                    temp.setType(MessageModel.TYPE_IMAGE);
+                    temp.setImageUrl(currentViewedImageUrl);
+                    openForwardScreen(temp);
+                }
+            });
         }
     }
 
-    @Override
-    public void onBackPressed() {
-        if (viewImageLayout != null
-                && viewImageLayout.getVisibility() == View.VISIBLE) {
-            closeImageViewer();
-        } else {
-            super.onBackPressed();
-        }
-    }
-
-    public void openImageViewer(String imageUrl) {
+    public void openImageViewer(MessageModel msg, String imageUrl) {
         if (viewImageLayout == null || imgViewFull == null) return;
+        currentViewedImageUrl = imageUrl;
+        selectedMessage       = msg;
 
-        Glide.with(this)
-                .load(imageUrl)
-                .placeholder(R.drawable.circle_grey_bg)
-                .into(imgViewFull);
-
+        Glide.with(this).load(imageUrl)
+                .placeholder(R.drawable.circle_grey_bg).into(imgViewFull);
         viewImageLayout.setVisibility(View.VISIBLE);
     }
 
     private void closeImageViewer() {
-        if (viewImageLayout != null) {
-            viewImageLayout.setVisibility(View.GONE);
-        }
+        if (viewImageLayout != null) viewImageLayout.setVisibility(View.GONE);
+        currentViewedImageUrl = null;
     }
 
-    private final ActivityResultLauncher<String[]> filePicker =
-            registerForActivityResult(
-                    new ActivityResultContracts.OpenDocument(),
-                    uri -> { if (uri != null) handleFilePicked(uri); });
+    // ════════════════════════════════════════════════════════
+    //  SAVE IMAGE TO GALLERY
+    // ════════════════════════════════════════════════════════
+
+    private void saveImageToGallery(String imageUrl) {
+        if (imageUrl == null || imageUrl.isEmpty()) {
+            Toast.makeText(this, "No image to save.", Toast.LENGTH_SHORT).show();
+            return;
+        }
+
+        if (Build.VERSION.SDK_INT < Build.VERSION_CODES.Q) {
+            if (ContextCompat.checkSelfPermission(this, Manifest.permission.WRITE_EXTERNAL_STORAGE)
+                    != PackageManager.PERMISSION_GRANTED) {
+                ActivityCompat.requestPermissions(this,
+                        new String[]{Manifest.permission.WRITE_EXTERNAL_STORAGE},
+                        REQ_WRITE_STORAGE);
+                return;
+            }
+        }
+
+        Toast.makeText(this, "Saving image...", Toast.LENGTH_SHORT).show();
+
+        new Thread(() -> {
+            try {
+                URL url = new URL(imageUrl);
+                HttpURLConnection conn = (HttpURLConnection) url.openConnection();
+                conn.connect();
+                InputStream input = conn.getInputStream();
+                String fileName = "UccChat_" + System.currentTimeMillis() + ".jpg";
+
+                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
+                    android.content.ContentValues values = new android.content.ContentValues();
+                    values.put(android.provider.MediaStore.Images.Media.DISPLAY_NAME, fileName);
+                    values.put(android.provider.MediaStore.Images.Media.MIME_TYPE, "image/jpeg");
+                    values.put(android.provider.MediaStore.Images.Media.RELATIVE_PATH,
+                            Environment.DIRECTORY_PICTURES + "/UccChat");
+                    Uri uri = getContentResolver().insert(
+                            android.provider.MediaStore.Images.Media.EXTERNAL_CONTENT_URI, values);
+                    if (uri != null) {
+                        try (java.io.OutputStream os = getContentResolver().openOutputStream(uri)) {
+                            byte[] buffer = new byte[4096];
+                            int bytesRead;
+                            while ((bytesRead = input.read(buffer)) != -1) {
+                                if (os != null) os.write(buffer, 0, bytesRead);
+                            }
+                        }
+                    }
+                } else {
+                    File dir = new File(Environment.getExternalStoragePublicDirectory(
+                            Environment.DIRECTORY_PICTURES), "UccChat");
+                    if (!dir.exists()) dir.mkdirs();
+                    File file = new File(dir, fileName);
+                    try (FileOutputStream fos = new FileOutputStream(file)) {
+                        byte[] buffer = new byte[4096];
+                        int bytesRead;
+                        while ((bytesRead = input.read(buffer)) != -1) {
+                            fos.write(buffer, 0, bytesRead);
+                        }
+                    }
+                    sendBroadcast(new Intent(Intent.ACTION_MEDIA_SCANNER_SCAN_FILE,
+                            Uri.fromFile(new File(
+                                    Environment.getExternalStoragePublicDirectory(
+                                            Environment.DIRECTORY_PICTURES),
+                                    "UccChat/" + fileName))));
+                }
+
+                input.close();
+                runOnUiThread(() ->
+                        Toast.makeText(this, "Image saved to gallery! 📷",
+                                Toast.LENGTH_SHORT).show());
+
+            } catch (Exception e) {
+                runOnUiThread(() ->
+                        Toast.makeText(this, "Failed to save image.",
+                                Toast.LENGTH_SHORT).show());
+            }
+        }).start();
+    }
+
+    @Override
+    public void onRequestPermissionsResult(int requestCode,
+                                           String[] permissions,
+                                           int[] grantResults) {
+        super.onRequestPermissionsResult(requestCode, permissions, grantResults);
+        if (requestCode == REQ_WRITE_STORAGE
+                && grantResults.length > 0
+                && grantResults[0] == PackageManager.PERMISSION_GRANTED) {
+            saveImageToGallery(currentViewedImageUrl);
+        }
+    }
 
     // ════════════════════════════════════════════════════════
     //  HELPERS
@@ -812,13 +935,10 @@ public class ChatActivity extends AppCompatActivity {
 
     private void getOtherParticipants(OnParticipantsFetched callback) {
         FirebaseFirestore.getInstance()
-                .collection(FirestoreHelper.COL_CHATS)
-                .document(chatId)
-                .get()
+                .collection(FirestoreHelper.COL_CHATS).document(chatId).get()
                 .addOnSuccessListener(doc -> {
                     if (!doc.exists()) return;
-                    List<String> participants =
-                            (List<String>) doc.get("participants");
+                    List<String> participants = (List<String>) doc.get("participants");
                     List<String> others = new ArrayList<>();
                     if (participants != null) {
                         for (String uid : participants) {
@@ -831,5 +951,67 @@ public class ChatActivity extends AppCompatActivity {
 
     interface OnParticipantsFetched {
         void onFetched(List<String> otherUids);
+    }
+
+    private String getFileName(Uri uri) {
+        String result = null;
+        if ("content".equals(uri.getScheme())) {
+            try (android.database.Cursor cursor =
+                         getContentResolver().query(uri, null, null, null, null)) {
+                if (cursor != null && cursor.moveToFirst()) {
+                    int idx = cursor.getColumnIndex(android.provider.OpenableColumns.DISPLAY_NAME);
+                    if (idx >= 0) result = cursor.getString(idx);
+                }
+            } catch (Exception e) { e.printStackTrace(); }
+        }
+        if (result == null) {
+            result = uri.getPath();
+            int cut = result != null ? result.lastIndexOf('/') : -1;
+            if (cut != -1) result = result.substring(cut + 1);
+        }
+        return result != null ? result : "file";
+    }
+
+    private String getFileSize(Uri uri) {
+        try (android.database.Cursor cursor =
+                     getContentResolver().query(uri, null, null, null, null)) {
+            if (cursor != null && cursor.moveToFirst()) {
+                int idx = cursor.getColumnIndex(android.provider.OpenableColumns.SIZE);
+                if (idx >= 0) {
+                    long bytes = cursor.getLong(idx);
+                    if (bytes < 1024)
+                        return bytes + " B";
+                    else if (bytes < 1024 * 1024)
+                        return String.format(java.util.Locale.getDefault(), "%.1f KB", bytes / 1024.0);
+                    else
+                        return String.format(java.util.Locale.getDefault(), "%.1f MB", bytes / (1024.0 * 1024));
+                }
+            }
+        } catch (Exception e) { e.printStackTrace(); }
+        return "";
+    }
+
+    private String getFileExtension(String fileName) {
+        if (fileName == null) return "";
+        int dot = fileName.lastIndexOf('.');
+        return dot >= 0 ? fileName.substring(dot + 1).toLowerCase() : "";
+    }
+
+    private String getVideoDuration(Uri uri) {
+        try {
+            android.media.MediaMetadataRetriever retriever =
+                    new android.media.MediaMetadataRetriever();
+            retriever.setDataSource(this, uri);
+            String durationMs = retriever.extractMetadata(
+                    android.media.MediaMetadataRetriever.METADATA_KEY_DURATION);
+            retriever.release();
+            if (durationMs != null) {
+                long totalSecs = Long.parseLong(durationMs) / 1000;
+                long mins = totalSecs / 60;
+                long secs = totalSecs % 60;
+                return String.format(java.util.Locale.getDefault(), "%d:%02d", mins, secs);
+            }
+        } catch (Exception e) { e.printStackTrace(); }
+        return "";
     }
 }

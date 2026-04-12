@@ -1,9 +1,21 @@
 <?xml version="1.0" encoding="utf-8"?>
-<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+<!--
+    viewimage.xml
+    Full-screen image viewer.
+    IDs used by ChatActivity:
+      imgViewBackBtn      → close / back
+      btnSaveDoc          → save image to gallery
+      btnForwardViewImage → forward the image  ← RENAMED from btnForward
+                                                  to avoid ID clash with
+                                                  the long-press popup's btnForward
+      imgViewFull         → the big ImageView
+-->
+<LinearLayout
+    xmlns:android="http://schemas.android.com/apk/res/android"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
     android:orientation="vertical"
->
+    android:background="#000000">
 
     <!-- Top Bar -->
     <LinearLayout
@@ -16,20 +28,20 @@
         android:paddingTop="48dp"
         android:paddingBottom="12dp">
 
-        <!-- Back Button -->
-        <!-- Avatar -->
+        <!-- Back / Close button -->
         <ImageView
-            android:id="@+id/backBtn"
+            android:id="@+id/imgViewBackBtn"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:layout_gravity="left"
             android:layout_marginLeft="15dp"
             android:paddingTop="7dp"
             android:paddingRight="15dp"
             android:scaleType="centerCrop"
-
-
-            android:src="@drawable/back" />
+            android:src="@drawable/back"
+            android:contentDescription="Back"
+            android:clickable="true"
+            android:focusable="true"
+            android:background="?attr/selectableItemBackgroundBorderless" />
 
         <!-- Spacer -->
         <View
@@ -44,27 +56,29 @@
             android:layout_height="28dp"
             android:src="@drawable/savedoc"
             android:scaleType="fitCenter"
-            android:contentDescription="Save"
+            android:contentDescription="Save image"
             android:clickable="true"
             android:focusable="true"
-            android:padding="2dp" />
+            android:padding="2dp"
+            android:background="?attr/selectableItemBackgroundBorderless" />
 
-        <!-- Forward Button -->
+        <!-- Forward Button — renamed to btnForwardViewImage -->
         <ImageView
-            android:id="@+id/btnForward"
+            android:id="@+id/btnForwardViewImage"
             android:layout_width="28dp"
             android:layout_height="28dp"
             android:layout_marginStart="20dp"
             android:src="@drawable/forward"
             android:scaleType="fitCenter"
-            android:contentDescription="Forward"
+            android:contentDescription="Forward image"
             android:clickable="true"
             android:focusable="true"
-            android:padding="2dp" />
+            android:padding="2dp"
+            android:background="?attr/selectableItemBackgroundBorderless" />
 
     </LinearLayout>
 
-    <!-- Full-Screen Image Viewer -->
+    <!-- Full-Screen Image -->
     <LinearLayout
         android:layout_width="match_parent"
         android:layout_height="0dp"

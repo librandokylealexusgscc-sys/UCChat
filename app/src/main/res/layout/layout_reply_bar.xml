@@ -1,0 +1,60 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout
+    xmlns:android="http://schemas.android.com/apk/res/android"
+    android:id="@+id/replyBar"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:orientation="horizontal"
+    android:gravity="center_vertical"
+    android:background="#F0F4FF"
+    android:paddingStart="12dp"
+    android:paddingEnd="8dp"
+    android:paddingTop="8dp"
+    android:paddingBottom="8dp"
+    android:visibility="gone">
+
+    <!-- Green left accent bar -->
+    <View
+        android:layout_width="3dp"
+        android:layout_height="36dp"
+        android:background="#4CAF50"
+        android:layout_marginEnd="10dp" />
+
+    <!-- Reply content -->
+    <LinearLayout
+        android:layout_width="0dp"
+        android:layout_height="wrap_content"
+        android:layout_weight="1"
+        android:orientation="vertical">
+
+        <TextView
+            android:id="@+id/tvReplyName"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="You"
+            android:textColor="#4CAF50"
+            android:textSize="12sp"
+            android:textStyle="bold" />
+
+        <TextView
+            android:id="@+id/tvReplyPreview"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="Message preview..."
+            android:textColor="#555555"
+            android:textSize="12sp"
+            android:maxLines="1"
+            android:ellipsize="end" />
+    </LinearLayout>
+
+    <!-- Close / cancel reply -->
+    <ImageView
+        android:id="@+id/btnCloseReply"
+        android:layout_width="32dp"
+        android:layout_height="32dp"
+        android:src="@android:drawable/ic_menu_close_clear_cancel"
+        android:padding="6dp"
+        android:contentDescription="Cancel reply"
+        android:background="?attr/selectableItemBackgroundBorderless" />
+
+</LinearLayout>
