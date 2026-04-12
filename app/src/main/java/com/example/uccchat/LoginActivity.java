@@ -5,9 +5,11 @@ import android.os.Bundle;
 import android.text.SpannableString;
 import android.text.Spanned;
 import android.text.style.UnderlineSpan;
+import android.text.method.HideReturnsTransformationMethod;
+import android.text.method.PasswordTransformationMethod;
+import android.widget.ImageButton;
 import android.widget.TextView;
 import android.widget.Toast;
-
 
 import androidx.appcompat.app.AppCompatActivity;
 
@@ -22,6 +24,8 @@ public class LoginActivity extends AppCompatActivity {
     private TextInputLayout tilEmail, tilPassword;
     private TextInputEditText etEmail, etPassword;
     private MaterialButton btnLogin;
+    private ImageButton btnTogglePassword;      // 👈 added
+    private boolean isPasswordVisible = false;  // 👈 added
     private FirebaseAuth mAuth;
     private FirebaseFirestore db;
 
@@ -33,12 +37,33 @@ public class LoginActivity extends AppCompatActivity {
         mAuth = FirebaseAuth.getInstance();
         db    = FirebaseFirestore.getInstance();
 
-        tilEmail    = findViewById(R.id.tilEmail);
-        tilPassword = findViewById(R.id.tilPassword);
-        etEmail     = findViewById(R.id.etEmail);
-        etPassword  = findViewById(R.id.etPassword);
-        btnLogin    = findViewById(R.id.btnLogin);
+        tilEmail          = findViewById(R.id.tilEmail);
+        tilPassword       = findViewById(R.id.tilPassword);
+        etEmail           = findViewById(R.id.etEmail);
+        etPassword        = findViewById(R.id.etPassword);
+        btnLogin          = findViewById(R.id.btnLogin);
+        btnTogglePassword = findViewById(R.id.btnTogglePassword);  // 👈 added
         TextView tvSignIn = findViewById(R.id.tvSignIn);
+
+        // ── Password show / hide toggle ──────────────────────────────────── 👈 added
+        btnTogglePassword.setOnClickListener(v -> {
+            isPasswordVisible = !isPasswordVisible;
+
+            if (isPasswordVisible) {
+                // Show password
+                etPassword.setTransformationMethod(HideReturnsTransformationMethod.getInstance());
+                btnTogglePassword.setImageResource(R.drawable.visible); // your "eye open" drawable
+            } else {
+                // Hide password
+                etPassword.setTransformationMethod(PasswordTransformationMethod.getInstance());
+                btnTogglePassword.setImageResource(R.drawable.hide); // your "eye closed" drawable
+            }
+
+            // Keep cursor at the end after toggling
+            etPassword.setSelection(etPassword.getText() != null
+                    ? etPassword.getText().length() : 0);
+        });
+        // ────────────────────────────────────────────────────────────────────
 
         String fullText = "Don't have an account? Sign In";
         SpannableString spannable = new SpannableString(fullText);
@@ -51,7 +76,7 @@ public class LoginActivity extends AppCompatActivity {
                 startActivity(new Intent(LoginActivity.this, SignUpPage1Activity.class)));
 
         btnLogin.setOnClickListener(v -> {
-            String email    = etEmail.getText() != null ? etEmail.getText().toString().trim() : "";
+            String input    = etEmail.getText() != null ? etEmail.getText().toString().trim() : "";
             String password = etPassword.getText() != null ? etPassword.getText().toString().trim() : "";
 
             tilEmail.setError(null);    tilEmail.setErrorEnabled(false);
@@ -59,9 +84,9 @@ public class LoginActivity extends AppCompatActivity {
 
             boolean hasError = false;
 
-            if (email.isEmpty()) {
+            if (input.isEmpty()) {
                 tilEmail.setErrorEnabled(true);
-                tilEmail.setError("Please enter your email");
+                tilEmail.setError("Please enter your email or username");
                 hasError = true;
             }
             if (password.isEmpty()) {
@@ -73,42 +98,68 @@ public class LoginActivity extends AppCompatActivity {
             if (!hasError) {
                 btnLogin.setEnabled(false);
 
-                mAuth.signInWithEmailAndPassword(email, password)
-                        .addOnSuccessListener(authResult -> {
-                            String uid = authResult.getUser().getUid();
-                            db.collection("users").document(uid).get()
-                                    .addOnSuccessListener(doc -> {
-                                        if (doc.exists()) {
-                                            UserSession.firstName = doc.getString("firstName");
-                                            UserSession.lastName  = doc.getString("lastName");
-                                            UserSession.username  = doc.getString("username");
-                                            UserSession.email     = doc.getString("email");
-                                            UserSession.phone     = doc.getString("phone");
-                                            UserSession.studentId = doc.getString("studentId");
-                                            UserSession.photoUrl  = doc.getString("photoUrl");
-                                            UserSession.firebaseUid = uid;
-                                        }
-                                        Toast.makeText(LoginActivity.this,
-                                                "Welcome back, " + UserSession.firstName + "! 👋",
-                                                Toast.LENGTH_SHORT).show();
-                                        // ✅ NEW
-                                        startActivity(new Intent(LoginActivity.this, ChatHomeActivity.class));
-                                        finish();
-                                    })
-                                    .addOnFailureListener(e -> {
-                                        btnLogin.setEnabled(true);
-                                        Toast.makeText(LoginActivity.this,
-                                                "Failed to load user data.", Toast.LENGTH_SHORT).show();
-                                    });
-                        })
-                        .addOnFailureListener(e -> {
-                            btnLogin.setEnabled(true);
-                            tilEmail.setErrorEnabled(true);
-                            tilEmail.setError("Invalid email or password");
-                            tilPassword.setErrorEnabled(true);
-                            tilPassword.setError("Invalid email or password");
-                        });
+                if (input.contains("@")) {
+                    // Looks like an email — sign in directly
+                    signInWithEmail(input, password);
+                } else {
+                    // Treat as username — look up the email first
+                    db.collection("users")
+                            .whereEqualTo("username", input)
+                            .limit(1)
+                            .get()
+                            .addOnSuccessListener(query -> {
+                                if (!query.isEmpty()) {
+                                    String email = query.getDocuments().get(0).getString("email");
+                                    signInWithEmail(email, password);
+                                } else {
+                                    btnLogin.setEnabled(true);
+                                    tilEmail.setErrorEnabled(true);
+                                    tilEmail.setError("Username not found");
+                                }
+                            })
+                            .addOnFailureListener(e -> {
+                                btnLogin.setEnabled(true);
+                                Toast.makeText(LoginActivity.this,
+                                        "Error looking up username.", Toast.LENGTH_SHORT).show();
+                            });
+                }
             }
         });
+    }
+    private void signInWithEmail(String email, String password) {
+        mAuth.signInWithEmailAndPassword(email, password)
+                .addOnSuccessListener(authResult -> {
+                    String uid = authResult.getUser().getUid();
+                    db.collection("users").document(uid).get()
+                            .addOnSuccessListener(doc -> {
+                                if (doc.exists()) {
+                                    UserSession.firstName  = doc.getString("firstName");
+                                    UserSession.lastName   = doc.getString("lastName");
+                                    UserSession.username   = doc.getString("username");
+                                    UserSession.email      = doc.getString("email");
+                                    UserSession.phone      = doc.getString("phone");
+                                    UserSession.studentId  = doc.getString("studentId");
+                                    UserSession.photoUrl   = doc.getString("photoUrl");
+                                    UserSession.firebaseUid = uid;
+                                }
+                                Toast.makeText(LoginActivity.this,
+                                        "Welcome back, " + UserSession.firstName + "! 👋",
+                                        Toast.LENGTH_SHORT).show();
+                                startActivity(new Intent(LoginActivity.this, ChatHomeActivity.class));
+                                finish();
+                            })
+                            .addOnFailureListener(e -> {
+                                btnLogin.setEnabled(true);
+                                Toast.makeText(LoginActivity.this,
+                                        "Failed to load user data.", Toast.LENGTH_SHORT).show();
+                            });
+                })
+                .addOnFailureListener(e -> {
+                    btnLogin.setEnabled(true);
+                    tilEmail.setErrorEnabled(true);
+                    tilEmail.setError("Invalid email/username or password");
+                    tilPassword.setErrorEnabled(true);
+                    tilPassword.setError("Invalid email/username or password");
+                });
     }
 }
