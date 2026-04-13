@@ -67,6 +67,22 @@ public class ChatHomeActivity extends AppCompatActivity {
             }
         }
 
+        myUid = FirebaseAuth.getInstance().getCurrentUser() != null
+                ? FirebaseAuth.getInstance().getCurrentUser().getUid() : null;
+
+        if (myUid == null) {
+            startActivity(new Intent(this, LoginActivity.class));
+            finish();
+            return;
+        }
+
+        // ✅ Show welcome toast here — UserSession is already loaded before navigating
+        if (UserSession.firstName != null && !UserSession.firstName.isEmpty()) {
+            Toast.makeText(this,
+                    "Welcome back, " + UserSession.firstName + "! 👋",
+                    Toast.LENGTH_SHORT).show();
+        }
+
 
 
         myUid = FirebaseAuth.getInstance().getCurrentUser() != null
@@ -310,15 +326,24 @@ public class ChatHomeActivity extends AppCompatActivity {
         FirestoreHelper.get().getUser(myUid, new FirestoreHelper.OnUserFetched() {
             @Override
             public void onSuccess(UserModel user) {
-                UserSession.firstName = user.getFirstName();
-                UserSession.lastName  = user.getLastName();
-                UserSession.username  = user.getUsername();
-                UserSession.email     = user.getEmail();
-                UserSession.phone     = user.getPhone();
-                UserSession.studentId = user.getStudentId();
-                UserSession.photoUrl  = user.getPhotoUrl();
+                UserSession.firstName   = user.getFirstName();
+                UserSession.lastName    = user.getLastName();
+                UserSession.username    = user.getUsername();
+                UserSession.email       = user.getEmail();
+                UserSession.phone       = user.getPhone();
+                UserSession.studentId   = user.getStudentId();
+                UserSession.photoUrl    = user.getPhotoUrl();
                 UserSession.firebaseUid = myUid;
+
+                // ✅ Use ChatHomeActivity.this instead of this
+                // ✅ No recursive call — session is already loaded at this point
+                if (UserSession.firstName != null && !UserSession.firstName.isEmpty()) {
+                    Toast.makeText(ChatHomeActivity.this,
+                            "Welcome back, " + UserSession.firstName + "! 👋",
+                            Toast.LENGTH_SHORT).show();
+                }
             }
+
             @Override
             public void onFailure(String error) {
                 Toast.makeText(ChatHomeActivity.this,

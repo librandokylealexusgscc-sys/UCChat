@@ -1,4 +1,10 @@
 <?xml version="1.0" encoding="utf-8"?>
+<!--
+    item_message_file_sent.xml
+    Added: replyPreviewBar (GONE by default) at the top of bubbleContainer.
+    Added: tvForwardedLabel (GONE by default) at the very top of bubbleContainer.
+    MessageAdapter.bindReplyPreview() shows it when the message is a reply.
+-->
 <LinearLayout
     xmlns:android="http://schemas.android.com/apk/res/android"
     android:layout_width="match_parent"
@@ -15,56 +21,126 @@
         android:id="@+id/bubbleContainer"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:orientation="horizontal"
-        android:gravity="center_vertical"
+        android:orientation="vertical"
         android:background="@drawable/bubble_sent"
-        android:paddingStart="12dp"
-        android:paddingEnd="12dp"
-        android:paddingTop="10dp"
-        android:paddingBottom="10dp"
         android:clickable="true"
         android:focusable="true">
 
-        <!-- File icon -->
+        <!-- Forwarded indicator — shown when message was forwarded -->
         <TextView
-            android:id="@+id/tvFileIcon"
+            android:id="@+id/tvForwardedLabel"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:text="📄"
-            android:textSize="28sp"
-            android:layout_marginEnd="10dp" />
+            android:text="➦ Forwarded"
+            android:textSize="11sp"
+            android:textColor="#888888"
+            android:fontFamily="@font/regular"
+            android:paddingBottom="2dp"
+            android:visibility="gone" />
 
-        <!-- File info -->
+        <!-- ── Reply preview (hidden unless this msg is a reply) ── -->
+        <LinearLayout
+            android:id="@+id/replyPreviewBar"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="horizontal"
+            android:background="#22000000"
+            android:paddingStart="10dp"
+            android:paddingEnd="10dp"
+            android:paddingTop="6dp"
+            android:paddingBottom="6dp"
+            android:layout_marginBottom="4dp"
+            android:visibility="gone">
+
+            <!-- Green accent stripe -->
+            <View
+                android:layout_width="3dp"
+                android:layout_height="match_parent"
+                android:background="#4CAF50"
+                android:layout_marginEnd="8dp" />
+
+            <LinearLayout
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_weight="1"
+                android:orientation="vertical">
+
+                <TextView
+                    android:id="@+id/tvReplySender"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="You"
+                    android:textColor="#4CAF50"
+                    android:textSize="11sp"
+                    android:textStyle="bold" />
+
+                <TextView
+                    android:id="@+id/tvReplyText"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="Original message..."
+                    android:textColor="#DDDDDD"
+                    android:textSize="11sp"
+                    android:maxLines="1"
+                    android:ellipsize="end" />
+
+            </LinearLayout>
+
+        </LinearLayout>
+        <!-- ── End reply preview ──────────────────────────────── -->
+
+        <!-- File row (icon + name + size) -->
         <LinearLayout
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:orientation="vertical"
-            android:maxWidth="160dp">
+            android:orientation="horizontal"
+            android:gravity="center_vertical"
+            android:paddingStart="12dp"
+            android:paddingEnd="12dp"
+            android:paddingTop="10dp"
+            android:paddingBottom="10dp">
 
+            <!-- File icon -->
             <TextView
-                android:id="@+id/tvFileName"
+                android:id="@+id/tvFileIcon"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:fontFamily="@font/bold"
-                android:textColor="#FFFFFF"
-                android:textSize="13sp"
-                android:maxLines="2"
-                android:ellipsize="middle" />
+                android:text="📄"
+                android:textSize="28sp"
+                android:layout_marginEnd="10dp" />
 
-            <TextView
-                android:id="@+id/tvFileSize"
-                android:layout_width="wrap_content"
+            <!-- File info -->
+            <LinearLayout
+                android:layout_width="160dp"
                 android:layout_height="wrap_content"
-                android:fontFamily="@font/regular"
-                android:textColor="#CCFFFFFF"
-                android:textSize="11sp"
-                android:paddingTop="2dp" />
+                android:orientation="vertical">
+
+                <TextView
+                    android:id="@+id/tvFileName"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:fontFamily="@font/bold"
+                    android:textColor="#FFFFFF"
+                    android:textSize="13sp"
+                    android:maxLines="2"
+                    android:ellipsize="middle" />
+
+                <TextView
+                    android:id="@+id/tvFileSize"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:fontFamily="@font/regular"
+                    android:textColor="#CCFFFFFF"
+                    android:textSize="11sp"
+                    android:paddingTop="2dp" />
+
+            </LinearLayout>
 
         </LinearLayout>
 
     </LinearLayout>
 
-    <!-- Timestamp + status -->
+    <!-- Timestamp + status row -->
     <LinearLayout
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"

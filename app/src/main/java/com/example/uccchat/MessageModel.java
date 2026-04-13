@@ -5,7 +5,6 @@ import java.util.List;
 
 public class MessageModel {
 
-    // Message types
     public static final String TYPE_TEXT  = "text";
     public static final String TYPE_IMAGE = "image";
     public static final String TYPE_FILE  = "file";
@@ -29,10 +28,21 @@ public class MessageModel {
     private String thumbnailUrl;
     private String videoDuration;
 
-    // Required empty constructor for Firestore
+    // ── Reply fields ──────────────────────────────────────────
+    private String replyToId;
+    private String replyToText;
+    private String replyToType;
+    private String replyToSender;
+
+    // ── Deleted display flag ──────────────────────────────────
+    // When true, everyone sees "🚫 Message was deleted" instead of hiding it
+    private boolean deleted;
+
+    // ── Forwarded flag ────────────────────────────────────────
+    private boolean forwarded;
+
     public MessageModel() {}
 
-    // Constructor for text messages
     public MessageModel(String messageId, String senderId,
                         String text, Timestamp timestamp) {
         this.messageId = messageId;
@@ -44,7 +54,6 @@ public class MessageModel {
         this.seen      = false;
     }
 
-    // Constructor for image messages
     public MessageModel(String messageId, String senderId,
                         String imageUrl, Timestamp timestamp,
                         boolean isImage) {
@@ -73,6 +82,12 @@ public class MessageModel {
     public String getFileUrl()          { return fileUrl; }
     public String getThumbnailUrl()     { return thumbnailUrl; }
     public String getVideoDuration()    { return videoDuration; }
+    public String getReplyToId()        { return replyToId; }
+    public String getReplyToText()      { return replyToText; }
+    public String getReplyToType()      { return replyToType; }
+    public String getReplyToSender()    { return replyToSender; }
+    public boolean isDeleted()          { return deleted; }
+    public boolean isForwarded()        { return forwarded; }
 
     // ─── Setters ──────────────────────────────────────────────
     public void setMessageId(String messageId)         { this.messageId = messageId; }
@@ -90,22 +105,31 @@ public class MessageModel {
     public void setFileUrl(String fileUrl)             { this.fileUrl = fileUrl; }
     public void setThumbnailUrl(String t)              { this.thumbnailUrl = t; }
     public void setVideoDuration(String d)             { this.videoDuration = d; }
+    public void setReplyToId(String replyToId)         { this.replyToId = replyToId; }
+    public void setReplyToText(String replyToText)     { this.replyToText = replyToText; }
+    public void setReplyToType(String replyToType)     { this.replyToType = replyToType; }
+    public void setReplyToSender(String s)             { this.replyToSender = s; }
+    public void setDeleted(boolean deleted)            { this.deleted = deleted; }
+    public void setForwarded(boolean forwarded)        { this.forwarded = forwarded; }
 
     // ─── Helpers ──────────────────────────────────────────────
     public boolean isTextMessage()  { return TYPE_TEXT.equals(type); }
     public boolean isImageMessage() { return TYPE_IMAGE.equals(type); }
     public boolean isFileMessage()  { return TYPE_FILE.equals(type); }
     public boolean isVideoMessage() { return TYPE_VIDEO.equals(type); }
+    public boolean hasReply()       { return replyToId != null && !replyToId.isEmpty(); }
 
     public boolean isSeenBy(String uid) {
         return seenBy != null && seenBy.contains(uid);
     }
 
+    // isDeletedFor is now only used for permanent/undo delete
     public boolean isDeletedFor(String uid) {
         return deletedFor != null && deletedFor.contains(uid);
     }
 
     public String getPreviewText() {
+        if (deleted) return "🚫 Message was deleted";
         if (TYPE_IMAGE.equals(type)) return "📷 Photo";
         if (TYPE_FILE.equals(type))  return "📎 " + (fileName != null ? fileName : "File");
         if (TYPE_VIDEO.equals(type)) return "🎥 Video";

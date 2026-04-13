@@ -228,12 +228,34 @@ public class PersonalDetailsActivity extends AppCompatActivity {
         }
     }
     private void updateProfile() {
-        if (newProfilePicUri != null) {
+        // Always build the text updates first
+        String fullname   = etFullname.getText().toString().trim();
+        String[] nameParts = fullname.split(" ", 2);
+        String firstName  = nameParts[0];
+        String lastName   = nameParts.length > 1 ? nameParts[1] : "";
 
+        String username   = etUsername.getText().toString().trim();
+        String phone      = etPhoneNumber.getText().toString().trim();
+        String email      = etEmail.getText().toString().trim();
+        String studentId  = etStudentId.getText().toString().trim();
+        String course     = spinnerProgram.getSelectedItem().toString();
+
+        Map<String, Object> updates = new HashMap<>();
+        updates.put("firstName", firstName);
+        updates.put("lastName",  lastName);
+        updates.put("username",  username);
+        updates.put("phone",     phone);
+        updates.put("email",     email);
+        updates.put("studentId", studentId);
+        updates.put("course",    course);
+
+        if (newProfilePicUri != null) {
+            // Upload image first, then save everything together
             File file = uriToFile(newProfilePicUri);
 
             if (file == null) {
-                Toast.makeText(this, "File is null!", Toast.LENGTH_SHORT).show();
+                Toast.makeText(this, "File conversion failed. Saving other details...", Toast.LENGTH_SHORT).show();
+                saveUpdatesToFirestore(updates); // ✅ still save text fields
                 return;
             }
 
@@ -258,27 +280,27 @@ public class PersonalDetailsActivity extends AppCompatActivity {
                         @Override
                         public void onSuccess(String requestId, Map resultData) {
                             String newUrl = (String) resultData.get("secure_url");
-
                             currentPhotoUrl = newUrl;
+
+                            // ✅ Include new photo URL with the rest of the updates
+                            updates.put("photoUrl", newUrl);
 
                             Glide.with(PersonalDetailsActivity.this)
                                     .load(newUrl + "?t=" + System.currentTimeMillis())
                                     .transform(new CircleCrop())
                                     .into(btnProfilePicture);
 
-                            db.collection("users").document(userId)
-                                    .update("photoUrl", newUrl)
-                                    .addOnSuccessListener(unused -> {
-                                        Toast.makeText(PersonalDetailsActivity.this,
-                                                "Profile updated!", Toast.LENGTH_SHORT).show();
-                                    });
+                            saveUpdatesToFirestore(updates); // ✅ Save everything at once
                         }
+
                         @Override
                         public void onError(String requestId, ErrorInfo error) {
                             Log.e("UPLOAD", "FAILED: " + error.getDescription());
                             Toast.makeText(PersonalDetailsActivity.this,
-                                    "Upload failed: " + error.getDescription(),
-                                    Toast.LENGTH_LONG).show();
+                                    "Image upload failed. Saving other details...",
+                                    Toast.LENGTH_SHORT).show();
+
+                            saveUpdatesToFirestore(updates); // ✅ Still save text fields even if image fails
                         }
 
                         @Override
@@ -287,7 +309,8 @@ public class PersonalDetailsActivity extends AppCompatActivity {
                     .dispatch();
 
         } else {
-            Toast.makeText(this, "No image selected", Toast.LENGTH_SHORT).show();
+            // ✅ No image selected — just save text fields directly
+            saveUpdatesToFirestore(updates);
         }
     }
 
