@@ -5,7 +5,6 @@ import android.content.Intent;
 import android.os.Bundle;
 import android.text.TextUtils;
 import android.util.Log;
-import android.util.Patterns;
 import android.widget.ArrayAdapter;
 import android.widget.Button;
 import android.widget.EditText;
@@ -14,7 +13,7 @@ import android.widget.LinearLayout;
 import android.widget.Spinner;
 import android.widget.Toast;
 import android.net.Uri;
-import android.widget.ImageView;
+
 import androidx.activity.result.ActivityResultLauncher;
 import androidx.activity.result.contract.ActivityResultContracts;
 import com.bumptech.glide.Glide;
@@ -32,15 +31,13 @@ import androidx.appcompat.app.AppCompatActivity;
 
 import com.google.firebase.auth.FirebaseAuth;
 import com.google.firebase.auth.FirebaseUser;
-import com.google.firebase.firestore.DocumentReference;
 import com.google.firebase.firestore.FirebaseFirestore;
 
 import java.util.HashMap;
-import java.util.Map;
 
 public class PersonalDetailsActivity extends AppCompatActivity {
 
-    private EditText etFullname, etUsername, etPhoneNumber, etEmail, etStudentId;
+    private EditText etFirstName, etLastName, etUsername, etPhoneNumber, etEmail, etStudentId;
     private Spinner spinnerProgram;
     private Button btnUpdateProfile;
     private LinearLayout btnTabChats, btnTabSearch, btnTabMenu;
@@ -94,7 +91,8 @@ public class PersonalDetailsActivity extends AppCompatActivity {
         }
         userId = currentUser.getUid();
 
-        etFullname    = findViewById(R.id.etFullname);
+        etFirstName = findViewById(R.id.etFirstName);
+        etLastName  = findViewById(R.id.etLastName);
         etUsername     = findViewById(R.id.etUsername);
         etPhoneNumber = findViewById(R.id.etPhoneNumber);
         etEmail       = findViewById(R.id.etEmail);
@@ -180,9 +178,8 @@ public class PersonalDetailsActivity extends AppCompatActivity {
                     }
                     if (doc.exists()) {
                         // Combine firstName + lastName into fullname
-                        String first = doc.getString("firstName") != null ? doc.getString("firstName") : "";
-                        String last  = doc.getString("lastName") != null ? doc.getString("lastName") : "";
-                        etFullname.setText((first + " " + last).trim());
+                        etFirstName.setText(doc.getString("firstName"));
+                        etLastName.setText(doc.getString("lastName"));
 
                         etUsername.setText(doc.getString("username"));
                         etPhoneNumber.setText(doc.getString("phone"));
@@ -229,10 +226,8 @@ public class PersonalDetailsActivity extends AppCompatActivity {
     }
     private void updateProfile() {
         // Always build the text updates first
-        String fullname   = etFullname.getText().toString().trim();
-        String[] nameParts = fullname.split(" ", 2);
-        String firstName  = nameParts[0];
-        String lastName   = nameParts.length > 1 ? nameParts[1] : "";
+        String firstName = etFirstName.getText().toString().trim();
+        String lastName  = etLastName.getText().toString().trim();
 
         String username   = etUsername.getText().toString().trim();
         String phone      = etPhoneNumber.getText().toString().trim();
@@ -314,21 +309,48 @@ public class PersonalDetailsActivity extends AppCompatActivity {
         }
     }
 
-    private void saveUpdatesToFirestore(Map<String, Object> updates) {
-        db.collection("users").document(userId).update(updates)
+    private void saveUpdatesToFirestore(Map<String, Object> updates)
+    {
+        String firstName = updates.get("firstName").toString();
+        String lastName  = updates.get("lastName").toString();
+
+        String fullName = firstName + " " + lastName;
+
+        db.collection("users").document(userId)
+                .update(updates)
                 .addOnSuccessListener(unused -> {
-                    Toast.makeText(this, "Profile updated successfully", Toast.LENGTH_SHORT).show();
-                    startActivity(new Intent(this, MenuActivity.class));
-                    finish();
+
+                    // 🔥 update participantNames inside chats collection
+                    db.collection("chats")
+                            .whereArrayContains("participants", userId)
+                            .get()
+                            .addOnSuccessListener(querySnapshot -> {
+
+                                for (com.google.firebase.firestore.DocumentSnapshot doc : querySnapshot.getDocuments()) {
+                                    doc.getReference().update(
+                                            "participantNames." + userId,
+                                            fullName
+                                    );
+                                }
+                                Toast.makeText(this,
+                                        "Profile updated successfully",
+                                        Toast.LENGTH_SHORT).show();
+
+                                startActivity(new Intent(this, MenuActivity.class));
+                                finish();
+                            });
                 })
                 .addOnFailureListener(e ->
-                        Toast.makeText(this, "Update failed: " + e.getMessage(), Toast.LENGTH_SHORT).show()
+                        Toast.makeText(this,
+                                "Update failed: " + e.getMessage(),
+                                Toast.LENGTH_SHORT).show()
                 );
     }
     private boolean validateFields() {
         boolean valid = true;
 
-        String fullname = etFullname.getText().toString().trim();
+        String firstName = etFirstName.getText().toString().trim();
+        String lastName  = etLastName.getText().toString().trim();
         String username = etUsername.getText().toString().trim();
         String phone    = etPhoneNumber.getText().toString().trim();
         String email    = etEmail.getText().toString().trim();
@@ -339,8 +361,13 @@ public class PersonalDetailsActivity extends AppCompatActivity {
                     Toast.LENGTH_SHORT).show();
             valid = false;
         }
-        else if (!fullname.matches("^[A-Za-z ]+$")) {
-            etFullname.setError("Fullname must contain letters only");
+        if (!firstName.matches("^[A-Za-z]+(\\s[A-Za-z]+){0,2}$")) {
+            etFirstName.setError("Letters only");
+            valid = false;
+        }
+
+        if (!lastName.matches("^[A-Za-z]+(\\s[A-Za-z]+){0,2}$")) {
+            etLastName.setError("Letters only");
             valid = false;
         }
 

@@ -1,7 +1,8 @@
 <resources>
     <string name="app_name">UCChat</string>
 
-    <string name="facebook_app_id">831007380042266</string>
-    <string name="fb_login_protocol_scheme">fb831007380042266</string>
-    <string name="facebook_client_token">2fd50d83b35d7f18b8bbed0a486ab051</string>
+
+    <string name="facebook_app_id">1581114942946411</string>
+    <string name="fb_login_protocol_scheme">fb1581114942946411</string>
+    <string name="facebook_client_token">d32213f7f3f5c35b02f6ed6830c2c77e</string>
 </resources>

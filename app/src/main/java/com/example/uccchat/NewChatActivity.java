@@ -29,6 +29,7 @@ public class NewChatActivity extends AppCompatActivity {
     private EditText etSearch;
     private LinearLayout containerResults;
     private TextView tvSuggestedLabel;
+    private String myCourse = "";
 
     // ── Firebase ──────────────────────────────────────────────
     private String myUid;
@@ -105,21 +106,31 @@ public class NewChatActivity extends AppCompatActivity {
     private void loadAllUsers() {
         FirebaseFirestore.getInstance()
                 .collection(FirestoreHelper.COL_USERS)
+                .document(myUid)
                 .get()
-                .addOnSuccessListener(querySnapshot -> {
-                    allUsers.clear();
-                    for (DocumentSnapshot doc : querySnapshot.getDocuments()) {
-                        // Skip current user
-                        if (doc.getId().equals(myUid)) continue;
+                .addOnSuccessListener(doc -> {
 
-                        UserModel user = doc.toObject(UserModel.class);
-                        if (user != null) {
-                            user.setUid(doc.getId());
-                            allUsers.add(user);
-                        }
-                    }
-                    // Show all users initially as "Suggested"
-                    filterUsers("");
+                    myCourse = doc.getString("course");
+
+                    FirebaseFirestore.getInstance()
+                            .collection(FirestoreHelper.COL_USERS)
+                            .get()
+                            .addOnSuccessListener(querySnapshot -> {
+
+                                allUsers.clear();
+
+                                for (DocumentSnapshot d : querySnapshot.getDocuments()) {
+                                    if (d.getId().equals(myUid)) continue;
+
+                                    UserModel user = d.toObject(UserModel.class);
+                                    if (user != null) {
+                                        user.setUid(d.getId());
+                                        allUsers.add(user);
+                                    }
+                                }
+
+                                filterUsers(""); // show suggested
+                            });
                 })
                 .addOnFailureListener(e ->
                         Toast.makeText(this,
@@ -135,20 +146,26 @@ public class NewChatActivity extends AppCompatActivity {
         displayed.clear();
 
         if (query.isEmpty()) {
-            // Show all users as suggestions
-            displayed.addAll(allUsers);
+            // 🔥 SUGGESTED: same course only
+            for (UserModel user : allUsers) {
+                if (user.getCourse() != null &&
+                        user.getCourse().equals(myCourse)) {
+                    displayed.add(user);
+                }
+            }
         } else {
             String lower = query.toLowerCase();
+
             for (UserModel user : allUsers) {
-                // Search by name, username, or student ID
-                if ((user.getFirstName()  != null &&
+                if ((user.getFirstName() != null &&
                         user.getFirstName().toLowerCase().contains(lower))
-                        || (user.getLastName()   != null &&
+                        || (user.getLastName() != null &&
                         user.getLastName().toLowerCase().contains(lower))
-                        || (user.getUsername()   != null &&
+                        || (user.getUsername() != null &&
                         user.getUsername().toLowerCase().contains(lower))
-                        || (user.getStudentId()  != null &&
+                        || (user.getStudentId() != null &&
                         user.getStudentId().toLowerCase().contains(lower))) {
+
                     displayed.add(user);
                 }
             }
@@ -156,6 +173,7 @@ public class NewChatActivity extends AppCompatActivity {
 
         renderUserList();
     }
+
 
     private void renderUserList() {
         // Clear existing views (except the static student item placeholder)

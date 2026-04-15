@@ -30,8 +30,7 @@
             android:layout_width="match_parent"
             android:layout_height="0dp"
             android:layout_weight="1"
-            android:orientation="vertical"
-            android:padding="16dp">
+            android:orientation="vertical">
 
             <!-- Title: Personal Details -->
 
@@ -49,9 +48,9 @@
                     android:layout_width="114dp"
                     android:layout_height="114dp"
                     android:background="@drawable/bg_circle_gray"
-                    android:scaleType="centerCrop"
-                    android:contentDescription="Profile Picture" />
-                  />
+                    android:contentDescription="Profile Picture"
+                    android:scaleType="centerCrop" />
+                />
             </LinearLayout>
 
             <!-- Section Label -->
@@ -88,12 +87,33 @@
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
                         android:fontFamily="@font/regular"
-                        android:text="Fullname"
+                        android:text="First name"
                         android:textColor="#9E9E9E"
                         android:textSize="12sp" />
 
                     <EditText
-                        android:id="@+id/etFullname"
+                        android:id="@+id/etFirstName"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+
+                        android:background="@null"
+                        android:inputType="textPersonName"
+                        android:paddingTop="4dp"
+                        android:paddingBottom="8dp"
+                        android:textColor="#212121"
+                        android:textSize="15sp" />
+
+                    <TextView
+                        android:id="@+id/textView"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:fontFamily="@font/regular"
+                        android:text="Last name"
+                        android:textColor="#9E9E9E"
+                        android:textSize="12sp" />
+
+                    <EditText
+                        android:id="@+id/etLastName"
                         android:layout_width="match_parent"
                         android:layout_height="wrap_content"
 
@@ -288,7 +308,6 @@
                 </LinearLayout>
 
             </LinearLayout>
-
 
 
             <!-- Update Button -->

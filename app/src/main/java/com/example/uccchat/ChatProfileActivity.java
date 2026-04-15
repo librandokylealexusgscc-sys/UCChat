@@ -54,6 +54,7 @@ public class ChatProfileActivity extends AppCompatActivity {
     private boolean isGroup;
     private String otherUid;
 
+
     private boolean isMuted   = false;
     private boolean isBlocked = false;
     private List<String> participants = new ArrayList<>();
@@ -593,7 +594,7 @@ public class ChatProfileActivity extends AppCompatActivity {
             searchResultsContainer.addView(item);
         }
     }
-
+   
     // ════════════════════════════════════════════════════════
     //  1-ON-1 MODE
     // ════════════════════════════════════════════════════════

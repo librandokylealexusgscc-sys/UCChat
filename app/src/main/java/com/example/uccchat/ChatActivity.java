@@ -529,6 +529,7 @@ public class ChatActivity extends AppCompatActivity {
     // ════════════════════════════════════════════════════════
     //  INPUT BAR
     // ════════════════════════════════════════════════════════
+// Wherever you call Firestore to toggle mute:
 
     private void setupInputBar() {
         btnSendMessage.setOnClickListener(v -> sendTextMessage());

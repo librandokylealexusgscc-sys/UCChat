@@ -35,6 +35,7 @@ import java.util.Map;
 public class ChatNotificationService extends Service {
 
     private static final String TAG = "ChatNotifService";
+    private Map<String, Boolean> mutedChats = new HashMap<>();
 
     private String myUid;
 
@@ -59,7 +60,22 @@ public class ChatNotificationService extends Service {
 
         if (myUid != null) {
             startListening();
+            loadMutedChats();
         }
+    }
+    private void loadMutedChats() {
+        // Use addSnapshotListener instead of .get() so it updates in real-time
+        FirebaseFirestore.getInstance()
+                .collection(FirestoreHelper.COL_USERS)
+                .document(myUid)
+                .addSnapshotListener((doc, error) -> {
+                    if (error != null || doc == null) return;
+                    Object data = doc.get("mutedChats");
+                    if (data instanceof Map) {
+                        mutedChats.clear();
+                        mutedChats.putAll((Map<String, Boolean>) data);
+                    }
+                });
     }
 
     @Override
@@ -133,38 +149,25 @@ public class ChatNotificationService extends Service {
                 .collection(FirestoreHelper.COL_CHATS)
                 .document(chatId)
                 .collection(FirestoreHelper.COL_MESSAGES)
-                // Only fetch the last message first so we don't fire on initial load
-                .orderBy("timestamp",
-                        com.google.firebase.firestore.Query.Direction.DESCENDING)
+                .orderBy("timestamp", com.google.firebase.firestore.Query.Direction.DESCENDING)
                 .limit(1)
                 .addSnapshotListener((snapshots, error) -> {
                     if (error != null || snapshots == null) return;
 
                     for (DocumentChange change : snapshots.getDocumentChanges()) {
-
-                        // Only care about brand-new messages, not initial fetch
                         if (change.getType() != DocumentChange.Type.ADDED) continue;
-
-                        // Skip if this is the very first snapshot load
-                        // (getDocumentChanges on the first call marks everything as ADDED)
-                        // We guard against this by checking metadata.isFromCache / hasPendingWrites.
-                        // A simpler guard: only fire if the snapshot is NOT from cache.
                         if (snapshots.getMetadata().isFromCache()) continue;
 
                         DocumentSnapshot msgDoc = change.getDocument();
                         MessageModel msg = msgDoc.toObject(MessageModel.class);
                         if (msg == null) continue;
 
-                        // Don't notify for own messages
+                        // ── All guards in one place (no duplicates) ──
                         if (myUid.equals(msg.getSenderId())) continue;
-
-                        // Don't notify if user is currently in this chat
                         if (chatId.equals(activeChatId)) continue;
-
-                        // Don't notify for deleted messages
                         if (msg.isDeletedFor(myUid)) continue;
+                        if (mutedChats != null && Boolean.TRUE.equals(mutedChats.get(chatId))) continue;
 
-                        // Build notification text
                         String senderName = getSenderName(chat, msg.getSenderId());
                         String preview    = buildPreview(msg);
                         String title      = chat.isGroup()
@@ -173,8 +176,7 @@ public class ChatNotificationService extends Service {
 
                         NotificationHelper.showMessageNotification(
                                 ChatNotificationService.this,
-                                chatId,
-                                title,
+                                chatId, title,
                                 chat.getDisplayPhoto(myUid),
                                 preview,
                                 chat.isGroup(),
@@ -185,7 +187,6 @@ public class ChatNotificationService extends Service {
 
         messageListeners.put(chatId, reg);
     }
-
     // ── Helpers ────────────────────────────────────────────────
 
     private String getSenderName(ChatModel chat, String senderId) {

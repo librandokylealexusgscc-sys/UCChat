@@ -29,11 +29,13 @@ import java.util.List;
 import java.util.Map;
 
 public class NewGroupChatActivity extends AppCompatActivity {
-
+    private final List<String> chattedUserIds = new ArrayList<>();
+    private final List<UserModel> suggestedUsers = new ArrayList<>();
     // ── Views ─────────────────────────────────────────────────
     private EditText etGroupName, etSearch;
     private LinearLayout containerResults;
     private Button btnCreate;
+    private String myCourse = "";
 
     // ── Data ──────────────────────────────────────────────────
     private String myUid;
@@ -57,7 +59,30 @@ public class NewGroupChatActivity extends AppCompatActivity {
         setupCreateButton();
         loadAllUsers();
     }
+    private void loadChatHistoryThenUsers() {
+        FirebaseFirestore.getInstance()
+                .collection(FirestoreHelper.COL_CHATS)
+                .whereArrayContains("participants", myUid)
+                .get()
+                .addOnSuccessListener(querySnapshot -> {
 
+                    chattedUserIds.clear();
+
+                    for (DocumentSnapshot doc : querySnapshot.getDocuments()) {
+
+                        List<String> participants = (List<String>) doc.get("participants");
+                        if (participants == null) continue;
+
+                        for (String uid : participants) {
+                            if (!uid.equals(myUid) && !chattedUserIds.contains(uid)) {
+                                chattedUserIds.add(uid);
+                            }
+                        }
+                    }
+
+                    loadAllUsers(); // continue loading users after chat history
+                });
+    }
     // ════════════════════════════════════════════════════════
     //  SETUP
     // ════════════════════════════════════════════════════════
@@ -114,36 +139,101 @@ public class NewGroupChatActivity extends AppCompatActivity {
     // ════════════════════════════════════════════════════════
 
     private void loadAllUsers() {
-        FirebaseFirestore.getInstance()
-                .collection(FirestoreHelper.COL_USERS)
+
+        FirebaseFirestore db = FirebaseFirestore.getInstance();
+
+        // 1️⃣ Get my profile (course)
+        db.collection(FirestoreHelper.COL_USERS)
+                .document(myUid)
                 .get()
-                .addOnSuccessListener(querySnapshot -> {
-                    allUsers.clear();
-                    for (DocumentSnapshot doc : querySnapshot.getDocuments()) {
-                        if (doc.getId().equals(myUid)) continue;
-                        UserModel user = doc.toObject(UserModel.class);
-                        if (user != null) {
-                            user.setUid(doc.getId());
-                            allUsers.add(user);
+                .addOnSuccessListener(myDoc -> {
+
+                    myCourse = myDoc.getString("course");
+
+                    // 2️⃣ Load ALL users
+                    db.collection(FirestoreHelper.COL_USERS)
+                            .get()
+                            .addOnSuccessListener(snapshot -> {
+
+                                allUsers.clear();
+                                for (DocumentSnapshot d : snapshot.getDocuments()) {
+                                    if (d.getId().equals(myUid)) continue;
+
+                                    UserModel user = d.toObject(UserModel.class);
+                                    if (user != null) {
+                                        user.setUid(d.getId());
+                                        allUsers.add(user);
+                                    }
+                                }
+
+                                // 3️⃣ Load recent chat users
+                                loadRecentChatUsers();
+                            });
+                });
+    }
+    private void loadRecentChatUsers() {
+
+        FirebaseFirestore.getInstance()
+                .collection(FirestoreHelper.COL_CHATS)
+                .whereArrayContains("participants", myUid)
+                .get()
+                .addOnSuccessListener(snapshot -> {
+
+                    suggestedUsers.clear();
+
+                    // 👥 Add recent chat users first
+                    for (DocumentSnapshot doc : snapshot.getDocuments()) {
+
+                        ChatModel chat = doc.toObject(ChatModel.class);
+                        if (chat == null) continue;
+
+                        for (String uid : chat.getParticipants()) {
+                            if (uid.equals(myUid)) continue;
+
+                            UserModel match = findUser(uid);
+                            if (match != null && !suggestedUsers.contains(match)) {
+                                suggestedUsers.add(match);
+                            }
                         }
                     }
-                    filterUsers("");
-                })
-                .addOnFailureListener(e ->
-                        Toast.makeText(this,
-                                "Failed to load users.", Toast.LENGTH_SHORT).show());
-    }
 
+                    // 🎓 Add same-course users
+                    for (UserModel user : allUsers) {
+                        if (user.getCourse() != null &&
+                                myCourse != null &&
+                                user.getCourse().equals(myCourse)) {
+
+                            if (!suggestedUsers.contains(user)) {
+                                suggestedUsers.add(user);
+                            }
+                        }
+                    }
+
+                    // show suggestions initially
+                    filterUsers("");
+                });
+    }
+    private UserModel findUser(String uid) {
+        for (UserModel user : allUsers) {
+            if (user.getUid().equals(uid)) {
+                return user;
+            }
+        }
+        return null;
+    }
     // ════════════════════════════════════════════════════════
     //  FILTER + RENDER
     // ════════════════════════════════════════════════════════
 
     private void filterUsers(String query) {
         displayed.clear();
+
         if (query.isEmpty()) {
-            displayed.addAll(allUsers);
+            displayed.clear();
+            displayed.addAll(suggestedUsers);
         } else {
             String lower = query.toLowerCase();
+
             for (UserModel user : allUsers) {
                 if ((user.getFirstName() != null &&
                         user.getFirstName().toLowerCase().contains(lower))
@@ -153,6 +243,7 @@ public class NewGroupChatActivity extends AppCompatActivity {
                         user.getUsername().toLowerCase().contains(lower))
                         || (user.getStudentId() != null &&
                         user.getStudentId().toLowerCase().contains(lower))) {
+
                     displayed.add(user);
                 }
             }
