@@ -13,7 +13,6 @@
     android:clickable="true"
     android:focusable="true">
 
-    <!-- Avatar -->
     <ImageView
         android:id="@+id/userProfile"
         android:layout_width="48dp"
@@ -22,20 +21,18 @@
         android:scaleType="centerCrop"
         android:contentDescription="Profile picture" />
 
-    <!-- Name -->
     <TextView
         android:id="@+id/studentName"
         android:layout_width="0dp"
         android:layout_height="wrap_content"
         android:layout_weight="1"
         android:fontFamily="@font/regular"
-        android:textColor="#000000"
+        android:textColor="@color/text_primary"
         android:textSize="15sp"
         android:paddingStart="14dp"
         android:maxLines="1"
         android:ellipsize="end" />
 
-    <!-- Radio Button -->
     <RadioButton
         android:id="@+id/rbSelectedStudent"
         android:layout_width="wrap_content"
@@ -43,5 +40,4 @@
         android:buttonTint="#4CAF50"
         android:clickable="false"
         android:focusable="false" />
-
 </LinearLayout>

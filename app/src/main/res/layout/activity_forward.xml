@@ -1,12 +1,11 @@
 <?xml version="1.0" encoding="utf-8"?>
-<LinearLayout
-    xmlns:android="http://schemas.android.com/apk/res/android"
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
     android:orientation="vertical"
-    android:background="#FFFFFF">
+    android:background="@color/bg_main">
 
-    <!-- Header -->
     <LinearLayout
         android:layout_width="match_parent"
         android:layout_height="56dp"
@@ -23,7 +22,7 @@
             android:src="@android:drawable/ic_media_previous"
             android:padding="10dp"
             android:contentDescription="Back"
-            android:tint="#FFFFFF"
+            app:tint="#FFFFFF"
             android:background="?attr/selectableItemBackgroundBorderless" />
 
         <LinearLayout
@@ -50,13 +49,12 @@
         </LinearLayout>
     </LinearLayout>
 
-    <!-- Search bar -->
     <LinearLayout
         android:layout_width="match_parent"
         android:layout_height="52dp"
         android:orientation="horizontal"
         android:gravity="center_vertical"
-        android:background="#F5F5F5"
+        android:background="@color/bg_secondary"
         android:paddingStart="12dp"
         android:paddingEnd="12dp">
 
@@ -68,13 +66,14 @@
             android:hint="Search chats..."
             android:paddingStart="14dp"
             android:paddingEnd="14dp"
+            android:textColor="@color/text_primary"
+            android:textColorHint="@color/text_hint"
             android:textSize="14sp"
             android:inputType="text"
             android:imeOptions="actionSearch"
             android:singleLine="true" />
     </LinearLayout>
 
-    <!-- Chat list -->
     <androidx.recyclerview.widget.RecyclerView
         android:id="@+id/recyclerForwardChats"
         android:layout_width="match_parent"
@@ -83,5 +82,4 @@
         android:clipToPadding="false"
         android:paddingTop="4dp"
         android:paddingBottom="8dp" />
-
 </LinearLayout>

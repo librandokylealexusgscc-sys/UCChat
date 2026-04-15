@@ -38,7 +38,7 @@ public class MessageAdapter extends RecyclerView.Adapter<RecyclerView.ViewHolder
     private static final int TYPE_FILE_RECEIVED  = 6;
     private static final int TYPE_VIDEO_SENT     = 7;
     private static final int TYPE_VIDEO_RECEIVED = 8;
-
+    private static final int TYPE_DATE_HEADER = 99;
     private final Context context;
     private final List<MessageModel> messages = new ArrayList<>();
     private final String myUid;
@@ -78,6 +78,21 @@ public class MessageAdapter extends RecyclerView.Adapter<RecyclerView.ViewHolder
     public void setOnImageClickListener(OnImageClickListener l)               { this.imageClickListener = l; }
     public void setOnImageLongClickListener(OnImageLongClickListener l)       { this.imageLongClickListener = l; }
 
+    // Cache of uid → photoUrl for group chats
+    private final java.util.Map<String, String> memberPhotos
+            = new java.util.HashMap<>();
+
+    private boolean isGroupChat = false;
+
+    public void setGroupChat(boolean isGroup) {
+        this.isGroupChat = isGroup;
+    }
+
+    public void setMemberPhotos(java.util.Map<String, String> photos) {
+        memberPhotos.clear();
+        if (photos != null) memberPhotos.putAll(photos);
+    }
+
     public void setHighlightedMessage(String messageId) {
         this.highlightedMessageId = messageId;
         notifyDataSetChanged();
@@ -102,12 +117,22 @@ public class MessageAdapter extends RecyclerView.Adapter<RecyclerView.ViewHolder
     // ── View type logic ───────────────────────────────────────────
     @Override
     public int getItemViewType(int position) {
+        // ✅ Back to original — no more TYPE_DATE_HEADER hijacking
         MessageModel msg = messages.get(position);
-        boolean isMine   = msg.getSenderId().equals(myUid);
-        if (msg.isImageMessage()) return isMine ? TYPE_IMAGE_SENT : TYPE_IMAGE_RECEIVED;
-        if (msg.isFileMessage())  return isMine ? TYPE_FILE_SENT  : TYPE_FILE_RECEIVED;
-        if (msg.isVideoMessage()) return isMine ? TYPE_VIDEO_SENT : TYPE_VIDEO_RECEIVED;
-        return isMine ? TYPE_TEXT_SENT : TYPE_TEXT_RECEIVED;
+        boolean isMine = msg.getSenderId() != null
+                && msg.getSenderId().equals(myUid);
+        String type = msg.getType() != null
+                ? msg.getType() : MessageModel.TYPE_TEXT;
+        switch (type) {
+            case MessageModel.TYPE_IMAGE:
+                return isMine ? TYPE_IMAGE_SENT : TYPE_IMAGE_RECEIVED;
+            case MessageModel.TYPE_VIDEO:
+                return isMine ? TYPE_VIDEO_SENT : TYPE_VIDEO_RECEIVED;
+            case MessageModel.TYPE_FILE:
+                return isMine ? TYPE_FILE_SENT : TYPE_FILE_RECEIVED;
+            default:
+                return isMine ? TYPE_TEXT_SENT : TYPE_TEXT_RECEIVED;
+        }
     }
 
     @NonNull
@@ -130,10 +155,19 @@ public class MessageAdapter extends RecyclerView.Adapter<RecyclerView.ViewHolder
     @Override
     public void onBindViewHolder(@NonNull RecyclerView.ViewHolder holder, int position) {
         MessageModel msg = messages.get(position);
-        boolean isHighlighted = msg.getMessageId() != null
-                && msg.getMessageId().equals(highlightedMessageId);
-        holder.itemView.setBackgroundColor(
-                isHighlighted ? 0x5566BB6A : android.graphics.Color.TRANSPARENT);
+
+        // ✅ Date separator — works for ALL view types
+        View dateSeparator = holder.itemView.findViewById(R.id.tvDateSeparator);
+        if (dateSeparator != null) {
+            boolean showDate = position == 0 ||
+                    !isSameDay(messages.get(position - 1).getTimestamp(),
+                            msg.getTimestamp());
+            dateSeparator.setVisibility(showDate ? View.VISIBLE : View.GONE);
+            if (showDate) {
+                ((TextView) dateSeparator).setText(
+                        formatDateHeader(msg.getTimestamp()));
+            }
+        }
 
         if      (holder instanceof TextSentVH)      ((TextSentVH) holder).bind(msg);
         else if (holder instanceof TextReceivedVH)  ((TextReceivedVH) holder).bind(msg);
@@ -147,6 +181,39 @@ public class MessageAdapter extends RecyclerView.Adapter<RecyclerView.ViewHolder
 
     @Override
     public int getItemCount() { return messages.size(); }
+
+    //DATE PUSH NOTIFICATION
+
+    private String formatDateHeader(com.google.firebase.Timestamp timestamp) {
+        if (timestamp == null) return "";
+        java.util.Date date = timestamp.toDate();
+        java.util.Calendar msgCal = java.util.Calendar.getInstance();
+        msgCal.setTime(date);
+        java.util.Calendar today = java.util.Calendar.getInstance();
+        java.util.Calendar yesterday = java.util.Calendar.getInstance();
+        yesterday.add(java.util.Calendar.DAY_OF_YEAR, -1);
+
+        if (msgCal.get(java.util.Calendar.YEAR) == today.get(java.util.Calendar.YEAR)
+                && msgCal.get(java.util.Calendar.DAY_OF_YEAR) == today.get(java.util.Calendar.DAY_OF_YEAR)) {
+            return "Today";
+        } else if (msgCal.get(java.util.Calendar.YEAR) == yesterday.get(java.util.Calendar.YEAR)
+                && msgCal.get(java.util.Calendar.DAY_OF_YEAR) == yesterday.get(java.util.Calendar.DAY_OF_YEAR)) {
+            return "Yesterday";
+        } else {
+            return new java.text.SimpleDateFormat("MMMM d, yyyy",
+                    java.util.Locale.getDefault()).format(date);
+        }
+    }
+
+    private boolean isSameDay(com.google.firebase.Timestamp t1, com.google.firebase.Timestamp t2) {
+        if (t1 == null || t2 == null) return false;
+        java.util.Calendar c1 = java.util.Calendar.getInstance();
+        java.util.Calendar c2 = java.util.Calendar.getInstance();
+        c1.setTime(t1.toDate());
+        c2.setTime(t2.toDate());
+        return c1.get(java.util.Calendar.YEAR) == c2.get(java.util.Calendar.YEAR)
+                && c1.get(java.util.Calendar.DAY_OF_YEAR) == c2.get(java.util.Calendar.DAY_OF_YEAR);
+    }
 
     // ════════════════════════════════════════════════════════════
     //  HELPER — forwarded label
@@ -319,7 +386,7 @@ public class MessageAdapter extends RecyclerView.Adapter<RecyclerView.ViewHolder
         void bind(MessageModel msg) {
             imgMessage.setVisibility(View.GONE);
             tvMessage.setVisibility(View.VISIBLE);
-            loadAvatar(imgAvatar);
+            loadAvatar(imgAvatar, msg.getSenderId()); // ✅ pass senderId
             bindForwardedLabel(itemView, msg);
             bindReplyPreview(itemView, msg);
 
@@ -425,7 +492,7 @@ public class MessageAdapter extends RecyclerView.Adapter<RecyclerView.ViewHolder
         }
 
         void bind(MessageModel msg) {
-            loadAvatar(imgAvatar);
+            loadAvatar(imgAvatar, msg.getSenderId()); // ✅ pass senderId
             bindForwardedLabel(itemView, msg);
             bindReplyPreview(itemView, msg);
 
@@ -536,7 +603,7 @@ public class MessageAdapter extends RecyclerView.Adapter<RecyclerView.ViewHolder
         }
 
         void bind(MessageModel msg) {
-            loadAvatar(imgAvatar);
+            loadAvatar(imgAvatar, msg.getSenderId()); // ✅ pass senderId
             bindForwardedLabel(itemView, msg);
             bindReplyPreview(itemView, msg);
 
@@ -644,7 +711,7 @@ public class MessageAdapter extends RecyclerView.Adapter<RecyclerView.ViewHolder
         }
 
         void bind(MessageModel msg) {
-            loadAvatar(imgAvatar);
+            loadAvatar(imgAvatar, msg.getSenderId()); // ✅ pass senderId
             bindForwardedLabel(itemView, msg);
 
             if (msg.isDeleted()) {
@@ -683,9 +750,19 @@ public class MessageAdapter extends RecyclerView.Adapter<RecyclerView.ViewHolder
     //  HELPERS
     // ════════════════════════════════════════════════════════════
 
-    private void loadAvatar(ImageView imgAvatar) {
-        if (otherPhotoUrl != null && !otherPhotoUrl.isEmpty()) {
-            Glide.with(context).load(otherPhotoUrl)
+    private void loadAvatar(ImageView imgAvatar, String senderId) {
+        String photoUrl = null;
+
+        // For group chats use sender-specific photo
+        if (isGroupChat && senderId != null) {
+            photoUrl = memberPhotos.get(senderId);
+        } else {
+            photoUrl = otherPhotoUrl;
+        }
+
+        if (photoUrl != null && !photoUrl.isEmpty()) {
+            Glide.with(context)
+                    .load(photoUrl)
                     .transform(new CircleCrop())
                     .placeholder(R.drawable.circle_grey_bg)
                     .into(imgAvatar);

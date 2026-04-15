@@ -2,7 +2,10 @@ package com.example.uccchat;
 
 import android.app.Application;
 import android.app.Activity;
+import android.content.SharedPreferences;
 import android.os.Bundle;
+
+import androidx.appcompat.app.AppCompatDelegate;
 
 import com.cloudinary.android.MediaManager;
 import com.google.firebase.auth.FirebaseAuth;
@@ -19,6 +22,21 @@ public class App extends Application {
     public void onCreate() {
         super.onCreate();
 
+        // ✅ Apply saved dark mode preference FIRST before any activity loads
+        android.content.SharedPreferences prefs =
+                getSharedPreferences("settings", MODE_PRIVATE);
+        boolean darkMode = prefs.getBoolean("dark_mode", false);
+        if (darkMode) {
+            androidx.appcompat.app.AppCompatDelegate
+                    .setDefaultNightMode(
+                            androidx.appcompat.app.AppCompatDelegate.MODE_NIGHT_YES);
+        } else {
+            androidx.appcompat.app.AppCompatDelegate
+                    .setDefaultNightMode(
+                            androidx.appcompat.app.AppCompatDelegate.MODE_NIGHT_NO);
+        }
+
+        // ... rest of your existing onCreate code (Cloudinary init, etc.)
         // Cloudinary init
         Map<String, String> config = new HashMap<>();
         config.put("cloud_name", "dpuunread");

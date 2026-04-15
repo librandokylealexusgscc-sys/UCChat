@@ -121,13 +121,14 @@ public class FirestoreHelper {
                                 Map<String, String> participantNames,
                                 Map<String, String> participantPhotos,
                                 String groupName,
+                                boolean manuallyNamed,
                                 String currentUserUid,
                                 OnChatReady callback) {
+
         Map<String, Long> unread = new HashMap<>();
         for (String uid : participantUids) unread.put(uid, 0L);
 
         Map<String, Object> chat = new HashMap<>();
-        chat.put("createdBy",         currentUserUid);
         chat.put("participants",      participantUids);
         chat.put("participantNames",  participantNames);
         chat.put("participantPhotos", participantPhotos);
@@ -138,6 +139,8 @@ public class FirestoreHelper {
         chat.put("groupName",         groupName);
         chat.put("groupPhoto",        null);
         chat.put("unreadCount",       unread);
+        chat.put("createdBy",         currentUserUid);
+        chat.put("manuallyNamed",     manuallyNamed); // ✅ NEW
 
         db.collection(COL_CHATS)
                 .add(chat)
@@ -543,9 +546,10 @@ public class FirestoreHelper {
     //  GROUP PHOTO UPDATE
     // ════════════════════════════════════════════════════════
 
-    public void updateGroupPhoto(String chatId, String photoUrl, OnActionComplete callback) {
+    public void updateGroupPhoto(String chatId, String photoUrl,
+                                 OnActionComplete callback) {
         db.collection(COL_CHATS).document(chatId)
-                .update("groupPhoto", photoUrl)
+                .update("groupPhoto", photoUrl)  // ✅ must be "groupPhoto"
                 .addOnSuccessListener(u -> callback.onSuccess())
                 .addOnFailureListener(e -> callback.onFailure(e.getMessage()));
     }

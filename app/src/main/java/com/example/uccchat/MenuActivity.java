@@ -1,6 +1,7 @@
 package com.example.uccchat;
 
 import android.content.Intent;
+import android.content.SharedPreferences;
 import android.os.Bundle;
 import android.view.View;
 import android.widget.LinearLayout;
@@ -11,6 +12,7 @@ import com.bumptech.glide.load.resource.bitmap.CircleCrop;
 import android.widget.ImageView;
 
 import androidx.appcompat.app.AppCompatActivity;
+import androidx.appcompat.app.AppCompatDelegate;
 
 import com.google.firebase.auth.FirebaseAuth;
 import com.google.firebase.auth.FirebaseUser;
@@ -20,6 +22,7 @@ public class MenuActivity extends AppCompatActivity {
     private LinearLayout centerConfirmPopup;
     private TextView popupOK, popupCancel;
 
+    private android.widget.Switch switchDarkMode;
     private LinearLayout btnTabChats, btnTabSearch, btnTabMenu;
     private LinearLayout btnPersonalDetails, btnPrivacyPolicy, btnTerms, btnDltAcc, btnLogout;
     private LinearLayout studentDeets;
@@ -54,7 +57,7 @@ public class MenuActivity extends AppCompatActivity {
         btnTabChats  = findViewById(R.id.btnTabChats);
         btnTabSearch = findViewById(R.id.btnTabSearch);
         btnTabMenu   = findViewById(R.id.btnTabMenu);
-        ImgProfile  = findViewById(R.id.ImgProfile);
+        ImgProfile   = findViewById(R.id.ImgProfile);
 
         btnPersonalDetails = findViewById(R.id.btnPersonalDetails);
         btnPrivacyPolicy   = findViewById(R.id.btnPrivacyPolicy);
@@ -66,9 +69,15 @@ public class MenuActivity extends AppCompatActivity {
         studentName       = findViewById(R.id.studentName);
         course_studentNum = findViewById(R.id.course_studentNum);
         centerConfirmPopup = findViewById(R.id.centerConfirmPopup);
-        popupOK = findViewById(R.id.popupOK);
-        popupCancel = findViewById(R.id.popupCancel);
+        popupOK            = findViewById(R.id.popupOK);
+        popupCancel        = findViewById(R.id.popupCancel);
         centerConfirmPopup.setVisibility(View.GONE);
+
+        switchDarkMode = findViewById(R.id.switchDarkMode);
+        if (switchDarkMode != null) {
+            SharedPreferences prefs = getSharedPreferences("settings", MODE_PRIVATE);
+            switchDarkMode.setChecked(prefs.getBoolean("dark_mode", false));
+        }
 
     }
 
@@ -133,7 +142,6 @@ public class MenuActivity extends AppCompatActivity {
                 navigateTo(SearchActivity.class, false));
 
         btnTabMenu.setOnClickListener(v -> {
-            // already here
         });
 
         btnPersonalDetails.setOnClickListener(v ->
@@ -148,20 +156,37 @@ public class MenuActivity extends AppCompatActivity {
         btnDltAcc.setOnClickListener(v ->
                 navigateTo(DeleteAccountActivity.class, false));
 
-        btnLogout.setOnClickListener(v -> {
-            centerConfirmPopup.setVisibility(View.VISIBLE);
-        });
+        btnLogout.setOnClickListener(v ->
+                centerConfirmPopup.setVisibility(View.VISIBLE));
 
         popupOK.setOnClickListener(v -> {
             mAuth.signOut();
             navigateTo(WelcomePageActivity.class, true);
         });
 
-        popupCancel.setOnClickListener(v -> {
-            centerConfirmPopup.setVisibility(View.GONE);
-        });
+        popupCancel.setOnClickListener(v ->
+                centerConfirmPopup.setVisibility(View.GONE));
 
+        if (switchDarkMode != null) {
+            SharedPreferences prefs = getSharedPreferences("settings", MODE_PRIVATE);
+            switchDarkMode.setOnCheckedChangeListener((btn, isChecked) -> {
+                prefs.edit().putBoolean("dark_mode", isChecked).apply();
+                AppCompatDelegate.setDefaultNightMode(
+                        isChecked
+                                ? AppCompatDelegate.MODE_NIGHT_YES
+                                : AppCompatDelegate.MODE_NIGHT_NO
+                );
+            });
+        }
+    }
 
+    // ✅ Updates the button label to show current state
+    private void updateDarkModeLabel() {
+        TextView tvDarkLabel = findViewById(R.id.switchDarkMode);
+        if (tvDarkLabel == null) return;
+        SharedPreferences prefs = getSharedPreferences("settings", MODE_PRIVATE);
+        boolean isDark = prefs.getBoolean("dark_mode", false);
+        tvDarkLabel.setText(isDark ? "Light Mode" : "Dark Mode");
     }
 
     private void navigateTo(Class<?> destination, boolean clearStack) {

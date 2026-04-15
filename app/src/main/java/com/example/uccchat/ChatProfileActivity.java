@@ -142,39 +142,90 @@ public class ChatProfileActivity extends AppCompatActivity {
     // ════════════════════════════════════════════════════════
 
     private void setupHeader() {
-        tvName.setText(chatName != null ? chatName : "");
-
-        if (isGroup) {
-            boolean hasCustomPhoto = chatPhoto != null
-                    && !chatPhoto.isEmpty()
-                    && !chatPhoto.equals("null");
-
-            if (hasCustomPhoto) {
-                Log.d(TAG, "Loading custom group photo");
-                Glide.with(this)
-                        .load(chatPhoto)
-                        .transform(new CircleCrop())
-                        .placeholder(R.drawable.circle_grey_bg)
-                        .into(imgProfile);
-            } else {
-                Log.d(TAG, "No custom photo — building composite");
-                loadCompositeGroupPhoto();
-            }
-            imgProfile.setOnClickListener(v -> imagePicker.launch("image/*"));
-
-        } else {
-            loadPhoto(chatPhoto);
-        }
-
+        // Back button
         View backBtn = findViewById(R.id.backBtn);
         if (backBtn != null) backBtn.setOnClickListener(v -> finish());
+
+        // Group photo — tap to change
+        if (isGroup && imgProfile != null) {
+            imgProfile.setOnClickListener(v ->
+                    imagePicker.launch("image/*"));
+        }
+
+        // ✅ Always fetch FRESH data directly from Firestore
+        FirebaseFirestore.getInstance()
+                .collection(FirestoreHelper.COL_CHATS)
+                .document(chatId)
+                .get()
+                .addOnSuccessListener(doc -> {
+                    if (!doc.exists()) return;
+
+                    if (isGroup) {
+                        // Group name
+                        String freshName = doc.getString("groupName");
+                        if (freshName != null && !freshName.isEmpty()) {
+                            chatName = freshName;
+                            if (tvName != null) tvName.setText(freshName);
+                        } else {
+                            if (tvName != null) tvName.setText(
+                                    chatName != null ? chatName : "Group");
+                        }
+
+                        // ✅ Group photo
+                        String freshPhoto = doc.getString("groupPhoto");
+                        android.util.Log.d("ChatProfile",
+                                "groupPhoto from Firestore: " + freshPhoto);
+
+                        if (freshPhoto != null && !freshPhoto.isEmpty()) {
+                            chatPhoto = freshPhoto;
+                            loadPhoto(freshPhoto);
+                        } else {
+                            android.util.Log.d("ChatProfile",
+                                    "No group photo found in Firestore");
+                            if (imgProfile != null) {
+                                imgProfile.setImageResource(
+                                        R.drawable.circle_grey_bg);
+                            }
+                        }
+
+                    } else {
+                        // 1-on-1 — fetch other user's photo
+                        if (tvName != null) tvName.setText(
+                                chatName != null ? chatName : "");
+
+                        if (otherUid != null) {
+                            FirestoreHelper.get().getUser(otherUid,
+                                    new FirestoreHelper.OnUserFetched() {
+                                        @Override
+                                        public void onSuccess(UserModel user) {
+                                            String photo = user.getPhotoUrl();
+                                            if (photo != null
+                                                    && !photo.isEmpty()) {
+                                                loadPhoto(photo);
+                                            }
+                                        }
+                                        @Override
+                                        public void onFailure(String e) {}
+                                    });
+                        } else if (chatPhoto != null && !chatPhoto.isEmpty()) {
+                            loadPhoto(chatPhoto);
+                        }
+                    }
+                })
+                .addOnFailureListener(e ->
+                        android.util.Log.e("ChatProfile",
+                                "Failed to fetch chat: " + e.getMessage()));
     }
 
     private void loadPhoto(String url) {
-        if (url != null && !url.isEmpty() && !url.equals("null")) {
-            Glide.with(this).load(url)
+        if (imgProfile == null) return;
+
+        if (url != null && !url.isEmpty()) {
+            Glide.with(this)
+                    .load(url)
                     .transform(new CircleCrop())
                     .placeholder(R.drawable.circle_grey_bg)
+                    .error(R.drawable.circle_grey_bg) // ✅ show grey on error
                     .into(imgProfile);
         } else {
             imgProfile.setImageResource(R.drawable.circle_grey_bg);
@@ -794,14 +845,59 @@ public class ChatProfileActivity extends AppCompatActivity {
     private void addMemberToGroup(UserModel user) {
         FirestoreHelper.get().addMemberToGroup(chatId, user,
                 new FirestoreHelper.OnActionComplete() {
-                    @Override public void onSuccess() {
+                    @Override
+                    public void onSuccess() {
                         participants.add(user.getUid());
+
+                        // ✅ Check if group name is auto-generated
+                        // (i.e. contains comma-separated first names)
+                        // If so, update it with new member's name
+                        checkAndUpdateGroupName(user);
+
                         Toast.makeText(ChatProfileActivity.this,
-                                user.getFirstName() + " added! ✅", Toast.LENGTH_SHORT).show();
+                                user.getFirstName() + " added! ✅",
+                                Toast.LENGTH_SHORT).show();
                     }
-                    @Override public void onFailure(String e) {
+
+                    @Override
+                    public void onFailure(String e) {
                         Toast.makeText(ChatProfileActivity.this,
-                                "Failed to add member.", Toast.LENGTH_SHORT).show();
+                                "Failed to add member.",
+                                Toast.LENGTH_SHORT).show();
+                    }
+                });
+    }
+
+    private void checkAndUpdateGroupName(UserModel newMember) {
+        FirebaseFirestore.getInstance()
+                .collection(FirestoreHelper.COL_CHATS)
+                .document(chatId)
+                .get()
+                .addOnSuccessListener(doc -> {
+                    if (!doc.exists()) return;
+
+                    String currentName = doc.getString("groupName");
+                    boolean wasManuallyNamed =
+                            doc.getBoolean("manuallyNamed") != null
+                                    && Boolean.TRUE.equals(
+                                    doc.getBoolean("manuallyNamed"));
+
+                    // Only update if name was NOT manually set
+                    if (!wasManuallyNamed && currentName != null) {
+                        // Add new member's first name to the group name
+                        String updatedName = currentName
+                                + ", " + newMember.getFirstName();
+
+                        // Update in Firestore
+                        FirebaseFirestore.getInstance()
+                                .collection(FirestoreHelper.COL_CHATS)
+                                .document(chatId)
+                                .update("groupName", updatedName)
+                                .addOnSuccessListener(u -> {
+                                    // Update UI
+                                    tvName.setText(updatedName);
+                                    chatName = updatedName;
+                                });
                     }
                 });
     }
@@ -848,10 +944,12 @@ public class ChatProfileActivity extends AppCompatActivity {
 
     private void uploadGroupPhoto(Uri uri) {
         Toast.makeText(this, "Uploading photo...", Toast.LENGTH_SHORT).show();
+
         MediaManager.get()
                 .upload(uri)
                 .option("public_id", "group_pictures/" + chatId)
                 .option("upload_preset", "ucchat_profiles")
+                .option("resource_type", "image") // ✅ explicitly set to image
                 .callback(new UploadCallback() {
                     @Override public void onStart(String r) {}
                     @Override public void onProgress(String r, long b, long t) {}
@@ -860,34 +958,51 @@ public class ChatProfileActivity extends AppCompatActivity {
                     @Override
                     public void onSuccess(String requestId, Map resultData) {
                         String url = (String) resultData.get("secure_url");
+                        android.util.Log.d("ChatProfile", "Cloudinary URL: " + url);
+
+                        if (url == null || url.isEmpty()) {
+                            runOnUiThread(() ->
+                                    Toast.makeText(ChatProfileActivity.this,
+                                            "Upload failed — no URL returned.",
+                                            Toast.LENGTH_SHORT).show());
+                            return;
+                        }
+
+                        // ✅ Save to Firestore
                         FirestoreHelper.get().updateGroupPhoto(chatId, url,
                                 new FirestoreHelper.OnActionComplete() {
-                                    @Override public void onSuccess() {
+                                    @Override
+                                    public void onSuccess() {
                                         runOnUiThread(() -> {
-                                            Glide.with(ChatProfileActivity.this)
-                                                    .load(url)
-                                                    .transform(new CircleCrop())
-                                                    .placeholder(R.drawable.circle_grey_bg)
-                                                    .into(imgProfile);
+                                            // ✅ Update UI immediately
+                                            loadPhoto(url);
                                             chatPhoto = url;
-                                            Toast.makeText(ChatProfileActivity.this,
+                                            Toast.makeText(
+                                                    ChatProfileActivity.this,
                                                     "Group photo updated! ✅",
                                                     Toast.LENGTH_SHORT).show();
                                         });
                                     }
-                                    @Override public void onFailure(String e) {
-                                        runOnUiThread(() -> Toast.makeText(ChatProfileActivity.this,
-                                                "Failed to update photo.", Toast.LENGTH_SHORT).show());
+                                    @Override
+                                    public void onFailure(String e) {
+                                        runOnUiThread(() ->
+                                                Toast.makeText(
+                                                        ChatProfileActivity.this,
+                                                        "Failed to save photo.",
+                                                        Toast.LENGTH_SHORT).show());
                                     }
                                 });
                     }
 
                     @Override
                     public void onError(String r, ErrorInfo e) {
-                        runOnUiThread(() -> Toast.makeText(ChatProfileActivity.this,
-                                "Upload failed.", Toast.LENGTH_SHORT).show());
+                        runOnUiThread(() ->
+                                Toast.makeText(ChatProfileActivity.this,
+                                        "Upload failed: " + e.getDescription(),
+                                        Toast.LENGTH_SHORT).show());
                     }
-                }).dispatch();
+                })
+                .dispatch();
     }
 
     // ════════════════════════════════════════════════════════
@@ -1047,6 +1162,7 @@ public class ChatProfileActivity extends AppCompatActivity {
         etName.requestFocus();
         etName.setSelection(etName.getText().length());
     }
+
 
     // ════════════════════════════════════════════════════════
     //  BACK PRESS

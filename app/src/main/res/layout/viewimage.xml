@@ -10,12 +10,12 @@
                                                   the long-press popup's btnForward
       imgViewFull         → the big ImageView
 -->
-<LinearLayout
-    xmlns:android="http://schemas.android.com/apk/res/android"
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
     android:orientation="vertical"
-    android:background="#000000">
+    android:backgroundTint="@color/bg_main">
 
     <!-- Top Bar -->
     <LinearLayout
@@ -41,7 +41,8 @@
             android:contentDescription="Back"
             android:clickable="true"
             android:focusable="true"
-            android:background="?attr/selectableItemBackgroundBorderless" />
+            android:background="?attr/selectableItemBackgroundBorderless"
+            app:tint="@color/text_primary"/>
 
         <!-- Spacer -->
         <View
@@ -60,7 +61,8 @@
             android:clickable="true"
             android:focusable="true"
             android:padding="2dp"
-            android:background="?attr/selectableItemBackgroundBorderless" />
+            android:background="?attr/selectableItemBackgroundBorderless"
+            app:tint="@color/text_primary"/>
 
         <!-- Forward Button — renamed to btnForwardViewImage -->
         <ImageView
@@ -74,6 +76,7 @@
             android:clickable="true"
             android:focusable="true"
             android:padding="2dp"
+            app:tint="@color/text_primary"
             android:background="?attr/selectableItemBackgroundBorderless" />
 
     </LinearLayout>

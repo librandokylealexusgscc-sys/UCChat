@@ -1,16 +1,16 @@
 <?xml version="1.0" encoding="utf-8"?>
-<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+<LinearLayout
+    xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
     xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
     android:orientation="vertical"
-    android:paddingLeft="10dp"
-    android:paddingRight="10dp"
-    android:background="@android:color/white"
-    tools:context=".MainActivity">
+    android:paddingLeft="0dp"
+    android:paddingRight="0dp"
+    android:layout_marginTop="20dp"
+    android:background="@color/bg_main">
 
-    <!-- Top App Bar -->
     <LinearLayout
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
@@ -18,10 +18,9 @@
         android:gravity="center_vertical"
         android:paddingStart="16dp"
         android:paddingEnd="16dp"
-        android:paddingTop="12dp"
-        android:layout_marginTop="49dp"
+        android:paddingTop="0dp"
+        android:layout_marginTop="0dp"
         android:paddingBottom="12dp">
-
         <TextView
             android:id="@+id/textViewTitle"
             android:layout_width="0dp"
@@ -30,10 +29,9 @@
             android:fontFamily="@font/bold"
             android:gravity="start|center_vertical"
             android:text="UCChat"
-            android:textColor="@android:color/black"
+            android:textColor="@color/text_primary"
             android:textSize="34sp"
             android:textStyle="bold" />
-
         <ImageButton
             android:id="@+id/btnAdd"
             android:layout_width="32dp"
@@ -44,8 +42,6 @@
             android:contentDescription="Add Button" />
     </LinearLayout>
 
-    <!-- Search Bar -->
-    <!-- Search Bar + Spinner -->
     <LinearLayout
         android:layout_width="match_parent"
         android:layout_height="40dp"
@@ -53,8 +49,6 @@
         android:layout_marginEnd="16dp"
         android:layout_marginBottom="16dp"
         android:orientation="horizontal">
-
-        <!-- Search Input -->
         <EditText
             android:id="@+id/edittxtSearchStudent"
             android:layout_width="0dp"
@@ -66,10 +60,8 @@
             android:paddingEnd="16dp"
             android:textSize="14sp"
             android:maxLines="1"
-            android:textColor="@android:color/black"
-            android:textColorHint="#999999"/>
-
-        <!-- Spinner (right side, same height) -->
+            android:textColor="@color/text_primary"
+            android:textColorHint="@color/text_secondary"/>
         <Spinner
             android:id="@+id/spinnerCourse"
             android:layout_width="130dp"
@@ -77,22 +69,17 @@
             android:layout_marginStart="5dp"
             android:background="@drawable/search_bar_background" />
     </LinearLayout>
+
     <View
         android:layout_width="match_parent"
         android:layout_height="1dp"
-        android:background="#DDDDDD" />
+        android:background="@color/divider_color" />
 
-    <!-- FrameLayout: stacks all 3 states -->
     <FrameLayout
         android:layout_width="match_parent"
         android:layout_height="0dp"
         android:layout_weight="1">
 
-        <!-- =============================================
-             STATE 1: EMPTY SEARCH BAR
-             VISIBLE when search bar is empty (default)
-             GONE    when user is typing
-             ============================================= -->
         <LinearLayout
             android:id="@+id/emptySearchLayout"
             android:layout_width="match_parent"
@@ -102,7 +89,6 @@
             android:padding="24dp"
             android:visibility="visible"
             tools:visibility="visible">
-
             <ImageView
                 android:id="@+id/imageViewSearching"
                 android:layout_width="200dp"
@@ -111,7 +97,6 @@
                 android:contentDescription="Searching illustration"
                 android:scaleType="centerInside"
                 android:src="@drawable/searching" />
-
             <TextView
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
@@ -120,10 +105,9 @@
                 android:fontFamily="@font/bold"
                 android:gravity="center"
                 android:text="Search a Yusisista (눈_눈)"
-                android:textColor="@android:color/black"
+                android:textColor="@color/text_primary"
                 android:textSize="18sp"
                 android:textStyle="bold" />
-
             <TextView
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
@@ -131,16 +115,10 @@
                 android:gravity="center"
                 android:lineSpacingMultiplier="1.1"
                 android:text="Make friends with any Yusisistas! Make\nsure to make this space a safe abode!"
-                android:textColor="#757575"
+                android:textColor="@color/text_secondary"
                 android:textSize="14sp" />
-
         </LinearLayout>
 
-        <!-- =============================================
-             STATE 2: SEARCH NOT FOUND
-             VISIBLE when search returns no results
-             GONE    otherwise
-             ============================================= -->
         <LinearLayout
             android:id="@+id/notFoundLayout"
             android:layout_width="match_parent"
@@ -150,7 +128,6 @@
             android:padding="24dp"
             android:visibility="gone"
             tools:visibility="gone">
-
             <ImageView
                 android:layout_width="220dp"
                 android:layout_height="200dp"
@@ -158,7 +135,6 @@
                 android:contentDescription="No results found illustration"
                 android:scaleType="fitCenter"
                 android:src="@drawable/studentnotfound" />
-
             <TextView
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
@@ -166,10 +142,9 @@
                 android:fontFamily="@font/bold"
                 android:gravity="center"
                 android:text="Oops (crickets)..."
-                android:textColor="@android:color/black"
+                android:textColor="@color/text_primary"
                 android:textSize="18sp"
                 android:textStyle="bold" />
-
             <TextView
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
@@ -177,16 +152,10 @@
                 android:gravity="center"
                 android:lineSpacingMultiplier="1"
                 android:text="Make sure you typed their correct \nStudent ID or name and try again!"
-                android:textColor="#757575"
+                android:textColor="@color/text_secondary"
                 android:textSize="14sp" />
-
         </LinearLayout>
 
-        <!-- =============================================
-             STATE 3: SEARCH RESULTS
-             VISIBLE when results are found
-             GONE    otherwise
-             ============================================= -->
         <ScrollView
             android:id="@+id/searchResultsScrollView"
             android:layout_width="match_parent"
@@ -194,14 +163,11 @@
             android:scrollbars="none"
             android:visibility="gone"
             tools:visibility="gone">
-
             <LinearLayout
                 android:id="@+id/searchResultsContainer"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:orientation="vertical">
-
-                <!-- Sample Result Item (replicated dynamically in Java) -->
                 <LinearLayout
                     android:id="@+id/chatItem"
                     android:layout_width="match_parent"
@@ -215,7 +181,6 @@
                     android:paddingTop="12dp"
                     android:paddingEnd="16dp"
                     android:paddingBottom="12dp">
-
                     <ImageView
                         android:id="@+id/ImgProfile"
                         android:layout_width="46dp"
@@ -223,7 +188,6 @@
                         android:background="@drawable/circle_grey_bg"
                         android:contentDescription="Student avatar"
                         android:scaleType="centerCrop" />
-
                     <TextView
                         android:id="@+id/studentName"
                         android:layout_width="0dp"
@@ -232,30 +196,24 @@
                         android:layout_weight="1"
                         android:fontFamily="@font/regular"
                         android:text="Eli Jarder"
-                        android:textColor="#000000"
+                        android:textColor="@color/text_primary"
                         android:textSize="15sp" />
-
                 </LinearLayout>
-
             </LinearLayout>
-
         </ScrollView>
-
     </FrameLayout>
 
     <View
         android:layout_width="match_parent"
         android:layout_height="1dp"
-        android:background="#DDDDDD" />
+        android:background="@color/divider_color" />
 
-    <!-- Bottom Navigation Bar -->
     <LinearLayout
         android:layout_width="match_parent"
         android:layout_height="64dp"
-        android:layout_marginBottom="22dp"
+        android:layout_marginBottom="0dp"
         android:orientation="horizontal"
-        android:background="#FBFBFB">
-
+        android:background="@color/nav_bar_bg">
         <LinearLayout
             android:id="@+id/btnTabChats"
             android:layout_width="0dp"
@@ -266,7 +224,6 @@
             android:clickable="true"
             android:focusable="true"
             android:background="?attr/selectableItemBackground">
-
             <ImageView
                 android:layout_width="24dp"
                 android:layout_height="24dp"
@@ -274,16 +231,14 @@
                 android:scaleType="centerCrop"
                 android:layout_marginBottom="2dp"
                 android:contentDescription="Chats Icon" />
-
             <TextView
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:fontFamily="@font/regular"
                 android:text="Chats"
-                android:textColor="#999999"
+                android:textColor="@color/text_secondary"
                 android:textSize="11sp" />
         </LinearLayout>
-
         <LinearLayout
             android:id="@+id/btnTabSearch"
             android:layout_width="0dp"
@@ -294,7 +249,6 @@
             android:clickable="true"
             android:focusable="true"
             android:background="?attr/selectableItemBackground">
-
             <ImageView
                 android:layout_width="24dp"
                 android:layout_height="24dp"
@@ -303,7 +257,6 @@
                 android:layout_marginBottom="2dp"
                 android:contentDescription="Search Icon"
                 app:tint="#4CAF50" />
-
             <TextView
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
@@ -312,7 +265,6 @@
                 android:textColor="#4CAF50"
                 android:textSize="11sp" />
         </LinearLayout>
-
         <LinearLayout
             android:id="@+id/btnTabMenu"
             android:layout_width="0dp"
@@ -323,7 +275,6 @@
             android:clickable="true"
             android:focusable="true"
             android:background="?attr/selectableItemBackground">
-
             <ImageView
                 android:layout_width="24dp"
                 android:layout_height="24dp"
@@ -331,16 +282,13 @@
                 android:scaleType="centerCrop"
                 android:layout_marginBottom="2dp"
                 android:contentDescription="Menu Icon" />
-
             <TextView
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:fontFamily="@font/regular"
                 android:text="Menu"
-                android:textColor="#999999"
+                android:textColor="@color/text_secondary"
                 android:textSize="11sp" />
         </LinearLayout>
-
     </LinearLayout>
-
 </LinearLayout>

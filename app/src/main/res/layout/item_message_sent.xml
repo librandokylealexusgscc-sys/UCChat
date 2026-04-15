@@ -10,7 +10,18 @@
     android:paddingTop="4dp"
     android:paddingBottom="4dp">
 
-    <!-- Bubble container -->
+    <TextView
+        android:id="@+id/tvDateSeparator"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:gravity="center"
+        android:textColor="@color/text_secondary"
+        android:textSize="12sp"
+        android:paddingTop="20dp"
+        android:paddingBottom="8dp"
+        android:fontFamily="@font/regular"
+        android:visibility="gone" />
+
     <LinearLayout
         android:id="@+id/bubbleContainer"
         android:layout_width="wrap_content"
@@ -21,19 +32,17 @@
         android:focusable="true"
         android:background="?attr/selectableItemBackgroundBorderless">
 
-        <!-- Forwarded indicator — shown when message was forwarded -->
         <TextView
             android:id="@+id/tvForwardedLabel"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:text="➦ Forwarded"
             android:textSize="11sp"
-            android:textColor="#888888"
+            android:textColor="@color/text_secondary"
             android:fontFamily="@font/regular"
             android:paddingBottom="2dp"
             android:visibility="gone" />
 
-        <!-- ── Reply preview (GONE unless this msg is a reply) ── -->
         <LinearLayout
             android:id="@+id/replyPreviewBar"
             android:layout_width="wrap_content"
@@ -49,7 +58,6 @@
             android:layout_marginBottom="2dp"
             android:visibility="gone">
 
-            <!-- Green accent stripe -->
             <View
                 android:layout_width="3dp"
                 android:layout_height="match_parent"
@@ -75,17 +83,13 @@
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
                     android:text="Original message..."
-                    android:textColor="#777777"
+                    android:textColor="@color/text_secondary"
                     android:textSize="11sp"
                     android:maxLines="1"
                     android:ellipsize="end" />
-
             </LinearLayout>
-
         </LinearLayout>
-        <!-- ── End reply preview ── -->
 
-        <!-- Text message -->
         <TextView
             android:id="@+id/tvMessage"
             android:layout_width="wrap_content"
@@ -97,13 +101,12 @@
             android:paddingEnd="12dp"
             android:paddingBottom="8dp"
             android:fontFamily="@font/regular"
-            android:textColor="#FFFFFF"
+            android:textColor="#ffffff"
             android:textSize="14sp"
             android:autoLink="web"
             android:linksClickable="true"
             android:visibility="gone" />
 
-        <!-- Image message -->
         <ImageView
             android:id="@+id/imgMessage"
             android:layout_width="180dp"
@@ -111,10 +114,8 @@
             android:scaleType="centerCrop"
             android:contentDescription="Image message"
             android:visibility="gone" />
-
     </LinearLayout>
 
-    <!-- Timestamp + Seen -->
     <LinearLayout
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
@@ -127,7 +128,7 @@
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:fontFamily="@font/regular"
-            android:textColor="#AAAAAA"
+            android:textColor="@color/text_hint"
             android:textSize="10sp"
             android:paddingEnd="4dp" />
 
@@ -136,9 +137,7 @@
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:fontFamily="@font/regular"
-            android:textColor="#AAAAAA"
+            android:textColor="@color/text_hint"
             android:textSize="10sp" />
-
     </LinearLayout>
-
 </LinearLayout>

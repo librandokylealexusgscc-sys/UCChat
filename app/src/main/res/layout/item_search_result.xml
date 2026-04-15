@@ -28,7 +28,6 @@
         android:layout_marginStart="14dp"
         android:layout_weight="1"
         android:fontFamily="@font/regular"
-        android:textColor="#000000"
+        android:textColor="@color/text_primary"
         android:textSize="15sp" />
-
 </LinearLayout>

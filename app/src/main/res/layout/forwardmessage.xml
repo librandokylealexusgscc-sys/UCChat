@@ -1,14 +1,13 @@
 <?xml version="1.0" encoding="utf-8"?>
-<LinearLayout
-    xmlns:android="http://schemas.android.com/apk/res/android"
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
     android:orientation="vertical"
     android:paddingLeft="10dp"
     android:paddingRight="10dp"
-    android:background="#FFFFFF">
+    android:background="@color/bg_main">
 
-    <!-- Top App Bar -->
     <LinearLayout
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
@@ -18,8 +17,6 @@
         android:paddingEnd="16dp"
         android:paddingBottom="12dp"
         android:gravity="center_vertical">
-
-        <!-- Back Arrow -->
         <ImageView
             android:id="@+id/backBtn"
             android:layout_width="wrap_content"
@@ -27,9 +24,8 @@
             android:paddingTop="13dp"
             android:paddingRight="15dp"
             android:scaleType="centerCrop"
-            android:src="@drawable/back" />
-
-        <!-- Title -->
+            android:src="@drawable/back"
+            app:tint="@color/text_primary"/>
         <TextView
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
@@ -37,13 +33,11 @@
             android:paddingStart="6dp"
             android:layout_marginTop="2dp"
             android:text="Send to"
-            android:textColor="#000000"
+            android:textColor="@color/text_primary"
             android:textSize="34sp"
             android:textStyle="bold" />
-
     </LinearLayout>
 
-    <!-- Write a message input -->
     <LinearLayout
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
@@ -52,7 +46,6 @@
         android:paddingEnd="16dp"
         android:paddingTop="4dp"
         android:paddingBottom="4dp">
-
         <EditText
             android:id="@+id/ForwardMessage"
             android:layout_width="match_parent"
@@ -63,19 +56,15 @@
             android:inputType="text"
             android:paddingTop="6dp"
             android:paddingBottom="8dp"
-            android:textColor="#000000"
-            android:textColorHint="#AAAAAA"
+            android:textColor="@color/text_primary"
+            android:textColorHint="@color/text_hint"
             android:textSize="14sp" />
-
-        <!-- Underline -->
         <View
             android:layout_width="match_parent"
             android:layout_height="1dp"
-            android:background="#CCCCCC" />
-
+            android:background="@color/divider_color" />
     </LinearLayout>
 
-    <!-- Search Bar -->
     <EditText
         android:id="@+id/SearchStudent"
         android:layout_width="match_parent"
@@ -91,11 +80,10 @@
         android:maxLines="1"
         android:paddingStart="20dp"
         android:paddingEnd="16dp"
-        android:textColor="@android:color/black"
-        android:textColorHint="#999999"
+        android:textColor="@color/text_primary"
+        android:textColorHint="@color/text_secondary"
         android:textSize="14sp" />
 
-    <!-- "Suggested" Label -->
     <TextView
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
@@ -104,15 +92,9 @@
         android:paddingEnd="16dp"
         android:paddingBottom="6dp"
         android:text="Suggested"
-        android:textColor="#888888"
+        android:textColor="@color/text_secondary"
         android:textSize="13sp" />
 
-    <!-- ── Undo Banner ─────────────────────────────────────── -->
-    <!--
-        Shown for 4 seconds after forwarding a message.
-        "Message sent  [UNDO]"
-        GONE by default; ForwardActivity makes it VISIBLE.
-    -->
     <LinearLayout
         android:id="@+id/undoBanner"
         android:layout_width="match_parent"
@@ -123,7 +105,6 @@
         android:paddingStart="16dp"
         android:paddingEnd="8dp"
         android:visibility="gone">
-
         <TextView
             android:id="@+id/tvUndoText"
             android:layout_width="0dp"
@@ -133,7 +114,6 @@
             android:textColor="#FFFFFF"
             android:textSize="14sp"
             android:fontFamily="@font/regular" />
-
         <TextView
             android:id="@+id/btnUndo"
             android:layout_width="wrap_content"
@@ -149,10 +129,8 @@
             android:background="?attr/selectableItemBackground"
             android:clickable="true"
             android:focusable="true" />
-
     </LinearLayout>
 
-    <!-- ── Chat list (RecyclerView replaces the old ScrollView) ── -->
     <androidx.recyclerview.widget.RecyclerView
         android:id="@+id/recyclerForwardChats"
         android:layout_width="match_parent"
@@ -161,5 +139,4 @@
         android:clipToPadding="false"
         android:paddingTop="4dp"
         android:paddingBottom="8dp" />
-
 </LinearLayout>

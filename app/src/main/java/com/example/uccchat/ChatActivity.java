@@ -158,9 +158,13 @@ public class ChatActivity extends AppCompatActivity {
     @Override
     protected void onResume() {
         super.onResume();
-        ChatNotificationService.activeChatId = chatId;
-        if (chatId != null) NotificationHelper.cancelNotification(this, chatId);
+        // ✅ Re-fetch fresh data every time we return
+        // (e.g. after changing group photo in ChatProfileActivity)
+        if (chatId != null) {
+            fetchFreshChatData();
+        }
     }
+
 
     @Override
     protected void onPause() {
@@ -254,6 +258,7 @@ public class ChatActivity extends AppCompatActivity {
             container.addView(recyclerMessages);
         }
 
+
         LinearLayoutManager lm = new LinearLayoutManager(this);
         lm.setStackFromEnd(true);
         recyclerMessages.setLayoutManager(lm);
@@ -263,6 +268,7 @@ public class ChatActivity extends AppCompatActivity {
 
         messageAdapter.setOnImageClickListener((message, imageUrl) ->
                 openImageViewer(message, imageUrl));
+
 
         messageAdapter.setOnMessageLongClickListener((message, anchor) -> {
             selectedMessage = message;
@@ -274,6 +280,42 @@ public class ChatActivity extends AppCompatActivity {
             selectedMessage = message;
             showMediaOptionsDialog(message, isMine);
         });
+
+// ✅ If group chat, load all member photos
+        if (isGroup) {
+            messageAdapter.setGroupChat(true);
+            loadGroupMemberPhotos();
+        }
+    }
+
+    private void loadGroupMemberPhotos() {
+        FirebaseFirestore.getInstance()
+                .collection(FirestoreHelper.COL_CHATS)
+                .document(chatId)
+                .get()
+                .addOnSuccessListener(doc -> {
+                    if (!doc.exists()) return;
+
+                    // participantPhotos is a Map<String, String>
+                    // uid → photoUrl
+                    java.util.Map<String, Object> rawPhotos =
+                            (java.util.Map<String, Object>) doc.get("participantPhotos");
+
+                    if (rawPhotos != null) {
+                        java.util.Map<String, String> photos =
+                                new java.util.HashMap<>();
+                        for (java.util.Map.Entry<String, Object> entry
+                                : rawPhotos.entrySet()) {
+                            if (entry.getValue() != null) {
+                                photos.put(entry.getKey(),
+                                        entry.getValue().toString());
+                            }
+                        }
+                        messageAdapter.setMemberPhotos(photos);
+                        // Refresh adapter with new photos
+                        messageAdapter.notifyDataSetChanged();
+                    }
+                });
     }
 
     // ════════════════════════════════════════════════════════
@@ -449,30 +491,11 @@ public class ChatActivity extends AppCompatActivity {
 
     private void setupHeader() {
         tvName.setText(chatName != null ? chatName : "Chat");
-
-        if (chatPhoto != null && !chatPhoto.isEmpty()) {
-            Glide.with(this).load(chatPhoto)
-                    .transform(new CircleCrop())
-                    .placeholder(R.drawable.circle_grey_bg)
-                    .into(imgProfile);
-        } else {
-            imgProfile.setImageResource(R.drawable.circle_grey_bg);
-        }
-
         btnBack.setOnClickListener(v -> finish());
 
-        if (isGroup) {
-            tvStatus.setText("Group Chat");
-            tvStatus.setTextColor(0xFF888888);
-            if (onlineDot != null) onlineDot.setVisibility(View.GONE);
-            loadGroupMemberCount();
-        } else {
-            otherUid = getIntent().getStringExtra("otherUid");
-            if (otherUid != null) {
-                loadOtherUserInfo(otherUid);
-                startPresenceListener(otherUid);
-            }
-        }
+        // ✅ Always fetch fresh data from Firestore
+        // instead of relying on potentially stale Intent extras
+        fetchFreshChatData();
 
         imgProfile.setOnClickListener(v -> {
             Intent intent = new Intent(this, ChatProfileActivity.class);
@@ -480,9 +503,106 @@ public class ChatActivity extends AppCompatActivity {
             intent.putExtra("chatName",  chatName);
             intent.putExtra("chatPhoto", chatPhoto);
             intent.putExtra("isGroup",   isGroup);
-            if (!isGroup && otherUid != null) intent.putExtra("otherUid", otherUid);
-            startActivityForResult(intent, REQ_CHAT_PROFILE);
+            if (!isGroup && otherUid != null) {
+                intent.putExtra("otherUid", otherUid);
+            }
+            startActivity(intent);
         });
+    }
+
+    private void fetchFreshChatData() {
+        if (isGroup) {
+            // For group chats — fetch groupPhoto and groupName
+            FirebaseFirestore.getInstance()
+                    .collection(FirestoreHelper.COL_CHATS)
+                    .document(chatId)
+                    .get()
+                    .addOnSuccessListener(doc -> {
+                        if (!doc.exists()) return;
+
+                        // ✅ Fresh group name
+                        String freshName = doc.getString("groupName");
+                        if (freshName != null && !freshName.isEmpty()) {
+                            chatName = freshName;
+                            tvName.setText(freshName);
+                        }
+
+                        // ✅ Fresh group photo
+                        String freshPhoto = doc.getString("groupPhoto");
+                        if (freshPhoto != null && !freshPhoto.isEmpty()) {
+                            chatPhoto = freshPhoto;
+                            Glide.with(this)
+                                    .load(freshPhoto)
+                                    .transform(new CircleCrop())
+                                    .placeholder(R.drawable.circle_grey_bg)
+                                    .into(imgProfile);
+                        } else {
+                            imgProfile.setImageResource(R.drawable.circle_grey_bg);
+                        }
+
+                        // Load member count
+                        java.util.List<String> p =
+                                (java.util.List<String>) doc.get("participants");
+                        if (p != null && tvProgramId != null) {
+                            tvProgramId.setText(p.size() + " members");
+                            tvProgramId.setVisibility(View.VISIBLE);
+                        }
+
+                        // Load member photos for avatars in messages
+                        loadGroupMemberPhotos();
+
+                        tvStatus.setText("Group Chat");
+                        tvStatus.setTextColor(0xFF888888);
+                        if (onlineDot != null) onlineDot.setVisibility(View.GONE);
+                    });
+        } else {
+            // For 1-on-1 chats — fetch other user's data
+            otherUid = getIntent().getStringExtra("otherUid");
+            if (otherUid != null) {
+                FirestoreHelper.get().getUser(otherUid,
+                        new FirestoreHelper.OnUserFetched() {
+                            @Override
+                            public void onSuccess(UserModel user) {
+                                // ✅ Fresh photo
+                                String freshPhoto = user.getPhotoUrl();
+                                if (freshPhoto != null && !freshPhoto.isEmpty()) {
+                                    chatPhoto = freshPhoto;
+                                    Glide.with(ChatActivity.this)
+                                            .load(freshPhoto)
+                                            .transform(new CircleCrop())
+                                            .placeholder(R.drawable.circle_grey_bg)
+                                            .into(imgProfile);
+                                } else {
+                                    imgProfile.setImageResource(
+                                            R.drawable.circle_grey_bg);
+                                }
+
+                                // Program · StudentID
+                                if (tvProgramId != null) {
+                                    String info = "";
+                                    if (user.getCourse() != null
+                                            && !user.getCourse().isEmpty()) {
+                                        info += user.getCourse();
+                                    }
+                                    if (user.getStudentId() != null
+                                            && !user.getStudentId().isEmpty()) {
+                                        info += (info.isEmpty() ? "" : " · ")
+                                                + user.getStudentId();
+                                    }
+                                    if (!info.isEmpty()) {
+                                        tvProgramId.setText(info);
+                                        tvProgramId.setVisibility(View.VISIBLE);
+                                    }
+                                }
+                            }
+                            @Override
+                            public void onFailure(String error) {}
+                        });
+
+                // Start presence listener
+                startPresenceListener(otherUid);
+            }
+        }
     }
 
     private void loadOtherUserInfo(String uid) {

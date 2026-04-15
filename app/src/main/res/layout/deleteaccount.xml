@@ -4,6 +4,7 @@
     xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
     android:layout_height="match_parent">
+
     <ProgressBar
         android:id="@+id/progressBar"
         android:layout_width="wrap_content"
@@ -11,16 +12,14 @@
         android:layout_gravity="center"
         android:layout_marginTop="12dp"
         android:visibility="gone" />
-    <!-- MAIN CONTENT -->
+
     <LinearLayout
         android:layout_width="match_parent"
         android:layout_height="match_parent"
         android:orientation="vertical"
         android:padding="24dp"
-        android:background="#F5F5F5">
+        android:background="@color/bg_secondary">
 
-
-        <!-- Title -->
         <TextView
             android:id="@+id/tvTitle"
             android:layout_width="wrap_content"
@@ -29,11 +28,10 @@
             android:layout_marginBottom="16dp"
             android:fontFamily="@font/bold"
             android:text="Delete Account"
-            android:textColor="#000000"
+            android:textColor="@color/text_primary"
             android:textSize="34sp"
             android:textStyle="bold" />
 
-        <!-- Description -->
         <TextView
             android:id="@+id/tvDescription"
             android:layout_width="match_parent"
@@ -42,11 +40,10 @@
             android:layout_marginBottom="16dp"
             android:fontFamily="@font/regular"
             android:text="This action is permanent and cannot be undone. All of your data, settings, and history will be permanently erased. You will lose access to all services associated with this account."
-            android:textColor="#333333"
+            android:textColor="@color/text_primary"
             android:lineSpacingExtra="4dp"
             android:textSize="16sp" />
 
-        <!-- Instruction -->
         <TextView
             android:id="@+id/tvInstruction"
             android:layout_width="match_parent"
@@ -55,11 +52,9 @@
             android:layout_marginBottom="20dp"
             android:fontFamily="@font/regular"
             android:text="To confirm, type your username in the field below."
-            android:textColor="#333333"
+            android:textColor="@color/text_primary"
             android:textSize="16sp" />
 
-
-        <!-- Input Field -->
         <EditText
             android:id="@+id/etUsername"
             android:layout_width="match_parent"
@@ -67,10 +62,9 @@
             android:background="@drawable/input_rounded_bg"
             android:fontFamily="@font/sf_pro_display_medium"
             android:padding="12dp"
-            android:textColor="#020202"
+            android:textColor="@color/text_primary"
             android:textSize="16sp" />
 
-        <!-- Username Error Text -->
         <TextView
             android:id="@+id/tvUsernameError"
             android:layout_width="match_parent"
@@ -85,14 +79,12 @@
             android:visibility="gone"
             tools:visibility="visible" />
 
-        <!-- Buttons Container -->
         <LinearLayout
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:layout_marginTop="16dp"
             android:orientation="horizontal"
             android:gravity="center">
-
             <Button
                 android:id="@+id/btnCancel"
                 android:layout_width="170dp"
@@ -102,7 +94,6 @@
                 android:fontFamily="@font/regular"
                 android:text="Cancel"
                 android:textColor="#000000" />
-
             <Button
                 android:id="@+id/btnDeleteAccount"
                 android:layout_width="170dp"
@@ -111,12 +102,9 @@
                 android:fontFamily="@font/regular"
                 android:text="Delete Account"
                 android:textColor="#FFFFFF" />
-
         </LinearLayout>
-
     </LinearLayout>
 
-    <!-- DIM BACKGROUND -->
     <View
         android:id="@+id/dimBackground"
         android:layout_width="match_parent"
@@ -124,7 +112,6 @@
         android:background="#66000000"
         android:visibility="gone" />
 
-    <!-- CENTER CONFIRM POPUP -->
     <LinearLayout
         android:id="@+id/centerConfirmPopup"
         android:layout_width="280dp"
@@ -135,8 +122,6 @@
         android:orientation="vertical"
         android:visibility="gone"
         tools:visibility="visible">
-
-        <!-- MESSAGE -->
         <TextView
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
@@ -144,23 +129,17 @@
             android:gravity="center"
             android:padding="20dp"
             android:text="Are you sure you want to permanently delete your account?"
-            android:textColor="#000000"
+            android:textColor="@color/text_primary"
             android:textSize="16sp" />
-
-        <!-- HORIZONTAL DIVIDER -->
         <View
             android:layout_width="match_parent"
             android:layout_height="1dp"
-            android:background="#DDDDDD" />
-
-        <!-- BUTTON ROW -->
+            android:background="@color/divider_color" />
         <LinearLayout
             android:layout_width="match_parent"
             android:layout_height="48dp"
             android:orientation="horizontal"
             android:weightSum="2">
-
-            <!-- CANCEL BUTTON -->
             <TextView
                 android:id="@+id/popupCancel"
                 android:layout_width="0dp"
@@ -174,14 +153,10 @@
                 android:text="Cancel"
                 android:textColor="#4CAF50"
                 android:textSize="15sp" />
-
-            <!-- VERTICAL DIVIDER -->
             <View
                 android:layout_width="1dp"
                 android:layout_height="match_parent"
-                android:background="#DDDDDD" />
-
-            <!-- OK BUTTON -->
+                android:background="@color/divider_color" />
             <TextView
                 android:id="@+id/popupOK"
                 android:layout_width="0dp"
@@ -195,9 +170,6 @@
                 android:text="Yes"
                 android:textColor="#E53935"
                 android:textSize="15sp" />
-
         </LinearLayout>
-
     </LinearLayout>
-
 </FrameLayout>

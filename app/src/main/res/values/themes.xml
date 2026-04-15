@@ -1,21 +1,11 @@
-<resources xmlns:tools="http://schemas.android.com/tools">
-    <!-- Base application theme. -->
-    <style name="Base.Theme.SearchMenu" parent="Theme.Material3.DayNight.NoActionBar">
-        <!-- Customize your light theme here. -->
-        <!-- <item name="colorPrimary">@color/my_light_primary</item> -->
+<resources>
+    <style name="Theme.UCCChat" parent="Theme.MaterialComponents.DayNight.NoActionBar">
+        <item name="colorPrimary">#4CAF50</item>
+        <item name="colorPrimaryVariant">#388E3C</item>
+        <item name="colorOnPrimary">#FFFFFF</item>
     </style>
 
-    <style name="Theme.SearchMenu" parent="Base.Theme.SearchMenu" />
-    <style name="IOSBottomSheetStyle" parent="Theme.Design.Light.BottomSheetDialog">
-        <item name="bottomSheetStyle">@style/IOSBottomSheet</item>
-        <item name="android:windowIsFloating">false</item>
-        <item name="android:statusBarColor">@android:color/transparent</item>
-    </style>
-
-    <style name="IOSBottomSheet" parent="Widget.Design.BottomSheet.Modal">
-        <item name="android:background">@drawable/bg_bottom_sheet</item>
-        <item name="behavior_peekHeight">400dp</item>
-        <item name="behavior_hideable">true</item>
-        <item name="behavior_skipCollapsed">true</item>
+    <style name="NoAnimationTheme" parent="Theme.UCCChat">
+        <item name="android:windowAnimationStyle">@null</item>
     </style>
 </resources>

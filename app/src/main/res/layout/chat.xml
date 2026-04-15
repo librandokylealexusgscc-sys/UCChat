@@ -5,11 +5,10 @@
     android:layout_width="match_parent"
     android:layout_height="match_parent"
     android:orientation="vertical"
-    android:paddingLeft="10dp"
-    android:paddingRight="10dp"
-    android:background="#FFFFFF">
+    android:paddingLeft="0dp"
+    android:paddingRight="0dp"
+    android:background="@color/bg_main">
 
-    <!-- Top App Bar -->
     <LinearLayout
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
@@ -17,8 +16,16 @@
         android:gravity="center_vertical"
         android:paddingStart="16dp"
         android:paddingEnd="16dp"
-        android:layout_marginTop="60.6dp"
+        android:layout_marginTop="20dp"
         android:paddingBottom="12dp">
+
+<!--        <ImageView-->
+<!--            android:layout_width="36dp"-->
+<!--            android:layout_height="36dp"-->
+<!--            android:src="@mipmap/ic_launcher"-->
+<!--            android:scaleType="fitCenter"-->
+<!--            android:layout_marginEnd="8dp"-->
+<!--            android:contentDescription="UCC Logo" />-->
 
         <TextView
             android:id="@+id/textViewTitle"
@@ -28,7 +35,7 @@
             android:fontFamily="@font/bold"
             android:gravity="start|center_vertical"
             android:text="UCChat"
-            android:textColor="@android:color/black"
+            android:textColor="@color/text_primary"
             android:textSize="34sp"
             android:textStyle="bold" />
 
@@ -40,10 +47,8 @@
             android:scaleType="fitCenter"
             android:background="?attr/selectableItemBackgroundBorderless"
             android:contentDescription="Add Button" />
-
     </LinearLayout>
 
-    <!-- Tab Row: All | Group | Unread -->
     <LinearLayout
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
@@ -52,7 +57,6 @@
         android:paddingEnd="16dp"
         android:paddingBottom="8dp">
 
-        <!-- All Tab (selected) -->
         <TextView
             android:id="@+id/btnAllChat"
             android:layout_width="0dp"
@@ -68,7 +72,6 @@
             android:textSize="13sp"
             android:textStyle="bold" />
 
-        <!-- Group Tab -->
         <TextView
             android:id="@+id/btnGroup"
             android:layout_width="0dp"
@@ -80,10 +83,9 @@
             android:paddingTop="6dp"
             android:paddingBottom="6dp"
             android:text="Group"
-            android:textColor="#888888"
+            android:textColor="@color/text_secondary"
             android:textSize="13sp" />
 
-        <!-- Unread Tab -->
         <TextView
             android:id="@+id/btnUnread"
             android:layout_width="0dp"
@@ -95,101 +97,78 @@
             android:paddingTop="6dp"
             android:paddingBottom="6dp"
             android:text="Unread"
-            android:textColor="#888888"
+            android:textColor="@color/text_secondary"
             android:textSize="13sp" />
-
     </LinearLayout>
 
-    <!-- Divider -->
     <View
         android:layout_width="match_parent"
         android:layout_height="1dp"
-        android:background="#E0E0E0" />
+        android:background="@color/divider_color" />
 
-    <!-- Content area: wraps both empty state and RecyclerView -->
     <FrameLayout
         android:layout_width="match_parent"
         android:layout_height="0dp"
         android:layout_weight="1">
 
-        <!-- =============================================
-             EMPTY STATE VIEW
-             Visibility: VISIBLE when chat list is empty
-                         GONE    when there are chats
-             Control in Java/Kotlin:
-               emptyStateLayout.visibility = View.VISIBLE / View.GONE
-             ============================================= -->
         <LinearLayout
             android:id="@+id/emptyStateLayout"
             android:layout_width="match_parent"
             android:layout_height="match_parent"
-            android:orientation="vertical"
             android:gravity="center"
+            android:orientation="vertical"
             android:paddingStart="32dp"
             android:paddingEnd="32dp"
             android:visibility="visible">
 
-            <!-- Waiting illustration -->
             <ImageView
                 android:id="@+id/imgWaiting"
                 android:layout_width="220dp"
                 android:layout_height="220dp"
-                android:src="@drawable/waiting"
+                android:contentDescription="No chats yet illustration"
                 android:scaleType="fitCenter"
-                android:contentDescription="No chats yet illustration" />
+                android:src="@drawable/waiting" />
 
-            <!-- Title -->
             <TextView
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:layout_marginTop="16dp"
                 android:fontFamily="@font/bold"
+                android:gravity="center"
                 android:text="Waiting... ( ͡~ ͜ʖ ͡°)"
-                android:textColor="#000000"
+                android:textColor="@color/text_primary"
                 android:textSize="20sp"
-                android:textStyle="bold"
-                android:gravity="center" />
+                android:textStyle="bold" />
 
-            <!-- Subtitle -->
             <TextView
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:layout_marginTop="8dp"
                 android:fontFamily="@font/regular"
-                android:text="Looks like your inbox is empty. Start a \nnew conversation with a Yusisita now by \ntapping the button below."
-                android:textColor="#888888"
-                android:textSize="14sp"
                 android:gravity="center"
-                android:lineSpacingMultiplier="1" />
+                android:lineSpacingMultiplier="1"
+                android:text="Looks like your inbox is empty. Start a \nnew conversation with a Yusisita now by \ntapping the button below."
+                android:textColor="@color/text_secondary"
+                android:textSize="14sp" />
 
-            <!-- Start New Chat Button -->
             <TextView
                 android:id="@+id/btnStartNewChat"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:layout_marginTop="24dp"
                 android:background="@drawable/btn_start_new_chat"
+                android:clickable="true"
+                android:focusable="true"
                 android:fontFamily="@font/regular"
                 android:paddingStart="28dp"
-                android:paddingEnd="28dp"
                 android:paddingTop="12dp"
+                android:paddingEnd="28dp"
                 android:paddingBottom="12dp"
                 android:text="+ Start New Chat"
-                android:textColor="#000000"
-                android:textSize="14sp"
-                android:clickable="true"
-                android:focusable="true" />
-
+                android:textColor="@color/text_primary"
+                android:textSize="14sp" />
         </LinearLayout>
 
-        <!-- =============================================
-             CHAT LIST (RecyclerView)
-             Visibility: GONE    when chat list is empty
-                         VISIBLE when there are chats
-             Control in Java/Kotlin:
-               recyclerViewChats.visibility = View.VISIBLE / View.GONE
-             ============================================= -->
-        <!-- CHAT LIST -->
         <androidx.recyclerview.widget.RecyclerView
             android:id="@+id/recyclerViewChats"
             android:layout_width="match_parent"
@@ -197,23 +176,19 @@
             android:scrollbars="none"
             android:overScrollMode="never"
             android:visibility="gone" />
-
-
     </FrameLayout>
 
-    <!-- Divider above bottom nav -->
     <View
         android:layout_width="match_parent"
         android:layout_height="1dp"
-        android:background="#DDDDDD" />
+        android:background="@color/divider_color" />
 
-    <!-- Bottom Navigation Bar -->
     <LinearLayout
         android:layout_width="match_parent"
         android:layout_height="64dp"
-        android:layout_marginBottom="22dp"
+        android:layout_marginBottom="0dp"
         android:orientation="horizontal"
-        android:background="#FBFBFB">
+        android:background="@color/nav_bar_bg">
 
         <LinearLayout
             android:id="@+id/btnTabChats"
@@ -225,7 +200,6 @@
             android:clickable="true"
             android:focusable="true"
             android:background="?attr/selectableItemBackground">
-
             <ImageView
                 android:layout_width="24dp"
                 android:layout_height="24dp"
@@ -233,7 +207,6 @@
                 android:scaleType="centerCrop"
                 android:layout_marginBottom="2dp"
                 android:contentDescription="Chats Icon" />
-
             <TextView
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
@@ -241,7 +214,6 @@
                 android:text="Chats"
                 android:textColor="#4CAF50"
                 android:textSize="11sp" />
-
         </LinearLayout>
 
         <LinearLayout
@@ -254,7 +226,6 @@
             android:clickable="true"
             android:focusable="true"
             android:background="?attr/selectableItemBackground">
-
             <ImageView
                 android:layout_width="24dp"
                 android:layout_height="24dp"
@@ -262,15 +233,13 @@
                 android:scaleType="centerCrop"
                 android:layout_marginBottom="2dp"
                 android:contentDescription="Search Icon" />
-
             <TextView
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:fontFamily="@font/regular"
                 android:text="Search"
-                android:textColor="#999999"
+                android:textColor="@color/text_secondary"
                 android:textSize="11sp" />
-
         </LinearLayout>
 
         <LinearLayout
@@ -283,7 +252,6 @@
             android:clickable="true"
             android:focusable="true"
             android:background="?attr/selectableItemBackground">
-
             <ImageView
                 android:layout_width="24dp"
                 android:layout_height="24dp"
@@ -291,17 +259,13 @@
                 android:scaleType="centerCrop"
                 android:layout_marginBottom="2dp"
                 android:contentDescription="Menu Icon" />
-
             <TextView
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:fontFamily="@font/regular"
                 android:text="Menu"
-                android:textColor="#999999"
+                android:textColor="@color/text_secondary"
                 android:textSize="11sp" />
-
         </LinearLayout>
-
     </LinearLayout>
-
 </LinearLayout>

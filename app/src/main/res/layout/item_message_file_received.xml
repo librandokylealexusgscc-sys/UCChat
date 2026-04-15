@@ -10,7 +10,18 @@
     android:paddingTop="4dp"
     android:paddingBottom="4dp">
 
-    <!-- Avatar -->
+    <TextView
+        android:id="@+id/tvDateSeparator"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:gravity="center"
+        android:textColor="@color/text_secondary"
+        android:textSize="12sp"
+        android:paddingTop="20dp"
+        android:paddingBottom="8dp"
+        android:fontFamily="@font/regular"
+        android:visibility="gone" />
+
     <ImageView
         android:id="@+id/imgAvatar"
         android:layout_width="32dp"
@@ -26,7 +37,6 @@
         android:layout_height="wrap_content"
         android:orientation="vertical">
 
-        <!-- File bubble -->
         <LinearLayout
             android:id="@+id/bubbleContainer"
             android:layout_width="wrap_content"
@@ -36,19 +46,17 @@
             android:clickable="true"
             android:focusable="true">
 
-            <!-- Forwarded indicator — shown when message was forwarded -->
             <TextView
                 android:id="@+id/tvForwardedLabel"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:text="➦ Forwarded"
                 android:textSize="11sp"
-                android:textColor="#888888"
+                android:textColor="@color/text_secondary"
                 android:fontFamily="@font/regular"
                 android:paddingBottom="2dp"
                 android:visibility="gone" />
 
-            <!-- File row (icon + name + size) -->
             <LinearLayout
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
@@ -59,16 +67,15 @@
                 android:paddingTop="10dp"
                 android:paddingBottom="10dp">
 
-                <!-- File icon -->
                 <TextView
                     android:id="@+id/tvFileIcon"
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
                     android:text="📄"
                     android:textSize="28sp"
+                    android:textColor="@color/text_primary"
                     android:layout_marginEnd="10dp" />
 
-                <!-- File info -->
                 <LinearLayout
                     android:layout_width="160dp"
                     android:layout_height="wrap_content"
@@ -79,7 +86,7 @@
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
                         android:fontFamily="@font/bold"
-                        android:textColor="#000000"
+                        android:textColor="@color/bubble_received_text"
                         android:textSize="13sp"
                         android:maxLines="2"
                         android:ellipsize="middle" />
@@ -89,26 +96,20 @@
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
                         android:fontFamily="@font/regular"
-                        android:textColor="#888888"
+                        android:textColor="@color/text_secondary"
                         android:textSize="11sp"
                         android:paddingTop="2dp" />
-
                 </LinearLayout>
-
             </LinearLayout>
-
         </LinearLayout>
 
-        <!-- Timestamp -->
         <TextView
             android:id="@+id/tvTimestamp"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:fontFamily="@font/regular"
-            android:textColor="#AAAAAA"
+            android:textColor="@color/text_hint"
             android:textSize="10sp"
             android:paddingTop="2dp" />
-
     </LinearLayout>
-
 </LinearLayout>

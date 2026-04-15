@@ -4,20 +4,20 @@
     android:layout_width="match_parent"
     android:layout_height="match_parent"
     android:layout_marginTop="13dp"
-
-    android:background="#F5F5F5"
+    android:background="@color/bg_main"
     android:orientation="vertical"
-    android:paddingLeft="20dp"
-    android:paddingRight="20dp">
+    android:paddingLeft="0dp"
+    android:paddingRight="0dp">
 
     <TextView
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:fontFamily="@font/bold"
         android:text="Personal Details"
-        android:textColor="#000000"
+        android:textColor="@color/text_primary"
         android:textSize="34sp"
-        android:layout_marginTop="25dp"
+        android:layout_marginTop="0dp"
+        android:layout_marginLeft="16dp"
         android:textStyle="bold" />
 
     <ScrollView
@@ -25,35 +25,28 @@
         android:layout_height="0dp"
         android:layout_weight="1"
         android:fillViewport="true">
-        <!-- TOP CONTENT -->
         <LinearLayout
             android:layout_width="match_parent"
             android:layout_height="0dp"
             android:layout_weight="1"
-            android:orientation="vertical">
+            android:orientation="vertical"
+            android:padding="16dp">
 
-            <!-- Title: Personal Details -->
-
-            <!-- Profile Picture Button (circle) -->
             <LinearLayout
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:layout_marginBottom="20dp"
+                android:layout_marginBottom="0dp"
                 android:gravity="center"
                 android:orientation="vertical">
-
-
                 <ImageButton
                     android:id="@+id/btnProfilePicture"
                     android:layout_width="114dp"
                     android:layout_height="114dp"
                     android:background="@drawable/bg_circle_gray"
-                    android:contentDescription="Profile Picture"
-                    android:scaleType="centerCrop" />
-                />
+                    android:scaleType="centerCrop"
+                    android:contentDescription="Profile Picture" />
             </LinearLayout>
 
-            <!-- Section Label -->
             <TextView
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
@@ -61,10 +54,9 @@
                 android:layout_marginBottom="6dp"
                 android:fontFamily="@font/regular"
                 android:text="Personal Details"
-                android:textColor="#9E9E9E"
+                android:textColor="@color/text_hint"
                 android:textSize="14sp" />
 
-            <!-- Form Card -->
             <LinearLayout
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
@@ -75,59 +67,64 @@
                 android:paddingEnd="14dp"
                 android:paddingBottom="4dp">
 
-                <!-- Full Name -->
+                <!-- First Name -->
                 <LinearLayout
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
                     android:orientation="vertical"
                     android:paddingTop="10dp"
                     android:paddingBottom="4dp">
-
                     <TextView
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
                         android:fontFamily="@font/regular"
-                        android:text="First name"
-                        android:textColor="#9E9E9E"
+                        android:text="First Name"
+                        android:textColor="@color/text_hint"
                         android:textSize="12sp" />
-
                     <EditText
                         android:id="@+id/etFirstName"
                         android:layout_width="match_parent"
                         android:layout_height="wrap_content"
-
                         android:background="@null"
                         android:inputType="textPersonName"
                         android:paddingTop="4dp"
                         android:paddingBottom="8dp"
-                        android:textColor="#212121"
+                        android:textColor="@color/text_primary"
                         android:textSize="15sp" />
-
-                    <TextView
-                        android:id="@+id/textView"
+                    <View
                         android:layout_width="match_parent"
+                        android:layout_height="1dp"
+                        android:background="@color/divider_color" />
+                </LinearLayout>
+
+                <!-- Last Name -->
+                <LinearLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:orientation="vertical"
+                    android:paddingTop="10dp"
+                    android:paddingBottom="4dp">
+                    <TextView
+                        android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
                         android:fontFamily="@font/regular"
-                        android:text="Last name"
-                        android:textColor="#9E9E9E"
+                        android:text="Last Name"
+                        android:textColor="@color/text_hint"
                         android:textSize="12sp" />
-
                     <EditText
                         android:id="@+id/etLastName"
                         android:layout_width="match_parent"
                         android:layout_height="wrap_content"
-
                         android:background="@null"
                         android:inputType="textPersonName"
                         android:paddingTop="4dp"
                         android:paddingBottom="8dp"
-                        android:textColor="#212121"
+                        android:textColor="@color/text_primary"
                         android:textSize="15sp" />
-
                     <View
                         android:layout_width="match_parent"
                         android:layout_height="1dp"
-                        android:background="#E0E0E0" />
+                        android:background="@color/divider_color" />
                 </LinearLayout>
 
                 <!-- Username -->
@@ -137,31 +134,27 @@
                     android:orientation="vertical"
                     android:paddingTop="10dp"
                     android:paddingBottom="4dp">
-
                     <TextView
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
                         android:fontFamily="@font/regular"
                         android:text="Username"
-                        android:textColor="#9E9E9E"
+                        android:textColor="@color/text_hint"
                         android:textSize="12sp" />
-
                     <EditText
                         android:id="@+id/etUsername"
                         android:layout_width="match_parent"
                         android:layout_height="wrap_content"
-
                         android:background="@null"
                         android:inputType="textNoSuggestions"
                         android:paddingTop="4dp"
                         android:paddingBottom="8dp"
-                        android:textColor="#212121"
+                        android:textColor="@color/text_primary"
                         android:textSize="15sp" />
-
                     <View
                         android:layout_width="match_parent"
                         android:layout_height="1dp"
-                        android:background="#E0E0E0" />
+                        android:background="@color/divider_color" />
                 </LinearLayout>
 
                 <!-- Phone Number -->
@@ -171,15 +164,13 @@
                     android:orientation="vertical"
                     android:paddingTop="10dp"
                     android:paddingBottom="4dp">
-
                     <TextView
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
                         android:fontFamily="@font/regular"
                         android:text="Phone number"
-                        android:textColor="#9E9E9E"
+                        android:textColor="@color/text_hint"
                         android:textSize="12sp" />
-
                     <EditText
                         android:id="@+id/etPhoneNumber"
                         android:layout_width="match_parent"
@@ -188,13 +179,12 @@
                         android:inputType="phone"
                         android:paddingTop="4dp"
                         android:paddingBottom="8dp"
-                        android:textColor="#212121"
+                        android:textColor="@color/text_primary"
                         android:textSize="15sp" />
-
                     <View
                         android:layout_width="match_parent"
                         android:layout_height="1dp"
-                        android:background="#E0E0E0" />
+                        android:background="@color/divider_color" />
                 </LinearLayout>
 
                 <!-- Email -->
@@ -204,31 +194,27 @@
                     android:orientation="vertical"
                     android:paddingTop="10dp"
                     android:paddingBottom="4dp">
-
                     <TextView
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
                         android:fontFamily="@font/regular"
                         android:text="Email"
-                        android:textColor="#9E9E9E"
+                        android:textColor="@color/text_hint"
                         android:textSize="12sp" />
-
                     <EditText
                         android:id="@+id/etEmail"
                         android:layout_width="match_parent"
                         android:layout_height="wrap_content"
-
                         android:background="@null"
                         android:inputType="textEmailAddress"
                         android:paddingTop="4dp"
                         android:paddingBottom="8dp"
-                        android:textColor="#212121"
+                        android:textColor="@color/text_primary"
                         android:textSize="15sp" />
-
                     <View
                         android:layout_width="match_parent"
                         android:layout_height="1dp"
-                        android:background="#E0E0E0" />
+                        android:background="@color/divider_color" />
                 </LinearLayout>
 
                 <!-- Student ID -->
@@ -238,34 +224,29 @@
                     android:orientation="vertical"
                     android:paddingTop="10dp"
                     android:paddingBottom="4dp">
-
                     <TextView
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
                         android:fontFamily="@font/regular"
                         android:text="Student ID"
-                        android:textColor="#9E9E9E"
+                        android:textColor="@color/text_hint"
                         android:textSize="12sp" />
-
                     <EditText
                         android:id="@+id/etStudentId"
                         android:layout_width="match_parent"
                         android:layout_height="wrap_content"
-
                         android:background="@null"
                         android:inputType="text"
                         android:paddingTop="4dp"
                         android:paddingBottom="8dp"
-                        android:textColor="#212121"
+                        android:textColor="@color/text_primary"
                         android:textSize="15sp" />
-
                     <View
                         android:layout_width="match_parent"
                         android:layout_height="1dp"
-                        android:background="#E0E0E0" />
+                        android:background="@color/divider_color" />
                 </LinearLayout>
 
-                <!-- Program | Year | Section -->
                 <!-- Program -->
                 <LinearLayout
                     android:layout_width="match_parent"
@@ -273,69 +254,58 @@
                     android:orientation="vertical"
                     android:paddingTop="10dp"
                     android:paddingBottom="4dp">
-
                     <TextView
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
                         android:fontFamily="@font/regular"
                         android:text="Program"
-                        android:textColor="#9E9E9E"
+                        android:textColor="@color/text_hint"
                         android:textSize="12sp" />
-
-                    <!-- Spinner styled like EditText -->
                     <LinearLayout
                         android:layout_width="match_parent"
                         android:layout_height="wrap_content"
                         android:paddingTop="4dp"
                         android:paddingBottom="8dp">
-
                         <Spinner
                             android:id="@+id/spinnerProgram"
                             android:layout_width="match_parent"
                             android:layout_height="wrap_content"
                             android:background="@null"
-
                             android:spinnerMode="dropdown"
                             android:textSize="15sp" />
-
                     </LinearLayout>
-
                     <View
                         android:layout_width="match_parent"
                         android:layout_height="1dp"
-                        android:background="#E0E0E0" />
-
+                        android:background="@color/divider_color" />
                 </LinearLayout>
-
             </LinearLayout>
-
-
-            <!-- Update Button -->
-
         </LinearLayout>
     </ScrollView>
+
     <Button
         android:id="@+id/btnUpdateProfile"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:backgroundTint="#0B0A0A"
+        android:fontFamily="@font/medium"
         android:text="Update Profile"
         android:layout_marginBottom="10dp"
+        android:layout_marginLeft="30dp"
+        android:layout_marginRight="30dp"
         android:textColor="#FFFFFF" />
 
     <View
         android:layout_width="match_parent"
         android:layout_height="1dp"
-        android:background="#DDDDDD" />
+        android:background="@color/divider_color" />
 
-    <!-- BOTTOM NAVIGATION BAR -->
     <LinearLayout
         android:layout_width="match_parent"
         android:layout_height="64dp"
-        android:background="#FBFBFB"
-        android:layout_marginBottom="22dp"
+        android:background="@color/nav_bar_bg"
+        android:layout_marginBottom="0dp"
         android:orientation="horizontal">
-
         <LinearLayout
             android:id="@+id/btnTabChats"
             android:layout_width="0dp"
@@ -346,7 +316,6 @@
             android:focusable="true"
             android:gravity="center"
             android:orientation="vertical">
-
             <ImageView
                 android:layout_width="24dp"
                 android:layout_height="24dp"
@@ -354,16 +323,14 @@
                 android:contentDescription="Chats Icon"
                 android:scaleType="centerCrop"
                 android:src="@drawable/chat" />
-
             <TextView
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:fontFamily="@font/regular"
                 android:text="Chats"
-                android:textColor="#999999"
+                android:textColor="@color/text_secondary"
                 android:textSize="11sp" />
         </LinearLayout>
-
         <LinearLayout
             android:id="@+id/btnTabSearch"
             android:layout_width="0dp"
@@ -374,27 +341,21 @@
             android:focusable="true"
             android:gravity="center"
             android:orientation="vertical">
-
             <ImageView
                 android:layout_width="24dp"
                 android:layout_height="24dp"
                 android:layout_marginBottom="2dp"
                 android:contentDescription="Search Icon"
-
                 android:scaleType="centerCrop"
                 android:src="@drawable/graysearch" />
-
             <TextView
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:fontFamily="@font/regular"
                 android:text="Search"
-                android:textColor="#999999"
-
-
+                android:textColor="@color/text_secondary"
                 android:textSize="11sp" />
         </LinearLayout>
-
         <LinearLayout
             android:id="@+id/btnTabMenu"
             android:layout_width="0dp"
@@ -405,7 +366,6 @@
             android:focusable="true"
             android:gravity="center"
             android:orientation="vertical">
-
             <ImageView
                 android:layout_width="24dp"
                 android:layout_height="24dp"
@@ -413,17 +373,13 @@
                 android:contentDescription="Menu Icon"
                 android:scaleType="centerCrop"
                 android:src="@drawable/menugreen" />
-
             <TextView
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:fontFamily="@font/regular"
                 android:text="Menu"
                 android:textColor="#4CAF50"
-
                 android:textSize="11sp" />
         </LinearLayout>
-
     </LinearLayout>
-
 </LinearLayout>

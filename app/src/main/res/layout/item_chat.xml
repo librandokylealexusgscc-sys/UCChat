@@ -1,7 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <LinearLayout
     xmlns:android="http://schemas.android.com/apk/res/android"
-    xmlns:app="http://schemas.android.com/apk/res-auto"
     android:layout_width="match_parent"
     android:layout_height="wrap_content"
     android:orientation="horizontal"
@@ -14,7 +13,6 @@
     android:clickable="true"
     android:focusable="true">
 
-    <!-- Avatar -->
     <ImageView
         android:id="@+id/imgAvatar"
         android:layout_width="52dp"
@@ -23,7 +21,6 @@
         android:scaleType="centerCrop"
         android:contentDescription="Profile picture" />
 
-    <!-- Name + Last Message -->
     <LinearLayout
         android:layout_width="0dp"
         android:layout_height="wrap_content"
@@ -37,7 +34,7 @@
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:fontFamily="@font/bold"
-            android:textColor="#000000"
+            android:textColor="@color/text_primary"
             android:textSize="15sp"
             android:maxLines="1"
             android:ellipsize="end" />
@@ -47,15 +44,13 @@
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:fontFamily="@font/regular"
-            android:textColor="#888888"
+            android:textColor="@color/text_secondary"
             android:textSize="13sp"
             android:paddingTop="2dp"
             android:maxLines="1"
             android:ellipsize="end" />
-
     </LinearLayout>
 
-    <!-- Right side: timestamp + unread badge -->
     <LinearLayout
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
@@ -67,7 +62,7 @@
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:fontFamily="@font/regular"
-            android:textColor="#AAAAAA"
+            android:textColor="@color/text_hint"
             android:textSize="11sp" />
 
         <TextView
@@ -81,7 +76,5 @@
             android:textColor="#FFFFFF"
             android:textSize="10sp"
             android:visibility="gone" />
-
     </LinearLayout>
-
 </LinearLayout>

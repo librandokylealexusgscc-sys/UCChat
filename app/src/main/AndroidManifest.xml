@@ -19,7 +19,7 @@
 
         android:roundIcon="@mipmap/ic_launcher_round"
         android:supportsRtl="true"
-        android:theme="@style/Theme.SearchMenu">
+        android:theme="@style/Theme.UCCChat">
         <service
             android:name=".ChatNotificationService"
             android:enabled="true"
@@ -28,7 +28,8 @@
         <!-- Splash / entry point -->
         <activity
             android:name=".MainActivity"
-            android:exported="true">
+            android:exported="true"
+            android:theme="@style/Theme.UCCChat">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
                 <category android:name="android.intent.category.LAUNCHER" />
@@ -36,26 +37,27 @@
         </activity>
 
         <!-- Auth screens -->
-        <activity android:name=".LoginActivity" android:exported="false"/>
-        <activity android:name=".WelcomePageActivity" android:exported="false"/>
-        <activity android:name=".SignUpPage1Activity" android:exported="false"/>
-        <activity android:name=".SignUpPage2Activity" android:exported="false"/>
-        <activity android:name=".SignUpPage3Activity" android:exported="false"/>
-        <activity android:name=".PersonalDetailsActivity" />
-        <activity android:name=".DeleteAccountActivity" />
-        <activity android:name=".PrivacyPolicyActivity" />
-        <activity android:name=".TermsOfUseActivity" />
-        <activity android:name=".NewChatActivity" />
+        <activity android:name=".LoginActivity" android:exported="false" android:theme="@style/Theme.UCCChat"/>
+        <activity android:name=".WelcomePageActivity" android:exported="false" android:theme="@style/Theme.UCCChat"/>
+        <activity android:name=".SignUpPage1Activity" android:exported="false" android:theme="@style/Theme.UCCChat"/>
+        <activity android:name=".SignUpPage2Activity" android:exported="false" android:theme="@style/Theme.UCCChat"/>
+        <activity android:name=".SignUpPage3Activity" android:exported="false" android:theme="@style/Theme.UCCChat"/>
+        <activity android:name=".PersonalDetailsActivity" android:theme="@style/Theme.UCCChat"/>
+        <activity android:name=".DeleteAccountActivity" android:theme="@style/Theme.UCCChat"/>
+        <activity android:name=".PrivacyPolicyActivity" android:theme="@style/Theme.UCCChat"/>
+        <activity android:name=".TermsOfUseActivity" android:theme="@style/Theme.UCCChat"/>
+        <activity android:name=".NewChatActivity" android:theme="@style/Theme.UCCChat"/>
 
         <!-- Main app screens (we'll build these next) -->
-        <activity android:name=".ChatHomeActivity" android:exported="false" android:theme="@style/NoAnimationTheme"/>
-        <activity android:name=".ChatActivity" android:exported="false"/>
-        <activity android:name=".NewGroupChatActivity" android:exported="false"/>
-        <activity android:name=".ChatProfileActivity" android:exported="false"/>
-        <activity android:name=".SearchActivity" android:exported="false"  android:theme="@style/NoAnimationTheme"/>
-        <activity android:name=".MenuActivity" android:exported="false"  android:theme="@style/NoAnimationTheme"/>
+        <activity android:name=".ChatHomeActivity" android:exported="false" android:theme="@style/Theme.UCCChat"/>
+        <activity android:name=".ChatActivity" android:exported="false" android:theme="@style/Theme.UCCChat"/>
+        <activity android:name=".NewGroupChatActivity" android:exported="false" android:theme="@style/Theme.UCCChat"/>
+        <activity android:name=".ChatProfileActivity" android:exported="false" android:theme="@style/Theme.UCCChat"/>
+        <activity android:name=".SearchActivity" android:exported="false"  android:theme="@style/Theme.UCCChat"/>
+        <activity android:name=".MenuActivity" android:exported="false"  android:theme="@style/Theme.UCCChat"/>
 
-        <activity android:name=".ForwardActivity"/>
+
+        <activity android:name=".ForwardActivity" android:theme="@style/Theme.UCCChat"/>
 
 
 

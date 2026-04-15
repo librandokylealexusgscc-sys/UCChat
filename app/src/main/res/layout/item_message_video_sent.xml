@@ -10,6 +10,18 @@
     android:paddingTop="4dp"
     android:paddingBottom="4dp">
 
+    <TextView
+        android:id="@+id/tvDateSeparator"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:gravity="center"
+        android:textColor="#888888"
+        android:textSize="12sp"
+        android:paddingTop="20dp"
+        android:paddingBottom="8dp"
+        android:fontFamily="@font/regular"
+        android:visibility="gone" />
+
     <!-- Video bubble -->
     <FrameLayout
         android:id="@+id/bubbleContainer"

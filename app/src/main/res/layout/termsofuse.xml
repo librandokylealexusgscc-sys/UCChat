@@ -7,11 +7,10 @@
     <LinearLayout
         android:layout_width="match_parent"
         android:layout_height="match_parent"
-        android:background="#F5F5F5"
+        android:background="@color/bg_secondary"
         android:orientation="vertical"
         android:padding="24dp">
 
-        <!-- Title -->
         <TextView
             android:id="@+id/tvTitle"
             android:layout_width="wrap_content"
@@ -20,21 +19,16 @@
             android:layout_marginBottom="16dp"
             android:fontFamily="@font/bold"
             android:text="Terms of Use"
-            android:textColor="#000000"
+            android:textColor="@color/text_primary"
             android:textSize="34sp"
             android:textStyle="bold" />
 
-
-        <!-- Input Field -->
-
-        <!-- Buttons Container -->
         <ScrollView
             android:id="@+id/scrollView"
             android:layout_width="match_parent"
             android:layout_height="0dp"
             android:layout_weight="1"
             android:fillViewport="true">
-            <!-- Description -->
             <TextView
                 android:id="@+id/tvDescription"
                 android:layout_width="match_parent"
@@ -43,10 +37,8 @@
                 android:fontFamily="@font/regular"
                 android:lineSpacingExtra="3dp"
                 android:text="Legal Documents \nTerms of Use . Privacy Policy  \nEffective Date: April 1, 2026 \n \n  \nTerms of Use \nEffective Date: April 1, 2026  \n\nWelcome to UCChat! These Terms of Use (&quot;Terms&quot;)  govern your access to and use of the UCChat mobile and web application, including all features, content, and services provided through the platform. By creating an account or using UCChat, you agree to be bound by these Terms.  Please read them carefully. \n1. Acceptance of Terms By downloading, installing, or using UCChat, you confirm that you are at least 13 years of age (or the minimum age required in your country), have read and understood these Terms, and agree to be legally bound by them. If you do not agree, you must not use UCChat. \n2. Description of Service UCChat is a real-time messaging and communication platform that allows users to send messages, share media, create group chats, and connect with other users. We reserve the right to modify, suspend, or discontinue any part of the service at any time. \n3. User Accounts \n3.1 Registration To use UCChat, you must register for an account by providing accurate, complete, and current information. You are responsible for maintaining the confidentiality of your login credentials. \n3.2 Account Security You agree to notify us immediately at support@ucchat.app of any unauthorized use of your account. UCChat is not liable for any loss resulting from unauthorized access due to your failure to safeguard your credentials. \n3.3 One Account Per Person You may only maintain one active account. Creating multiple accounts to circumvent restrictions or bans is prohibited. \n4. Acceptable Use Policy You agree NOT to use UCChat to: \n • Send spam, unsolicited messages, or promotional content without consent \n• Harass, bully, intimidate, threaten, or harm other users \n• Share illegal content, including content that infringes on intellectual property rights \n• Distribute malware, viruses, or any harmful code • Impersonate another person or entity \n• Engage in any activity that violates applicable local, national, or international laws \n• Attempt to gain unauthorized access to UCChat's systems or other users' accounts \n• Collect or harvest personal data of other users without their consent \n5. Content Ownership and License \n5.1 Your Content You retain ownership of any content you create and share on UCChat (&quot;User Content&quot;). By posting content, you grant UCChat a non-exclusive, royalty-free, worldwide license to store, display, and transmit your content solely for the purpose of providing and improving the service. \n5.2 UCChat Content All intellectual property in the UCChat platform — including logos, design, software, and trademarks — is owned by UCChat or its licensors and is protected by applicable intellectual property laws. \n6. Privacy Your use of UCChat is also governed by our Privacy Policy (see Section II of this document). By using UCChat, you consent to the collection and use of your information as described therein. \n7. Third-Party Services UCChat may integrate with or link to third-party services. We are not responsible for the content, privacy practices, or terms of any third-party services. Your use of third-party services is at your own risk. \n8. Disclaimers UCChat is provided on an &quot;as is&quot; and &quot;as available&quot; basis without warranties of any kind, either express or implied. We do not warrant that the service will be uninterrupted, error-free, or free of viruses or other harmful components. \n9. Limitation of Liability To the maximum extent permitted by applicable law, UCChat and its officers, directors, employees, and agents shall not be liable for any indirect, incidental, special, consequential, or punitive damages arising from your use of the service, even if UCChat has been advised of the possibility of such damages. \n10. Termination We reserve the right to suspend or terminate your account at our sole discretion, without notice, if you violate these Terms or engage in conduct we deem harmful to other users or the platform. You may also delete your account at any time through the app settings. \n11. Changes to Terms We may update these Terms from time to time. We will notify you of significant changes via in-app notification or email. Your continued use of UCChat after the effective date of any update constitutes your acceptance of the revised Terms. \n12. Governing Law These Terms shall be governed by and construed in accordance with the laws of the Republic of the Philippines, without regard to its conflict of law provisions. Any disputes arising under these Terms shall be subject to the exclusive jurisdiction of the courts of the Philippines. \n13. Contact Us If you have questions about these Terms, please contact us: \nUCChat Support Team \nEmail: legal@ucchat.app \nWebsite: www.ucchat.app \n "
-                android:textColor="#333333"
+                android:textColor="@color/text_primary"
                 android:textSize="16sp" />
-
-            <!-- Instruction -->
         </ScrollView>
 
         <LinearLayout
@@ -54,10 +46,6 @@
             android:layout_height="wrap_content"
             android:gravity="center"
             android:orientation="horizontal">
-
-            <!-- Cancel Button -->
-
-            <!-- Delete Button -->
             <Button
                 android:id="@+id/btnOK"
                 android:layout_width="350dp"
@@ -69,6 +57,5 @@
                 android:layout_marginTop="10dp"
                 android:textColor="#FFFFFF" />
         </LinearLayout>
-
     </LinearLayout>
 </androidx.constraintlayout.widget.ConstraintLayout>

@@ -355,21 +355,20 @@ public class NewGroupChatActivity extends AppCompatActivity {
                 }
 
                 // ✅ Auto-generate group name if empty
-                // e.g. "Eli Jarder, Kyle Librando, Xyrine Calip"
+                boolean isManualName = !groupName.isEmpty(); // ✅ ADD THIS
+
                 if (groupName.isEmpty()) {
                     List<String> names = new ArrayList<>();
-                    // Add current user's first name
                     names.add(currentUser.getFirstName());
-                    // Add selected members' first names
                     for (UserModel user : selectedUsers) {
                         names.add(user.getFirstName());
                     }
                     String autoName = android.text.TextUtils.join(", ", names);
-                    proceedCreateGroup(autoName, participantUids,
-                            participantNames, participantPhotos);
+                    proceedCreateGroup(autoName, isManualName,          // ✅ pass it here
+                            participantUids, participantNames, participantPhotos);
                 } else {
-                    proceedCreateGroup(groupName, participantUids,
-                            participantNames, participantPhotos);
+                    proceedCreateGroup(groupName, isManualName,         // ✅ pass it here
+                            participantUids, participantNames, participantPhotos);
                 }
             }
 
@@ -384,6 +383,7 @@ public class NewGroupChatActivity extends AppCompatActivity {
     }
 
     private void proceedCreateGroup(String finalGroupName,
+                                    boolean isManualName,
                                     List<String> participantUids,
                                     Map<String, String> participantNames,
                                     Map<String, String> participantPhotos) {
@@ -391,7 +391,9 @@ public class NewGroupChatActivity extends AppCompatActivity {
                 participantUids,
                 participantNames,
                 participantPhotos,
+
                 finalGroupName,
+                isManualName, // ✅ pass this
                 myUid,
                 new FirestoreHelper.OnChatReady() {
                     @Override
