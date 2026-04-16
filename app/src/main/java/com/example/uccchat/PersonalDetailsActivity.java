@@ -25,6 +25,8 @@ import com.cloudinary.android.callback.UploadCallback;
 import java.io.File;
 import java.io.FileOutputStream;
 import java.io.InputStream;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.Map;
 
 import androidx.appcompat.app.AppCompatActivity;
@@ -309,33 +311,64 @@ public class PersonalDetailsActivity extends AppCompatActivity {
         }
     }
 
-    private void saveUpdatesToFirestore(Map<String, Object> updates)
-    {
+    private void saveUpdatesToFirestore(Map<String, Object> updates) {
         String firstName = updates.get("firstName").toString();
         String lastName  = updates.get("lastName").toString();
-
-        String fullName = firstName + " " + lastName;
+        String fullName  = firstName + " " + lastName;
 
         db.collection("users").document(userId)
                 .update(updates)
                 .addOnSuccessListener(unused -> {
-
-                    // 🔥 update participantNames inside chats collection
                     db.collection("chats")
                             .whereArrayContains("participants", userId)
                             .get()
                             .addOnSuccessListener(querySnapshot -> {
 
-                                for (com.google.firebase.firestore.DocumentSnapshot doc : querySnapshot.getDocuments()) {
+                                for (com.google.firebase.firestore.DocumentSnapshot doc
+                                        : querySnapshot.getDocuments()) {
+
+                                    // ✅ Always update participant name
                                     doc.getReference().update(
-                                            "participantNames." + userId,
-                                            fullName
-                                    );
+                                            "participantNames." + userId, fullName);
+
+                                    // ✅ Update participant photo if changed
+                                    if (updates.containsKey("photoUrl")) {
+                                        doc.getReference().update(
+                                                "participantPhotos." + userId,
+                                                updates.get("photoUrl"));
+                                    }
+
+                                    // ✅ Auto-update group name if not manually named
+                                    Boolean isGroup = doc.getBoolean("isGroup");
+                                    Boolean manuallyNamed = doc.getBoolean("manuallyNamed");
+                                    if (Boolean.TRUE.equals(isGroup)
+                                            && !Boolean.TRUE.equals(manuallyNamed)) {
+
+                                        Map<String, String> pNames =
+                                                (Map<String, String>) doc.get("participantNames");
+                                        List<String> pUids =
+                                                (List<String>) doc.get("participants");
+
+                                        if (pNames != null && pUids != null) {
+                                            List<String> firstNames = new ArrayList<>();
+                                            for (String uid : pUids) {
+                                                String n = uid.equals(userId)
+                                                        ? fullName
+                                                        : pNames.get(uid);
+                                                if (n != null && !n.isEmpty()) {
+                                                    firstNames.add(n.split(" ")[0]);
+                                                }
+                                            }
+                                            String newGroupName = android.text.TextUtils
+                                                    .join(", ", firstNames);
+                                            doc.getReference().update("groupName", newGroupName);
+                                        }
+                                    }
                                 }
+
                                 Toast.makeText(this,
                                         "Profile updated successfully",
                                         Toast.LENGTH_SHORT).show();
-
                                 startActivity(new Intent(this, MenuActivity.class));
                                 finish();
                             });
@@ -343,8 +376,7 @@ public class PersonalDetailsActivity extends AppCompatActivity {
                 .addOnFailureListener(e ->
                         Toast.makeText(this,
                                 "Update failed: " + e.getMessage(),
-                                Toast.LENGTH_SHORT).show()
-                );
+                                Toast.LENGTH_SHORT).show());
     }
     private boolean validateFields() {
         boolean valid = true;

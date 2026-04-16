@@ -66,10 +66,9 @@ public class WelcomePageActivity extends AppCompatActivity {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.welcome_page);
 
-        // ✅ Add requestIdToken — replace YOUR_WEB_CLIENT_ID with the one from google-services.json
         GoogleSignInOptions gso = new GoogleSignInOptions.Builder(
                 GoogleSignInOptions.DEFAULT_SIGN_IN)
-                .requestIdToken(getString(R.string.default_web_client_id)) // ✅ add this
+                .requestIdToken(getString(R.string.default_web_client_id))
                 .requestEmail()
                 .requestProfile()
                 .build();
@@ -134,6 +133,7 @@ public class WelcomePageActivity extends AppCompatActivity {
         btnHaveAccount.setOnClickListener(v ->
                 startActivity(new Intent(WelcomePageActivity.this, LoginActivity.class)));
 
+        // ✅ "Sign In" link now shows privacy policy first
         TextView tvSignIn = findViewById(R.id.tvSignIn);
         String signInText = "Don't have an account? Sign In";
         SpannableString signInSpannable = new SpannableString(signInText);
@@ -142,7 +142,10 @@ public class WelcomePageActivity extends AppCompatActivity {
                 signInStart, signInText.length(), Spanned.SPAN_EXCLUSIVE_EXCLUSIVE);
         signInSpannable.setSpan(new ClickableSpan() {
             @Override public void onClick(@NonNull View widget) {
-                startActivity(new Intent(WelcomePageActivity.this, SignUpPage1Activity.class));
+                // ✅ Show privacy policy before going to signup
+                showPrivacyPolicyThenProceed(() ->
+                        startActivity(new Intent(WelcomePageActivity.this,
+                                SignUpPage1Activity.class)));
             }
             @Override public void updateDrawState(@NonNull TextPaint ds) {
                 ds.setColor(Color.BLACK);
@@ -201,7 +204,10 @@ public class WelcomePageActivity extends AppCompatActivity {
         UserSession.isFromGoogle   = true;
 
         if (email == null || email.isEmpty()) {
-            startActivity(new Intent(WelcomePageActivity.this, SignUpPage1Activity.class));
+            // ✅ Show privacy policy before signup
+            showPrivacyPolicyThenProceed(() ->
+                    startActivity(new Intent(WelcomePageActivity.this,
+                            SignUpPage1Activity.class)));
             return;
         }
 
@@ -211,7 +217,7 @@ public class WelcomePageActivity extends AppCompatActivity {
                 .get()
                 .addOnSuccessListener(querySnapshot -> {
                     if (!querySnapshot.isEmpty()) {
-                        // ── Existing user ──
+                        // ── Existing user — go straight to chat ──
                         com.google.firebase.firestore.DocumentSnapshot doc =
                                 querySnapshot.getDocuments().get(0);
 
@@ -224,7 +230,6 @@ public class WelcomePageActivity extends AppCompatActivity {
                         UserSession.photoUrl    = doc.getString("photoUrl");
                         UserSession.firebaseUid = doc.getId();
 
-                        // ✅ Use the ID token from the account — no null crash
                         String idToken = account.getIdToken();
 
                         if (idToken != null) {
@@ -233,20 +238,18 @@ public class WelcomePageActivity extends AppCompatActivity {
                                             .getCredential(idToken, null);
 
                             FirebaseAuth.getInstance().signInWithCredential(credential)
-                                    .addOnCompleteListener(task -> {
-                                        // ✅ Navigate regardless of success/failure
-                                        runOnUiThread(() -> goToChat());
-                                    });
+                                    .addOnCompleteListener(task ->
+                                            runOnUiThread(() -> goToChat()));
                         } else {
-                            // No ID token — navigate anyway, session is loaded
                             runOnUiThread(() -> goToChat());
                         }
 
                     } else {
-                        // ── New user ──
+                        // ── New Google user → show privacy policy first ──
                         runOnUiThread(() ->
-                                startActivity(new Intent(WelcomePageActivity.this,
-                                        SignUpPage1Activity.class)));
+                                showPrivacyPolicyThenProceed(() ->
+                                        startActivity(new Intent(WelcomePageActivity.this,
+                                                SignUpPage1Activity.class))));
                     }
                 })
                 .addOnFailureListener(e ->
@@ -256,13 +259,13 @@ public class WelcomePageActivity extends AppCompatActivity {
                                         Toast.LENGTH_SHORT).show()));
     }
 
-    // ✅ Helper to avoid repeating navigation code
     private void goToChat() {
         Intent intent = new Intent(WelcomePageActivity.this, ChatHomeActivity.class);
         intent.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_ACTIVITY_CLEAR_TASK);
         startActivity(intent);
         finish();
     }
+
     // ════════════════════════════════════════════════════════
     //  FACEBOOK
     // ════════════════════════════════════════════════════════
@@ -276,33 +279,30 @@ public class WelcomePageActivity extends AppCompatActivity {
                 String lastName  = object.optString("last_name",  "");
                 String email     = object.optString("email",      "");
 
-                android.util.Log.d("FB_EMAIL", "Facebook returned email: '" + email + "'");
-
-                // ── No email returned by Facebook ──
+                // ── No email from Facebook ──
                 if (email.isEmpty()) {
                     activity.runOnUiThread(() -> {
                         UserSession.firstName      = firstName;
                         UserSession.lastName       = lastName;
                         UserSession.isFromFacebook = true;
-                        UserSession.facebookEmailAlreadyExists = false;
-                        activity.startActivity(
-                                new Intent(activity, SignUpPage1Activity.class));
+                        // ✅ Show privacy policy for new Facebook user
+                        showPrivacyPolicyThenProceed(() ->
+                                activity.startActivity(
+                                        new Intent(activity, SignUpPage1Activity.class)));
                     });
                     return;
                 }
 
-                // ── Check Firestore on main thread ──
+                // ── Check if user already exists in Firestore ──
                 activity.runOnUiThread(() ->
                         FirebaseFirestore.getInstance()
                                 .collection("users")
                                 .whereEqualTo("email", email)
                                 .get()
                                 .addOnSuccessListener(querySnapshot -> {
-                                    android.util.Log.d("FB_EMAIL",
-                                            "Firestore results: " + querySnapshot.size());
 
                                     if (!querySnapshot.isEmpty()) {
-                                        // ── Existing user → load session ──
+                                        // ── EXISTING USER → sign in directly ──
                                         com.google.firebase.firestore.DocumentSnapshot doc =
                                                 querySnapshot.getDocuments().get(0);
 
@@ -316,63 +316,34 @@ public class WelcomePageActivity extends AppCompatActivity {
                                         UserSession.firebaseUid = doc.getId();
                                         UserSession.isFromFacebook = true;
 
-                                        android.util.Log.d("FB_EMAIL",
-                                                "Found user: " + UserSession.firstName
-                                                        + " uid: " + UserSession.firebaseUid);
+                                        com.google.firebase.auth.AuthCredential credential =
+                                                com.google.firebase.auth.FacebookAuthProvider
+                                                        .getCredential(accessToken.getToken());
 
-                                        // ── Sign in using Firebase Auth with email + password ──
-                                        // Facebook users registered with createUserWithEmailAndPassword
-                                        // in SignUpPage3, so we sign in the same way.
-                                        // We use the stored password from UserSession if available,
-                                        // otherwise skip Firebase Auth and go straight to chat.
-                                        if (UserSession.password != null
-                                                && !UserSession.password.isEmpty()) {
-                                            FirebaseAuth.getInstance()
-                                                    .signInWithEmailAndPassword(
-                                                            email, UserSession.password)
-                                                    .addOnCompleteListener(task ->
-                                                            goToChat());
-                                        } else {
-                                            // ── No password in session — try Facebook credential ──
-                                            com.google.firebase.auth.AuthCredential credential =
-                                                    com.google.firebase.auth.FacebookAuthProvider
-                                                            .getCredential(
-                                                                    accessToken.getToken());
-                                            FirebaseAuth.getInstance()
-                                                    .signInWithCredential(credential)
-                                                    .addOnCompleteListener(task -> {
-                                                        android.util.Log.d("FB_EMAIL",
-                                                                "Firebase Auth result: "
-                                                                        + task.isSuccessful());
-                                                        // ✅ Go to chat regardless
-                                                        goToChat();
-                                                    });
-                                        }
+                                        FirebaseAuth.getInstance()
+                                                .signInWithCredential(credential)
+                                                .addOnCompleteListener(task -> goToChat());
 
                                     } else {
-                                        // ── New user → sign-up flow ──
-                                        android.util.Log.d("FB_EMAIL",
-                                                "No existing user found, going to sign up");
+                                        // ── NEW Facebook user → show privacy policy first ──
                                         UserSession.firstName      = firstName;
                                         UserSession.lastName       = lastName;
                                         UserSession.email          = email;
                                         UserSession.isFromFacebook = true;
                                         UserSession.facebookEmailAlreadyExists = false;
-                                        activity.startActivity(
-                                                new Intent(activity, SignUpPage1Activity.class));
+                                        showPrivacyPolicyThenProceed(() ->
+                                                activity.startActivity(
+                                                        new Intent(activity,
+                                                                SignUpPage1Activity.class)));
                                     }
                                 })
-                                .addOnFailureListener(e -> {
-                                    android.util.Log.e("FB_EMAIL",
-                                            "Firestore query failed: " + e.getMessage());
-                                    Toast.makeText(activity,
-                                            "Could not verify account. Try again.",
-                                            Toast.LENGTH_SHORT).show();
-                                })
+                                .addOnFailureListener(e ->
+                                        Toast.makeText(activity,
+                                                "Could not verify account. Try again.",
+                                                Toast.LENGTH_SHORT).show())
                 );
 
             } catch (Exception e) {
-                android.util.Log.e("FB_EMAIL", "Exception: " + e.getMessage());
                 activity.runOnUiThread(() ->
                         Toast.makeText(activity,
                                 "Failed to get Facebook profile.",
@@ -385,6 +356,152 @@ public class WelcomePageActivity extends AppCompatActivity {
         request.setParameters(parameters);
         request.executeAsync();
     }
+
+    // ════════════════════════════════════════════════════════
+    //  PRIVACY POLICY POPUP
+    // ════════════════════════════════════════════════════════
+
+    private void showPrivacyPolicyThenProceed(Runnable onAgree) {
+        android.app.Dialog dialog = new android.app.Dialog(this);
+        dialog.requestWindowFeature(android.view.Window.FEATURE_NO_TITLE);
+
+        android.widget.LinearLayout root = new android.widget.LinearLayout(this);
+        root.setOrientation(android.widget.LinearLayout.VERTICAL);
+        android.graphics.drawable.GradientDrawable bg =
+                new android.graphics.drawable.GradientDrawable();
+        bg.setColor(0xFFFFFFFF);
+        bg.setCornerRadius(42f);
+        root.setBackground(bg);
+        root.setClipToOutline(true);
+        root.setPadding(48, 48, 48, 0);
+
+        android.widget.TextView tvTitle = new android.widget.TextView(this);
+        tvTitle.setText("Privacy Policy");
+        tvTitle.setTextSize(18f);
+        tvTitle.setTypeface(null, android.graphics.Typeface.BOLD);
+        tvTitle.setTextColor(0xFF000000);
+        tvTitle.setGravity(android.view.Gravity.CENTER);
+        tvTitle.setPadding(0, 0, 0, 16);
+        root.addView(tvTitle);
+
+        android.widget.TextView tvSub = new android.widget.TextView(this);
+        tvSub.setText("Please read and scroll to the bottom before continuing.");
+        tvSub.setTextSize(13f);
+        tvSub.setTextColor(0xFF888888);
+        tvSub.setGravity(android.view.Gravity.CENTER);
+        tvSub.setPadding(0, 0, 0, 16);
+        root.addView(tvSub);
+
+        android.widget.ScrollView scrollView = new android.widget.ScrollView(this);
+        int maxH = (int)(getResources().getDisplayMetrics().density * 280);
+        scrollView.setLayoutParams(new android.widget.LinearLayout.LayoutParams(
+                android.widget.LinearLayout.LayoutParams.MATCH_PARENT, maxH));
+
+        android.widget.TextView tvContent = new android.widget.TextView(this);
+        tvContent.setPadding(0, 0, 0, 16);
+        tvContent.setTextColor(0xFF333333);
+        tvContent.setTextSize(13f);
+        tvContent.setText(
+                "UCChat Privacy Policy\n\nLast updated: April 16, 2026\n\n" +
+                        "Information We Collect\n" +
+                        "UCChat collects your name, email, student ID, and profile photo for " +
+                        "account creation and identification within the app.\n\n" +
+                        "How We Use Your Information\n" +
+                        "Your information is used solely to provide the UCChat messaging service " +
+                        "to University of Cebu students and staff.\n\n" +
+                        "Data Storage\n" +
+                        "Your data is stored securely using Google Firebase services.\n\n" +
+                        "Third Party Services\n" +
+                        "We use Firebase (Google) and Cloudinary for data storage and " +
+                        "media hosting.\n\n" +
+                        "User Rights\n" +
+                        "You may delete your account and all associated data at any time " +
+                        "through Menu → Delete Account.\n\n" +
+                        "Contact\n" +
+                        "For questions, contact: librandokylealexusgscc@gmail.com\n\n" +
+                        "By tapping Agree, you confirm that you have read and agree to our " +
+                        "Privacy Policy and Terms of Use."
+        );
+        scrollView.addView(tvContent);
+        root.addView(scrollView);
+
+        // Divider
+        android.view.View divider = new android.view.View(this);
+        divider.setBackgroundColor(0xFFE0E0E0);
+        divider.setLayoutParams(new android.widget.LinearLayout.LayoutParams(
+                android.widget.LinearLayout.LayoutParams.MATCH_PARENT, 2));
+        root.addView(divider);
+
+        // Button row
+        android.widget.LinearLayout btnRow = new android.widget.LinearLayout(this);
+        btnRow.setOrientation(android.widget.LinearLayout.HORIZONTAL);
+        btnRow.setLayoutParams(new android.widget.LinearLayout.LayoutParams(
+                android.widget.LinearLayout.LayoutParams.MATCH_PARENT, 130));
+
+        android.widget.TextView btnCancel = new android.widget.TextView(this);
+        btnCancel.setText("Cancel");
+        btnCancel.setGravity(android.view.Gravity.CENTER);
+        btnCancel.setTextSize(16f);
+        btnCancel.setTextColor(0xFF888888);
+        btnCancel.setLayoutParams(new android.widget.LinearLayout.LayoutParams(
+                0, android.widget.LinearLayout.LayoutParams.MATCH_PARENT, 1f));
+        btnCancel.setOnClickListener(v -> dialog.dismiss());
+
+        android.view.View vDiv = new android.view.View(this);
+        vDiv.setBackgroundColor(0xFFE0E0E0);
+        vDiv.setLayoutParams(new android.widget.LinearLayout.LayoutParams(
+                2, android.widget.LinearLayout.LayoutParams.MATCH_PARENT));
+
+        android.widget.TextView btnAgreeNew = new android.widget.TextView(this);
+        btnAgreeNew.setText("Agree");
+        btnAgreeNew.setGravity(android.view.Gravity.CENTER);
+        btnAgreeNew.setTextSize(16f);
+        btnAgreeNew.setTextColor(0xFFFFFFFF);
+        btnAgreeNew.setTypeface(null, android.graphics.Typeface.BOLD);
+        btnAgreeNew.setLayoutParams(new android.widget.LinearLayout.LayoutParams(
+                0, android.widget.LinearLayout.LayoutParams.MATCH_PARENT, 1f));
+        android.graphics.drawable.GradientDrawable agreeBg =
+                new android.graphics.drawable.GradientDrawable();
+        agreeBg.setColor(0xFF4CAF50);
+        btnAgreeNew.setBackground(agreeBg);
+        btnAgreeNew.setEnabled(false);
+        btnAgreeNew.setAlpha(0.4f);
+
+        // ✅ Enable Agree only after scrolling to bottom
+        scrollView.getViewTreeObserver().addOnScrollChangedListener(() -> {
+            android.view.View child = scrollView.getChildAt(0);
+            if (child != null) {
+                int diff = child.getBottom() -
+                        (scrollView.getHeight() + scrollView.getScrollY());
+                if (diff <= 10) {
+                    btnAgreeNew.setEnabled(true);
+                    btnAgreeNew.setAlpha(1f);
+                }
+            }
+        });
+
+        btnAgreeNew.setOnClickListener(v -> {
+            dialog.dismiss();
+            onAgree.run();
+        });
+
+        btnRow.addView(btnCancel);
+        btnRow.addView(vDiv);
+        btnRow.addView(btnAgreeNew);
+        root.addView(btnRow);
+
+        dialog.setContentView(root);
+        if (dialog.getWindow() != null) {
+            dialog.getWindow().setBackgroundDrawable(
+                    new android.graphics.drawable.ColorDrawable(
+                            android.graphics.Color.TRANSPARENT));
+            dialog.getWindow().setLayout(
+                    (int)(getResources().getDisplayMetrics().widthPixels * 0.92f),
+                    android.view.WindowManager.LayoutParams.WRAP_CONTENT);
+        }
+        dialog.show();
+    }
+
     // ════════════════════════════════════════════════════════
     //  TERMS MODAL
     // ════════════════════════════════════════════════════════

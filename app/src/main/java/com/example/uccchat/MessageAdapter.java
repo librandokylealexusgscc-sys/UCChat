@@ -115,14 +115,19 @@ public class MessageAdapter extends RecyclerView.Adapter<RecyclerView.ViewHolder
     public List<MessageModel> getMessages() { return messages; }
 
     // ── View type logic ───────────────────────────────────────────
+
     @Override
     public int getItemViewType(int position) {
-        // ✅ Back to original — no more TYPE_DATE_HEADER hijacking
-        MessageModel msg = messages.get(position);
+        MessageModel msg = messages.get(position); // ✅ declare FIRST
+
+        // ✅ Check system message type
+        if (MessageModel.TYPE_SYSTEM.equals(msg.getType())) return 99;
+
         boolean isMine = msg.getSenderId() != null
                 && msg.getSenderId().equals(myUid);
         String type = msg.getType() != null
                 ? msg.getType() : MessageModel.TYPE_TEXT;
+
         switch (type) {
             case MessageModel.TYPE_IMAGE:
                 return isMine ? TYPE_IMAGE_SENT : TYPE_IMAGE_RECEIVED;
@@ -137,9 +142,24 @@ public class MessageAdapter extends RecyclerView.Adapter<RecyclerView.ViewHolder
 
     @NonNull
     @Override
+
     public RecyclerView.ViewHolder onCreateViewHolder(@NonNull ViewGroup parent, int viewType) {
+        if (viewType == 99) {
+            // Inflate a simple centered TextView
+            android.widget.TextView tv = new android.widget.TextView(parent.getContext());
+            tv.setLayoutParams(new android.view.ViewGroup.LayoutParams(
+                    android.view.ViewGroup.LayoutParams.MATCH_PARENT,
+                    android.view.ViewGroup.LayoutParams.WRAP_CONTENT));
+            tv.setGravity(android.view.Gravity.CENTER);
+            tv.setPadding(32, 12, 32, 12);
+            tv.setTextSize(12f);
+            tv.setTextColor(0xFF888888);
+            tv.setTypeface(null, android.graphics.Typeface.ITALIC);
+            return new RecyclerView.ViewHolder(tv) {};
+        }
         LayoutInflater inf = LayoutInflater.from(context);
         switch (viewType) {
+
             case TYPE_TEXT_SENT:      return new TextSentVH(inf.inflate(R.layout.item_message_sent, parent, false));
             case TYPE_TEXT_RECEIVED:  return new TextReceivedVH(inf.inflate(R.layout.item_message_received, parent, false));
             case TYPE_IMAGE_SENT:     return new ImageSentVH(inf.inflate(R.layout.item_message_sent, parent, false));
@@ -155,7 +175,10 @@ public class MessageAdapter extends RecyclerView.Adapter<RecyclerView.ViewHolder
     @Override
     public void onBindViewHolder(@NonNull RecyclerView.ViewHolder holder, int position) {
         MessageModel msg = messages.get(position);
-
+        if (getItemViewType(position) == 99) {
+            ((android.widget.TextView) holder.itemView).setText(msg.getText());
+            return;
+        }
         // ✅ Date separator — works for ALL view types
         View dateSeparator = holder.itemView.findViewById(R.id.tvDateSeparator);
         if (dateSeparator != null) {
@@ -180,7 +203,8 @@ public class MessageAdapter extends RecyclerView.Adapter<RecyclerView.ViewHolder
     }
 
     @Override
-    public int getItemCount() { return messages.size(); }
+    public int getItemCount() { return messages.size();
+    }
 
     //DATE PUSH NOTIFICATION
 

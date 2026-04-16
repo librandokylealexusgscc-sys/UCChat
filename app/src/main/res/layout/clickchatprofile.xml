@@ -195,7 +195,41 @@
                     android:textColor="@color/text_primary"
                     android:textSize="15sp" />
             </LinearLayout>
+            <!-- View Members -->
+            <LinearLayout
+                android:id="@+id/btnViewMembers"
+                android:layout_width="match_parent"
+                android:layout_height="52dp"
+                android:orientation="horizontal"
+                android:gravity="center_vertical"
+                android:paddingStart="14dp"
+                android:paddingEnd="14dp"
+                android:background="?attr/selectableItemBackground"
+                android:clickable="true"
+                android:focusable="true"
+                android:visibility="gone">
 
+                <ImageView
+                    android:layout_width="22dp"
+                    android:layout_height="22dp"
+                    android:src="@drawable/person"
+                    android:tint="#4CAF50"
+                    android:layout_marginEnd="14dp" />
+
+                <TextView
+                    android:layout_width="0dp"
+                    android:layout_height="wrap_content"
+                    android:layout_weight="1"
+                    android:text="View Members"
+                    android:textSize="15sp"
+                    android:textColor="@color/text_primary" />
+
+                <ImageView
+                    android:layout_width="18dp"
+                    android:layout_height="18dp"
+                    android:src="@android:drawable/ic_media_next"
+                    android:tint="#BDBDBD" />
+            </LinearLayout>
             <LinearLayout
                 android:id="@+id/btnAddMembers"
                 android:layout_width="match_parent"

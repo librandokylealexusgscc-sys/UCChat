@@ -9,6 +9,7 @@ public class MessageModel {
     public static final String TYPE_IMAGE = "image";
     public static final String TYPE_FILE  = "file";
     public static final String TYPE_VIDEO = "video";
+    public static final String TYPE_SYSTEM = "system";
 
     private String messageId;
     private String senderId;
@@ -130,6 +131,7 @@ public class MessageModel {
 
     public String getPreviewText() {
         if (deleted) return "🚫 Message was deleted";
+        if (TYPE_SYSTEM.equals(type)) return text != null ? text : "";
         if (TYPE_IMAGE.equals(type)) return "📷 Photo";
         if (TYPE_FILE.equals(type))  return "📎 " + (fileName != null ? fileName : "File");
         if (TYPE_VIDEO.equals(type)) return "🎥 Video";

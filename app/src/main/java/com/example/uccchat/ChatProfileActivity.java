@@ -51,6 +51,8 @@ public class ChatProfileActivity extends AppCompatActivity {
     private String chatId;
     private String chatName;
     private String chatPhoto;
+    private LinearLayout btnViewMembers;
+    private String createdByUid;
     private boolean isGroup;
     private String otherUid;
 
@@ -127,6 +129,7 @@ public class ChatProfileActivity extends AppCompatActivity {
         btnBlock      = findViewById(R.id.btnBlock);
         btnClearChat  = findViewById(R.id.btnClearChat);
         btnAddMembers  = findViewById(R.id.btnAddMembers);
+        btnViewMembers = findViewById(R.id.btnViewMembers);
         btnLeaveGroup  = findViewById(R.id.btnLeaveGroup);
         btnDeleteGroup = findViewById(R.id.btnDeleteGroup);
         searchOverlay          = findViewById(R.id.searchOverlay);
@@ -744,9 +747,13 @@ public class ChatProfileActivity extends AppCompatActivity {
         if (btnClearChat!= null) btnClearChat.setVisibility(View.GONE);
         if (btnAddMembers != null) btnAddMembers.setVisibility(View.VISIBLE);
         if (btnLeaveGroup != null) btnLeaveGroup.setVisibility(View.VISIBLE);
+        if (btnViewMembers != null) btnViewMembers.setVisibility(View.VISIBLE);
 
         if (btnAddMembers != null)
             btnAddMembers.setOnClickListener(v -> openAddMembersSheet());
+
+        if (btnViewMembers != null)
+            btnViewMembers.setOnClickListener(v -> showMembersDialog());
 
         if (btnLeaveGroup != null) {
             btnLeaveGroup.setOnClickListener(v ->
@@ -758,6 +765,271 @@ public class ChatProfileActivity extends AppCompatActivity {
 
         if (tvName != null) tvName.setOnClickListener(v -> showRenameGroupDialog());
         checkIfCreator();
+    }
+    private void showMembersDialog() {
+        FirebaseFirestore.getInstance()
+                .collection(FirestoreHelper.COL_CHATS)
+                .document(chatId)
+                .get()
+                .addOnSuccessListener(doc -> {
+                    if (!doc.exists()) return;
+
+                    String createdBy = doc.getString("createdBy");
+                    List<String> participantList = (List<String>) doc.get("participants");
+                    Map<String, String> names  = (Map<String, String>) doc.get("participantNames");
+                    Map<String, String> photos = (Map<String, String>) doc.get("participantPhotos");
+
+                    if (participantList == null) return;
+
+                    android.app.Dialog dialog = new android.app.Dialog(this);
+                    dialog.requestWindowFeature(android.view.Window.FEATURE_NO_TITLE);
+
+                    android.widget.LinearLayout root = new android.widget.LinearLayout(this);
+                    root.setOrientation(android.widget.LinearLayout.VERTICAL);
+                    android.graphics.drawable.GradientDrawable bg =
+                            new android.graphics.drawable.GradientDrawable();
+                    bg.setColor(0xFFFFFFFF);
+                    bg.setCornerRadius(42f);
+                    root.setBackground(bg);
+                    root.setClipToOutline(true);
+                    root.setPadding(0, 48, 0, 0);
+
+                    android.widget.TextView tvTitle = new android.widget.TextView(this);
+                    tvTitle.setText("Group Members (" + participantList.size() + ")");
+                    tvTitle.setTextSize(17f);
+                    tvTitle.setTypeface(null, android.graphics.Typeface.BOLD);
+                    tvTitle.setTextColor(0xFF000000);
+                    tvTitle.setGravity(android.view.Gravity.CENTER);
+                    tvTitle.setPadding(48, 0, 48, 24);
+                    root.addView(tvTitle);
+
+                    // Divider
+                    android.view.View topDiv = new android.view.View(this);
+                    topDiv.setLayoutParams(new android.widget.LinearLayout.LayoutParams(
+                            android.widget.LinearLayout.LayoutParams.MATCH_PARENT, 1));
+                    topDiv.setBackgroundColor(0xFFE0E0E0);
+                    root.addView(topDiv);
+
+                    // Scrollable list
+                    android.widget.ScrollView scrollView = new android.widget.ScrollView(this);
+                    int maxHeightPx = (int) (getResources().getDisplayMetrics().density * 320);
+                    scrollView.setLayoutParams(new android.widget.LinearLayout.LayoutParams(
+                            android.widget.LinearLayout.LayoutParams.MATCH_PARENT, maxHeightPx));
+
+                    android.widget.LinearLayout membersContainer =
+                            new android.widget.LinearLayout(this);
+                    membersContainer.setOrientation(android.widget.LinearLayout.VERTICAL);
+
+                    for (String uid : participantList) {
+                        String memberName  = names  != null ? names.get(uid)  : "Unknown";
+                        String memberPhoto = photos != null ? photos.get(uid) : null;
+                        boolean isCreator  = uid.equals(createdBy);
+                        boolean isMe       = uid.equals(myUid);
+
+                        android.widget.LinearLayout item =
+                                new android.widget.LinearLayout(this);
+                        item.setOrientation(android.widget.LinearLayout.HORIZONTAL);
+                        item.setPadding(48, 28, 48, 28);
+                        item.setGravity(android.view.Gravity.CENTER_VERTICAL);
+                        item.setBackground(android.util.TypedValue.applyDimension(
+                                0, 0, null) == 0
+                                ? null : null);
+
+                        // Ripple effect
+                        android.util.TypedValue tv = new android.util.TypedValue();
+                        getTheme().resolveAttribute(android.R.attr.selectableItemBackground, tv, true);
+                        item.setBackgroundResource(tv.resourceId);
+                        item.setClickable(true);
+                        item.setFocusable(true);
+
+                        // Avatar
+                        ImageView imgAvatar = new ImageView(this);
+                        android.widget.LinearLayout.LayoutParams avatarParams =
+                                new android.widget.LinearLayout.LayoutParams(110, 110);
+                        avatarParams.setMarginEnd(32);
+                        imgAvatar.setLayoutParams(avatarParams);
+
+                        if (memberPhoto != null && !memberPhoto.isEmpty()) {
+                            Glide.with(this).load(memberPhoto)
+                                    .transform(new CircleCrop())
+                                    .placeholder(R.drawable.circle_grey_bg)
+                                    .into(imgAvatar);
+                        } else {
+                            imgAvatar.setImageResource(R.drawable.circle_grey_bg);
+                        }
+
+                        // Name column
+                        android.widget.LinearLayout nameCol =
+                                new android.widget.LinearLayout(this);
+                        nameCol.setOrientation(android.widget.LinearLayout.VERTICAL);
+                        nameCol.setLayoutParams(new android.widget.LinearLayout.LayoutParams(
+                                0, android.widget.LinearLayout.LayoutParams.WRAP_CONTENT, 1f));
+// After nameCol is built, add kick button if I am creator and this is not me
+                        if (myUid.equals(createdBy) && !isMe) {
+                            android.widget.TextView btnKick = new android.widget.TextView(this);
+                            btnKick.setText("Kick");
+                            btnKick.setTextSize(12f);
+                            btnKick.setTextColor(0xFFE53935);
+                            btnKick.setPadding(24, 8, 24, 8);
+
+                            android.graphics.drawable.GradientDrawable kickBg =
+                                    new android.graphics.drawable.GradientDrawable();
+                            kickBg.setStroke(2, 0xFFE53935);
+                            kickBg.setCornerRadius(24f);
+                            kickBg.setColor(0x00000000);
+                            btnKick.setBackground(kickBg);
+
+                            String finalUid2   = uid;
+                            String finalName2  = memberName;
+                            String finalPhoto2 = memberPhoto;
+
+                            btnKick.setOnClickListener(v -> {
+                                dialog.dismiss();
+                                // Build UserModel for kicked member
+                                UserModel kickedUser = new UserModel();
+                                kickedUser.setUid(finalUid2);
+                                // Split name
+                                String[] parts = (finalName2 != null ? finalName2 : "Unknown").split(" ", 2);
+                                kickedUser.setFirstName(parts[0]);
+                                kickedUser.setLastName(parts.length > 1 ? parts[1] : "");
+                                kickedUser.setPhotoUrl(finalPhoto2);
+
+                                FirestoreHelper.get().getUser(myUid, new FirestoreHelper.OnUserFetched() {
+                                    @Override public void onSuccess(UserModel me) {
+                                        String kickerName = me.getFirstName() + " " + me.getLastName();
+                                        new IosDialog(ChatProfileActivity.this)
+                                                .setTitle("Kick Member")
+                                                .setMessage("Remove " + finalName2 + " from the group?")
+                                                .setOkText("Kick")
+                                                .setDestructive()
+                                                .onOk(() -> FirestoreHelper.get().kickMemberFromGroup(
+                                                        chatId, kickerName, kickedUser,
+                                                        new FirestoreHelper.OnActionComplete() {
+                                                            @Override public void onSuccess() {
+                                                                participants.remove(finalUid2);
+                                                                Toast.makeText(ChatProfileActivity.this,
+                                                                        finalName2 + " was removed.",
+                                                                        Toast.LENGTH_SHORT).show();
+                                                            }
+                                                            @Override public void onFailure(String e) {
+                                                                Toast.makeText(ChatProfileActivity.this,
+                                                                        "Failed to kick member.",
+                                                                        Toast.LENGTH_SHORT).show();
+                                                            }
+                                                        }))
+                                                .show();
+                                    }
+                                    @Override public void onFailure(String e) {}
+                                });
+                            });
+
+                            item.addView(btnKick);
+                        }
+                        android.widget.TextView tvMemberName =
+                                new android.widget.TextView(this);
+                        tvMemberName.setText((memberName != null ? memberName : "Unknown")
+                                + (isMe ? " (You)" : ""));
+                        tvMemberName.setTextSize(15f);
+                        tvMemberName.setTextColor(0xFF000000);
+                        nameCol.addView(tvMemberName);
+
+                        if (isCreator) {
+                            android.widget.TextView tvCreatorLabel =
+                                    new android.widget.TextView(this);
+                            tvCreatorLabel.setText("creator of the group");
+                            tvCreatorLabel.setTextSize(10f);
+                            tvCreatorLabel.setTextColor(0xFF4CAF50);
+                            nameCol.addView(tvCreatorLabel);
+                        }
+
+                        item.addView(imgAvatar);
+                        item.addView(nameCol);
+
+                        // Click → open 1-on-1 chat (not for yourself)
+                        if (!isMe) {
+                            String finalUid   = uid;
+                            String finalName  = memberName;
+                            String finalPhoto = memberPhoto;
+                            item.setOnClickListener(v -> {
+                                dialog.dismiss();
+                                openChatWithMember(finalUid, finalName, finalPhoto);
+                            });
+                        }
+
+                        membersContainer.addView(item);
+
+                        // Divider
+                        android.view.View div = new android.view.View(this);
+                        div.setLayoutParams(new android.widget.LinearLayout.LayoutParams(
+                                android.widget.LinearLayout.LayoutParams.MATCH_PARENT, 1));
+                        div.setBackgroundColor(0xFFEEEEEE);
+                        membersContainer.addView(div);
+                    }
+
+                    scrollView.addView(membersContainer);
+                    root.addView(scrollView);
+
+                    // Bottom divider + close
+                    android.view.View botDiv = new android.view.View(this);
+                    botDiv.setLayoutParams(new android.widget.LinearLayout.LayoutParams(
+                            android.widget.LinearLayout.LayoutParams.MATCH_PARENT, 1));
+                    botDiv.setBackgroundColor(0xFFE0E0E0);
+                    root.addView(botDiv);
+
+                    android.widget.TextView btnClose =
+                            new android.widget.TextView(this);
+                    btnClose.setText("Close");
+                    btnClose.setTextSize(16f);
+                    btnClose.setTextColor(0xFF4CAF50);
+                    btnClose.setGravity(android.view.Gravity.CENTER);
+                    btnClose.setPadding(0, 36, 0, 36);
+                    btnClose.setLayoutParams(new android.widget.LinearLayout.LayoutParams(
+                            android.widget.LinearLayout.LayoutParams.MATCH_PARENT,
+                            android.widget.LinearLayout.LayoutParams.WRAP_CONTENT));
+                    btnClose.setOnClickListener(v -> dialog.dismiss());
+                    root.addView(btnClose);
+
+                    dialog.setContentView(root);
+                    if (dialog.getWindow() != null) {
+                        dialog.getWindow().setBackgroundDrawable(
+                                new android.graphics.drawable.ColorDrawable(
+                                        android.graphics.Color.TRANSPARENT));
+                        dialog.getWindow().setLayout(
+                                (int) (getResources().getDisplayMetrics().widthPixels * 0.92f),
+                                android.view.WindowManager.LayoutParams.WRAP_CONTENT);
+                    }
+                    dialog.show();
+                });
+    }
+
+    private void openChatWithMember(String otherUid, String name, String photo) {
+        FirestoreHelper.get().getUser(myUid, new FirestoreHelper.OnUserFetched() {
+            @Override public void onSuccess(UserModel currentUser) {
+                FirestoreHelper.get().getUser(otherUid, new FirestoreHelper.OnUserFetched() {
+                    @Override public void onSuccess(UserModel otherUser) {
+                        FirestoreHelper.get().getOrCreateChat(currentUser, otherUser,
+                                new FirestoreHelper.OnChatReady() {
+                                    @Override public void onReady(String newChatId) {
+                                        Intent intent = new Intent(
+                                                ChatProfileActivity.this, ChatActivity.class);
+                                        intent.putExtra("chatId",    newChatId);
+                                        intent.putExtra("chatName",  name);
+                                        intent.putExtra("chatPhoto", photo);
+                                        intent.putExtra("isGroup",   false);
+                                        intent.putExtra("otherUid",  otherUid);
+                                        startActivity(intent);
+                                    }
+                                    @Override public void onFailure(String e) {
+                                        Toast.makeText(ChatProfileActivity.this,
+                                                "Could not open chat.", Toast.LENGTH_SHORT).show();
+                                    }
+                                });
+                    }
+                    @Override public void onFailure(String e) {}
+                });
+            }
+            @Override public void onFailure(String e) {}
+        });
     }
 
     private void checkIfCreator() {
@@ -843,31 +1115,29 @@ public class ChatProfileActivity extends AppCompatActivity {
     }
 
     private void addMemberToGroup(UserModel user) {
-        FirestoreHelper.get().addMemberToGroup(chatId, user,
-                new FirestoreHelper.OnActionComplete() {
-                    @Override
-                    public void onSuccess() {
-                        participants.add(user.getUid());
-
-                        // ✅ Check if group name is auto-generated
-                        // (i.e. contains comma-separated first names)
-                        // If so, update it with new member's name
-                        checkAndUpdateGroupName(user);
-
-                        Toast.makeText(ChatProfileActivity.this,
-                                user.getFirstName() + " added! ✅",
-                                Toast.LENGTH_SHORT).show();
-                    }
-
-                    @Override
-                    public void onFailure(String e) {
-                        Toast.makeText(ChatProfileActivity.this,
-                                "Failed to add member.",
-                                Toast.LENGTH_SHORT).show();
-                    }
-                });
+        // Get current user's full name first
+        FirestoreHelper.get().getUser(myUid, new FirestoreHelper.OnUserFetched() {
+            @Override
+            public void onSuccess(UserModel currentUser) {
+                String adderName = currentUser.getFirstName() + " " + currentUser.getLastName();
+                FirestoreHelper.get().addMemberToGroup(chatId, user, adderName,
+                        new FirestoreHelper.OnActionComplete() {
+                            @Override public void onSuccess() {
+                                participants.add(user.getUid());
+                                Toast.makeText(ChatProfileActivity.this,
+                                        user.getFirstName() + " added! ✅",
+                                        Toast.LENGTH_SHORT).show();
+                            }
+                            @Override public void onFailure(String e) {
+                                Toast.makeText(ChatProfileActivity.this,
+                                        "Failed to add member.",
+                                        Toast.LENGTH_SHORT).show();
+                            }
+                        });
+            }
+            @Override public void onFailure(String e) {}
+        });
     }
-
     private void checkAndUpdateGroupName(UserModel newMember) {
         FirebaseFirestore.getInstance()
                 .collection(FirestoreHelper.COL_CHATS)
@@ -1055,8 +1325,12 @@ public class ChatProfileActivity extends AppCompatActivity {
         hintLp.setMargins(16, 0, 0, 4);
 
         android.widget.EditText etName = new android.widget.EditText(this);
+        etName.setFilters(new android.text.InputFilter[]{
+                new android.text.InputFilter.LengthFilter(25)
+        });
         etName.setText(chatName != null ? chatName : "");
         etName.setTextSize(15f);
+
         etName.setTextColor(0xFF000000);
         etName.setSingleLine(true);
         android.graphics.drawable.GradientDrawable inputBg =

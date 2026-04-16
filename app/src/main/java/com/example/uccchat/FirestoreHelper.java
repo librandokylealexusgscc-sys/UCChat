@@ -8,6 +8,7 @@ import com.google.firebase.firestore.Query;
 import com.google.firebase.firestore.WriteBatch;
 import com.google.firebase.firestore.DocumentSnapshot;
 
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashMap;
 import java.util.List;
@@ -560,26 +561,106 @@ public class FirestoreHelper {
 
     public void addMemberToGroup(String chatId,
                                  UserModel newMember,
+                                 String adderFullName,
                                  OnActionComplete callback) {
+
+        db.collection(COL_CHATS).document(chatId)
+                .get()
+                .addOnSuccessListener(doc -> {
+                    if (!doc.exists()) { callback.onFailure("Chat not found"); return; }
+
+                    Boolean manuallyNamed = doc.getBoolean("manuallyNamed");
+
+                    Map<String, Object> updates = new HashMap<>();
+                    updates.put("participants",
+                            FieldValue.arrayUnion(newMember.getUid()));
+                    updates.put("participantNames." + newMember.getUid(),
+                            newMember.getFirstName() + " " + newMember.getLastName());
+                    updates.put("participantPhotos." + newMember.getUid(),
+                            newMember.getPhotoUrl() != null ? newMember.getPhotoUrl() : "");
+                    updates.put("unreadCount." + newMember.getUid(), 0L);
+
+                    // ✅ If group has NO custom name yet (auto-generated),
+                    // add new member's first name to the existing name
+                    if (!Boolean.TRUE.equals(manuallyNamed)) {
+                        String currentName = doc.getString("groupName");
+                        String newGroupName = (currentName != null && !currentName.isEmpty())
+                                ? currentName + ", " + newMember.getFirstName()
+                                : newMember.getFirstName();
+                        updates.put("groupName", newGroupName);
+                    }
+                    // ✅ If group already has a custom/manually set name → don't touch it
+
+                    // ✅ Once a member is added, lock the name permanently
+                    updates.put("manuallyNamed", true);
+
+                    db.collection(COL_CHATS).document(chatId)
+                            .update(updates)
+                            .addOnSuccessListener(u -> {
+                                String systemText = adderFullName + " added "
+                                        + newMember.getFirstName() + " "
+                                        + newMember.getLastName() + " to the group";
+                                sendSystemMessage(chatId, systemText);
+                                callback.onSuccess();
+                            })
+                            .addOnFailureListener(e -> callback.onFailure(e.getMessage()));
+                })
+                .addOnFailureListener(e -> callback.onFailure(e.getMessage()));
+    }
+    public void kickMemberFromGroup(String chatId,
+                                    String kickerFullName,
+                                    UserModel member,
+                                    OnActionComplete callback) {
         Map<String, Object> updates = new HashMap<>();
         updates.put("participants",
-                FieldValue.arrayUnion(newMember.getUid()));
-        updates.put("participantNames." + newMember.getUid(),
-                newMember.getFirstName() + " " + newMember.getLastName());
-        updates.put("participantPhotos." + newMember.getUid(),
-                newMember.getPhotoUrl() != null ? newMember.getPhotoUrl() : "");
-        updates.put("unreadCount." + newMember.getUid(), 0L);
+                FieldValue.arrayRemove(member.getUid()));
+        updates.put("unreadCount." + member.getUid(),
+                FieldValue.delete());
+        updates.put("participantNames." + member.getUid(),
+                FieldValue.delete());
+        updates.put("participantPhotos." + member.getUid(),
+                FieldValue.delete());
 
         db.collection(COL_CHATS).document(chatId)
                 .update(updates)
-                .addOnSuccessListener(u -> callback.onSuccess())
+                .addOnSuccessListener(u -> {
+                    String systemText = kickerFullName + " kicked "
+                            + member.getFirstName() + " "
+                            + member.getLastName() + " from the group";
+                    sendSystemMessage(chatId, systemText);
+                    callback.onSuccess();
+                })
                 .addOnFailureListener(e -> callback.onFailure(e.getMessage()));
     }
-
     // ════════════════════════════════════════════════════════
     //  CALLBACKS
     // ════════════════════════════════════════════════════════
+    public void sendSystemMessage(String chatId, String text) {
+        DocumentReference chatRef = db.collection(COL_CHATS).document(chatId);
+        DocumentReference msgRef  = chatRef.collection(COL_MESSAGES).document();
+        Timestamp now = Timestamp.now();
 
+        Map<String, Object> message = new HashMap<>();
+        message.put("messageId",  msgRef.getId());
+        message.put("senderId",   "system");
+        message.put("text",       text);
+        message.put("timestamp",  now);
+        message.put("type",       MessageModel.TYPE_SYSTEM);
+        message.put("seen",       true);
+        message.put("seenBy",     new ArrayList<>());
+        message.put("deletedFor", new ArrayList<>());
+        message.put("deleted",    false);
+
+        Map<String, Object> chatUpdates = new HashMap<>();
+        chatUpdates.put("lastMessage",     text);
+        chatUpdates.put("lastMessageTime", now);
+        chatUpdates.put("lastSenderId",    "system");
+
+        WriteBatch batch = db.batch();
+        batch.set(msgRef, message);
+        batch.update(chatRef, chatUpdates);
+        batch.commit();
+    }
     public interface OnUserFetched {
         void onSuccess(UserModel user);
         void onFailure(String error);
