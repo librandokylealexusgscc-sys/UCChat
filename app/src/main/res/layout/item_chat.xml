@@ -67,14 +67,13 @@
 
         <TextView
             android:id="@+id/tvUnreadBadge"
-            android:layout_width="20dp"
-            android:layout_height="20dp"
-            android:layout_marginTop="4dp"
+            android:layout_width="22dp"
+            android:layout_height="22dp"
             android:background="@drawable/circle_green_bg"
-            android:fontFamily="@font/bold"
             android:gravity="center"
             android:textColor="#FFFFFF"
-            android:textSize="10sp"
+            android:textSize="11sp"
+            android:textStyle="bold"
             android:visibility="gone" />
     </LinearLayout>
 </LinearLayout>

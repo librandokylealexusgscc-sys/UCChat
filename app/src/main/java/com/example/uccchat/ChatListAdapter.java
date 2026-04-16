@@ -76,11 +76,11 @@ public class ChatListAdapter extends RecyclerView.Adapter<ChatListAdapter.ChatVi
 
         ChatViewHolder(@NonNull View itemView) {
             super(itemView);
-            imgAvatar      = itemView.findViewById(R.id.imgAvatar);
-            tvName         = itemView.findViewById(R.id.tvName);
-            tvLastMessage  = itemView.findViewById(R.id.tvLastMessage);
-            tvTimestamp    = itemView.findViewById(R.id.tvTimestamp);
-            tvUnreadBadge  = itemView.findViewById(R.id.tvUnreadBadge);
+            imgAvatar = itemView.findViewById(R.id.imgAvatar);
+            tvName = itemView.findViewById(R.id.tvName);
+            tvLastMessage = itemView.findViewById(R.id.tvLastMessage);
+            tvTimestamp = itemView.findViewById(R.id.tvTimestamp);
+            tvUnreadBadge = itemView.findViewById(R.id.tvUnreadBadge);
         }
 
         void bind(ChatModel chat) {
@@ -104,17 +104,40 @@ public class ChatListAdapter extends RecyclerView.Adapter<ChatListAdapter.ChatVi
             // ── Unread Badge ──────────────────────────────────
             long unread = chat.getUnreadCountFor(myUid);
             if (unread > 0) {
+                // ✅ Show badge
                 tvUnreadBadge.setVisibility(View.VISIBLE);
                 tvUnreadBadge.setText(unread > 99 ? "99+" : String.valueOf(unread));
-                // Bold the name if unread
+
+                // ✅ Bold name
                 tvName.setTypeface(null, android.graphics.Typeface.BOLD);
+
+                // ✅ Bold last message + use color resource not hardcoded
+                tvLastMessage.setTypeface(null, android.graphics.Typeface.BOLD);
                 tvLastMessage.setTextColor(
-                        context.getColor(android.R.color.black));
+                        context.getResources().getColor(R.color.text_primary,
+                                context.getTheme()));
+
+                // ✅ Bold timestamp too
+                tvTimestamp.setTypeface(null, android.graphics.Typeface.BOLD);
+                tvTimestamp.setTextColor(
+                        context.getResources().getColor(R.color.text_primary,
+                                context.getTheme()));
+
             } else {
+                // ✅ No unread — reset everything
                 tvUnreadBadge.setVisibility(View.GONE);
+
                 tvName.setTypeface(null, android.graphics.Typeface.NORMAL);
+
+                tvLastMessage.setTypeface(null, android.graphics.Typeface.NORMAL);
                 tvLastMessage.setTextColor(
-                        context.getColor(android.R.color.darker_gray));
+                        context.getResources().getColor(R.color.text_secondary,
+                                context.getTheme()));
+
+                tvTimestamp.setTypeface(null, android.graphics.Typeface.NORMAL);
+                tvTimestamp.setTextColor(
+                        context.getResources().getColor(R.color.text_secondary,
+                                context.getTheme()));
             }
 
             // ── Avatar ────────────────────────────────────────

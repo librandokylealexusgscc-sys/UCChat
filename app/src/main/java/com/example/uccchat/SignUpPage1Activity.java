@@ -5,6 +5,7 @@ import android.os.Bundle;
 import android.text.Editable;
 import android.text.TextWatcher;
 import android.view.View;
+import android.view.ViewGroup;
 import android.widget.AdapterView;
 import android.widget.ArrayAdapter;
 import android.widget.Spinner;
@@ -17,31 +18,75 @@ import com.google.android.material.textfield.TextInputEditText;
 import com.google.android.material.textfield.TextInputLayout;
 import com.google.firebase.FirebaseApp;
 
+import java.util.ArrayList;
+import java.util.Calendar;
+import java.util.LinkedHashMap;
+import java.util.List;
+import java.util.Map;
+
 public class SignUpPage1Activity extends AppCompatActivity {
 
     private TextInputLayout tilUsername, tilPassword, tilConfirmPassword,
             tilLastName, tilFirstName, tilPhone, tilEmail, tilStudentId;
     private TextInputEditText etUsername, etPassword, etConfirmPassword,
             etLastName, etFirstName, etPhone, etEmail, etStudentId;
-    private Spinner spinnerCourse;
-    private TextView tvStudentIdError, tvCourseError;
+    private Spinner spinnerDepartment, spinnerCourse, spinnerSchoolYear;
+    private TextView tvStudentIdError, tvCourseError, tvDepartmentError, tvSchoolYearError;
 
-    // First item is a prompt, the rest are actual courses
-    private final String[] COURSES = {
-            "Select course",
-            "Information Technology",
-            "Computer Science",
-            "Psychology",
-            "Education",
-            "Nursing",
-            "Accountancy",
-            "Business Administration",
-            "Civil Engineering",
-            "Architecture",
-            "Criminology",
-            "Social Work",
-            "Tourism Management"
-    };
+    private static final int MIN_YEAR = 2020;
+
+    private final LinkedHashMap<String, String[]> DEPARTMENT_COURSES =
+            new LinkedHashMap<String, String[]>() {{
+                put("COLLEGE OF BUSINESS AND ACCOUNTANCY", new String[]{
+                        "Select course",
+                        "Bachelor of Science in Accountancy",
+                        "Bachelor of Science in Accounting Information System",
+                        "Bachelor of Science in Business Administration, Major in Financial Management",
+                        "Bachelor of Science in Business Administration, Major in Human Resource Management",
+                        "Bachelor of Science in Business Administration, Major in Marketing Management",
+                        "Bachelor of Science in Entrepreneurship",
+                        "Bachelor of Science in Hospitality Management",
+                        "Bachelor of Science in Office Administration",
+                        "Bachelor of Science in Tourism Management"
+                });
+                put("COLLEGE OF CRIMINAL JUSTICE EDUCATION", new String[]{
+                        "Select course",
+                        "Bachelor of Science in Criminology",
+                        "Bachelor of Science in Industrial Security Management"
+                });
+                put("COLLEGE OF EDUCATION", new String[]{
+                        "Select course",
+                        "Bachelor in Secondary Education Major in English",
+                        "Bachelor in Secondary Education Major in English - Chinese",
+                        "Bachelor in Secondary Education Major in Science",
+                        "Bachelor in Secondary Education Major in Technology and Livelihood Education",
+                        "Bachelor of Early Childhood Education"
+                });
+                put("COLLEGE OF ENGINEERING", new String[]{
+                        "Select course",
+                        "Bachelor of Science in Computer Engineering",
+                        "Bachelor of Science in Electrical Engineering",
+                        "Bachelor of Science in Electronics Engineering",
+                        "Bachelor of Science in Industrial Engineering"
+                });
+                put("COLLEGE OF LAW", new String[]{
+                        "Select course",
+                        "Law"
+                });
+                put("COLLEGE OF LIBERAL ARTS AND SCIENCES", new String[]{
+                        "Select course",
+                        "AB Political Science",
+                        "BA Communication",
+                        "Bachelor of Public Administration",
+                        "Bachelor of Public Administration (SPECIAL PROGRAM)",
+                        "Bachelor of Science in Computer Science",
+                        "Bachelor of Science in Entertainment and Multimedia Computing",
+                        "Bachelor of Science in Information System",
+                        "Bachelor of Science in Information Technology",
+                        "Bachelor of Science in Mathematics",
+                        "Bachelor of Science in Psychology"
+                });
+            }};
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -49,6 +94,7 @@ public class SignUpPage1Activity extends AppCompatActivity {
         setContentView(R.layout.signup_page_1);
         FirebaseApp.initializeApp(this);
 
+        // ── Bind views ────────────────────────────────────────
         tilUsername        = findViewById(R.id.tilUsername);
         tilPassword        = findViewById(R.id.tilPassword);
         tilConfirmPassword = findViewById(R.id.tilConfirmPassword);
@@ -66,31 +112,116 @@ public class SignUpPage1Activity extends AppCompatActivity {
         etPhone            = findViewById(R.id.etPhone);
         etEmail            = findViewById(R.id.etEmail);
         etStudentId        = findViewById(R.id.etStudentId);
+
+        spinnerDepartment  = findViewById(R.id.spinnerDepartment);
         spinnerCourse      = findViewById(R.id.spinnerCourse);
+        spinnerSchoolYear  = findViewById(R.id.spinnerSchoolYear);
+
         tvStudentIdError   = findViewById(R.id.tvStudentIdError);
         tvCourseError      = findViewById(R.id.tvCourseError);
+        tvDepartmentError  = findViewById(R.id.tvDepartmentError);
+        tvSchoolYearError  = findViewById(R.id.tvSchoolYearError);
 
-        // Set up Spinner adapter
-        ArrayAdapter<String> courseAdapter = new ArrayAdapter<>(
-                this,
-                android.R.layout.simple_spinner_item,
-                COURSES
-        );
-        courseAdapter.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item);
-        spinnerCourse.setAdapter(courseAdapter);
+        // ── School Year Spinner ───────────────────────────────
+        int currentYear = Calendar.getInstance().get(Calendar.YEAR);
+        List<String> schoolYears = new ArrayList<>();
+        schoolYears.add("Select school year");
+        for (int y = currentYear; y >= MIN_YEAR; y--) {
+            schoolYears.add(String.valueOf(y));
+        }
 
-        // Clear course error when user selects a real course
-        spinnerCourse.setOnItemSelectedListener(new AdapterView.OnItemSelectedListener() {
+        ArrayAdapter<String> yearAdapter = new ArrayAdapter<String>(
+                this, android.R.layout.simple_spinner_item, schoolYears) {
             @Override
-            public void onItemSelected(AdapterView<?> parent, View view, int position, long id) {
-                if (position > 0) {
-                    tvCourseError.setVisibility(View.GONE);
-                }
+            public View getView(int position, View convertView, ViewGroup parent) {
+                View view = super.getView(position, convertView, parent);
+                TextView tv = view.findViewById(android.R.id.text1);
+                tv.setTextColor(0xFF000000);
+                tv.setBackgroundColor(0xFFFFFFFF);
+                tv.setTextSize(14f);
+                tv.setPadding(16, 0, 16, 0);
+                return view;
             }
             @Override
-            public void onNothingSelected(AdapterView<?> parent) {}
+            public View getDropDownView(int position, View convertView, ViewGroup parent) {
+                View view = super.getDropDownView(position, convertView, parent);
+                TextView tv = view.findViewById(android.R.id.text1);
+                tv.setTextColor(0xFF000000);
+                tv.setBackgroundColor(0xFFFFFFFF);
+                tv.setTextSize(14f);
+                tv.setPadding(32, 24, 32, 24);
+                return view;
+            }
+        };
+        yearAdapter.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item);
+        spinnerSchoolYear.setAdapter(yearAdapter);
+
+        spinnerSchoolYear.setOnItemSelectedListener(new AdapterView.OnItemSelectedListener() {
+            @Override
+            public void onItemSelected(AdapterView<?> parent, View view,
+                                       int position, long id) {
+                if (position > 0) tvSchoolYearError.setVisibility(View.GONE);
+            }
+            @Override public void onNothingSelected(AdapterView<?> parent) {}
         });
 
+        // ── Department Spinner ────────────────────────────────
+        List<String> departments = new ArrayList<>();
+        departments.add("Select department");
+        departments.addAll(DEPARTMENT_COURSES.keySet());
+
+        ArrayAdapter<String> deptAdapter = new ArrayAdapter<String>(
+                this, android.R.layout.simple_spinner_item, departments) {
+            @Override
+            public View getView(int position, View convertView, ViewGroup parent) {
+                View view = super.getView(position, convertView, parent);
+                TextView tv = view.findViewById(android.R.id.text1);
+                tv.setTextColor(0xFF000000);
+                tv.setBackgroundColor(0xFFFFFFFF);
+                tv.setTextSize(14f);
+                tv.setPadding(16, 0, 16, 0);
+                return view;
+            }
+            @Override
+            public View getDropDownView(int position, View convertView, ViewGroup parent) {
+                View view = super.getDropDownView(position, convertView, parent);
+                TextView tv = view.findViewById(android.R.id.text1);
+                tv.setTextColor(0xFF000000);
+                tv.setBackgroundColor(0xFFFFFFFF);
+                tv.setTextSize(14f);
+                tv.setPadding(32, 24, 32, 24);
+                return view;
+            }
+        };
+        deptAdapter.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item);
+        spinnerDepartment.setAdapter(deptAdapter);
+
+        updateCourseSpinner(null);
+
+        spinnerDepartment.setOnItemSelectedListener(new AdapterView.OnItemSelectedListener() {
+            @Override
+            public void onItemSelected(AdapterView<?> parent, View view,
+                                       int position, long id) {
+                if (position > 0) {
+                    tvDepartmentError.setVisibility(View.GONE);
+                    updateCourseSpinner(departments.get(position));
+                } else {
+                    updateCourseSpinner(null);
+                }
+            }
+            @Override public void onNothingSelected(AdapterView<?> parent) {}
+        });
+
+        spinnerCourse.setOnItemSelectedListener(new AdapterView.OnItemSelectedListener() {
+            @Override
+            public void onItemSelected(AdapterView<?> parent, View view,
+                                       int position, long id) {
+                if (position > 0) tvCourseError.setVisibility(View.GONE);
+            }
+            @Override public void onNothingSelected(AdapterView<?> parent) {}
+        });
+
+        // ── Clear errors on type ──────────────────────────────
         clearErrorOnType(etUsername,        tilUsername);
         clearErrorOnType(etPassword,        tilPassword);
         clearErrorOnType(etConfirmPassword, tilConfirmPassword);
@@ -100,62 +231,214 @@ public class SignUpPage1Activity extends AppCompatActivity {
         clearErrorOnType(etEmail,           tilEmail);
         clearErrorOnType(etStudentId,       tilStudentId);
 
-        // Pre-fill fields from Google if applicable
+        // ── Pre-fill from Google ──────────────────────────────
         if (UserSession.isFromGoogle) {
             if (UserSession.firstName != null) etFirstName.setText(UserSession.firstName);
             if (UserSession.lastName  != null) etLastName.setText(UserSession.lastName);
             if (UserSession.email     != null) etEmail.setText(UserSession.email);
         }
-        // Pre-fill fields from Facebook if applicable
+
+        // ── Pre-fill from Facebook ────────────────────────────
         if (UserSession.isFromFacebook) {
             if (UserSession.firstName != null) etFirstName.setText(UserSession.firstName);
             if (UserSession.lastName  != null) etLastName.setText(UserSession.lastName);
             if (UserSession.email     != null) etEmail.setText(UserSession.email);
-
             if (UserSession.facebookEmailAlreadyExists) {
-                // Show error on the email field so user knows to change it or log in instead
-                tilEmail.setError("This email is already registered. Please use a different email or log in with your existing account.");
+                tilEmail.setError("This email is already registered.");
                 tilEmail.requestFocus();
             }
         }
 
-        // Restore course selection if returning from back navigation
+        // ── Restore session on back navigation ────────────────
         if (UserSession.course != null) {
-            for (int i = 0; i < COURSES.length; i++) {
-                if (COURSES[i].equals(UserSession.course)) {
-                    spinnerCourse.setSelection(i);
-                    break;
+            for (Map.Entry<String, String[]> entry : DEPARTMENT_COURSES.entrySet()) {
+                String[] courses = entry.getValue();
+                for (int i = 1; i < courses.length; i++) {
+                    if (courses[i].equals(UserSession.course)) {
+                        String dept = entry.getKey();
+                        int deptIndex = departments.indexOf(dept);
+                        if (deptIndex >= 0) spinnerDepartment.setSelection(deptIndex);
+                        updateCourseSpinner(dept);
+                        final int courseIndex = i;
+                        spinnerCourse.post(() -> spinnerCourse.setSelection(courseIndex));
+                        break;
+                    }
                 }
             }
         }
 
+        // ── Next Button ───────────────────────────────────────
         MaterialButton btnNext = findViewById(R.id.btnNext);
         btnNext.setOnClickListener(v -> {
-            if (validateFields()) {
-                UserSession.username  = getText(etUsername);
-                UserSession.password  = getText(etPassword);
-                UserSession.lastName  = getText(etLastName);
-                UserSession.firstName = getText(etFirstName);
-                UserSession.phone     = getText(etPhone);
-                UserSession.email     = getText(etEmail);
-                UserSession.studentId = getText(etStudentId);
-                UserSession.course    = spinnerCourse.getSelectedItem().toString();
+            if (!validateFields()) return;
 
-                startActivity(new Intent(SignUpPage1Activity.this, SignUpPage2Activity.class));
-            }
+            btnNext.setEnabled(false);
+            btnNext.setText("Checking...");
+
+            String enteredUsername  = getText(etUsername);
+            String enteredStudentId = getText(etStudentId);
+            String enteredFirstName = getText(etFirstName);
+            String enteredLastName  = getText(etLastName);
+            String enteredEmail     = getText(etEmail);
+            String enteredCourse    = spinnerCourse.getSelectedItem().toString();
+
+            final boolean[] usernameTaken   = {false};
+            final boolean[] studentIdTaken  = {false};
+            final boolean[] nameCourseTaken = {false};
+            final boolean[] emailTaken      = {false};
+            final int[] checksComplete      = {0};
+            final int TOTAL_CHECKS          = 4;
+
+            Runnable onAllChecksComplete = () -> {
+                checksComplete[0]++;
+                if (checksComplete[0] < TOTAL_CHECKS) return;
+
+                runOnUiThread(() -> {
+                    btnNext.setEnabled(true);
+                    btnNext.setText("Next");
+
+                    boolean hasError = false;
+
+                    if (usernameTaken[0]) {
+                        tilUsername.setErrorEnabled(true);
+                        tilUsername.setError("Username is already taken");
+                        hasError = true;
+                    }
+                    if (studentIdTaken[0]) {
+                        tilStudentId.setErrorEnabled(true);
+                        tilStudentId.setError("Student ID is already registered");
+                        hasError = true;
+                    }
+                    if (nameCourseTaken[0]) {
+                        tilFirstName.setErrorEnabled(true);
+                        tilFirstName.setError(
+                                "An account with this name and course already exists");
+                        tilLastName.setErrorEnabled(true);
+                        tilLastName.setError(
+                                "An account with this name and course already exists");
+                        hasError = true;
+                    }
+                    if (emailTaken[0]) {
+                        tilEmail.setErrorEnabled(true);
+                        tilEmail.setError(
+                                "This email is already registered. Please use a different email.");
+                        hasError = true;
+                    }
+
+                    if (!hasError) {
+                        UserSession.username  = enteredUsername;
+                        UserSession.password  = getText(etPassword);
+                        UserSession.lastName  = enteredLastName;
+                        UserSession.firstName = enteredFirstName;
+                        UserSession.phone     = getText(etPhone);
+                        UserSession.email     = enteredEmail;
+                        UserSession.studentId = enteredStudentId;
+                        UserSession.course    = enteredCourse;
+                        startActivity(new Intent(SignUpPage1Activity.this,
+                                SignUpPage2Activity.class));
+                    }
+                });
+            };
+
+            com.google.firebase.firestore.FirebaseFirestore db =
+                    com.google.firebase.firestore.FirebaseFirestore.getInstance();
+
+            // ── Check 1: Username ──────────────────────────────
+            db.collection("users").whereEqualTo("username", enteredUsername)
+                    .limit(1).get()
+                    .addOnSuccessListener(snap -> {
+                        usernameTaken[0] = !snap.isEmpty();
+                        onAllChecksComplete.run();
+                    })
+                    .addOnFailureListener(e -> onAllChecksComplete.run());
+
+            // ── Check 2: Student ID ────────────────────────────
+            db.collection("users").whereEqualTo("studentId", enteredStudentId)
+                    .limit(1).get()
+                    .addOnSuccessListener(snap -> {
+                        studentIdTaken[0] = !snap.isEmpty();
+                        onAllChecksComplete.run();
+                    })
+                    .addOnFailureListener(e -> onAllChecksComplete.run());
+
+            // ── Check 3: First + Last Name + Course combo ──────
+            // ✅ Same name allowed if different course
+            // ✅ Only reject if name AND course are both identical
+            db.collection("users")
+                    .whereEqualTo("firstName", enteredFirstName)
+                    .whereEqualTo("lastName",  enteredLastName)
+                    .whereEqualTo("course",    enteredCourse)
+                    .limit(1).get()
+                    .addOnSuccessListener(snap -> {
+                        nameCourseTaken[0] = !snap.isEmpty();
+                        onAllChecksComplete.run();
+                    })
+                    .addOnFailureListener(e -> onAllChecksComplete.run());
+
+            // ── Check 4: Email ─────────────────────────────────
+            db.collection("users").whereEqualTo("email", enteredEmail)
+                    .limit(1).get()
+                    .addOnSuccessListener(snap -> {
+                        emailTaken[0] = !snap.isEmpty();
+                        onAllChecksComplete.run();
+                    })
+                    .addOnFailureListener(e -> onAllChecksComplete.run());
         });
     }
+
+    // ════════════════════════════════════════════════════════
+    //  COURSE SPINNER
+    // ════════════════════════════════════════════════════════
+
+    private void updateCourseSpinner(String department) {
+        String[] courses;
+        if (department == null || !DEPARTMENT_COURSES.containsKey(department)) {
+            courses = new String[]{"Select course"};
+        } else {
+            courses = DEPARTMENT_COURSES.get(department);
+        }
+
+        ArrayAdapter<String> courseAdapter = new ArrayAdapter<String>(
+                this, android.R.layout.simple_spinner_item, courses) {
+            @Override
+            public View getView(int position, View convertView, ViewGroup parent) {
+                View view = super.getView(position, convertView, parent);
+                TextView tv = view.findViewById(android.R.id.text1);
+                tv.setTextColor(0xFF000000);
+                tv.setBackgroundColor(0xFFFFFFFF);
+                tv.setTextSize(14f);
+                tv.setPadding(16, 0, 16, 0);
+                return view;
+            }
+            @Override
+            public View getDropDownView(int position, View convertView, ViewGroup parent) {
+                View view = super.getDropDownView(position, convertView, parent);
+                TextView tv = view.findViewById(android.R.id.text1);
+                tv.setTextColor(0xFF000000);
+                tv.setBackgroundColor(0xFFFFFFFF);
+                tv.setTextSize(14f);
+                tv.setPadding(32, 24, 32, 24);
+                return view;
+            }
+        };
+        courseAdapter.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item);
+        spinnerCourse.setAdapter(courseAdapter);
+    }
+
+    // ════════════════════════════════════════════════════════
+    //  VALIDATION
+    // ════════════════════════════════════════════════════════
 
     private boolean validateFields() {
         boolean valid = true;
 
-        // Username
+        // ── Username ──────────────────────────────────────────
         if (isEmpty(etUsername)) {
             tilUsername.setError("Username is required");
             valid = false;
         }
 
-        // Password
+        // ── Password ──────────────────────────────────────────
         String password = getText(etPassword);
         if (password.isEmpty()) {
             tilPassword.setError("Password is required");
@@ -164,17 +447,17 @@ public class SignUpPage1Activity extends AppCompatActivity {
             tilPassword.setError("Password must be at least 8 characters");
             valid = false;
         } else if (!password.matches(".*[A-Z].*")) {
-            tilPassword.setError("Password must contain at least 1 uppercase letter");
+            tilPassword.setError("Must contain at least 1 uppercase letter");
             valid = false;
         } else if (!password.matches(".*[a-z].*")) {
-            tilPassword.setError("Password must contain at least 1 lowercase letter");
+            tilPassword.setError("Must contain at least 1 lowercase letter");
             valid = false;
         } else if (!password.matches(".*[0-9].*")) {
-            tilPassword.setError("Password must contain at least 1 number");
+            tilPassword.setError("Must contain at least 1 number");
             valid = false;
         }
 
-        // Confirm Password
+        // ── Confirm Password ──────────────────────────────────
         if (isEmpty(etConfirmPassword)) {
             tilConfirmPassword.setError("Please confirm your password");
             valid = false;
@@ -183,19 +466,25 @@ public class SignUpPage1Activity extends AppCompatActivity {
             valid = false;
         }
 
-        // Last Name
+        // ── Last Name ─────────────────────────────────────────
         if (isEmpty(etLastName)) {
             tilLastName.setError("Last name is required");
             valid = false;
-        }
-
-        // First Name
-        if (isEmpty(etFirstName)) {
-            tilFirstName.setError("First name is required");
+        } else if (!getText(etLastName).matches("^[A-Za-z\\s]+$")) {
+            tilLastName.setError("Last name must contain letters only");
             valid = false;
         }
 
-        // Phone
+        // ── First Name ────────────────────────────────────────
+        if (isEmpty(etFirstName)) {
+            tilFirstName.setError("First name is required");
+            valid = false;
+        } else if (!getText(etFirstName).matches("^[A-Za-z\\s]+$")) {
+            tilFirstName.setError("First name must contain letters only");
+            valid = false;
+        }
+
+        // ── Phone ─────────────────────────────────────────────
         String phone = getText(etPhone);
         if (phone.isEmpty()) {
             tilPhone.setError("Phone number is required");
@@ -211,30 +500,83 @@ public class SignUpPage1Activity extends AppCompatActivity {
             valid = false;
         }
 
-        // Email
+        // ── Email ─────────────────────────────────────────────
         if (isEmpty(etEmail)) {
             tilEmail.setError("Email is required");
             valid = false;
-        } else if (!android.util.Patterns.EMAIL_ADDRESS.matcher(getText(etEmail)).matches()) {
+        } else if (!android.util.Patterns.EMAIL_ADDRESS
+                .matcher(getText(etEmail)).matches()) {
             tilEmail.setError("Please enter a valid email address");
             valid = false;
         }
 
-        // Student ID
-        String studentId = getText(etStudentId);
+        // ── Student ID ────────────────────────────────────────
+        String studentId = getText(etStudentId).toUpperCase();
         if (studentId.isEmpty()) {
             tilStudentId.setError("Student ID is required");
             tvStudentIdError.setVisibility(View.VISIBLE);
             valid = false;
-        } else if (!studentId.matches("\\d{8}-[A-Z]")) {
-            tilStudentId.setError("Invalid format. Use: 20240391-C");
+        } else if (!studentId.matches("\\d{8}-[CNSB]")) {
+            tilStudentId.setError("Format: 20240391-C  (ends with C, N, S, or B)");
             tvStudentIdError.setVisibility(View.VISIBLE);
             valid = false;
         } else {
-            tvStudentIdError.setVisibility(View.GONE);
+            int startYear   = Integer.parseInt(studentId.substring(0, 4));
+            int currentYear = Calendar.getInstance().get(Calendar.YEAR);
+
+            if (startYear < MIN_YEAR) {
+                tilStudentId.setError(
+                        "Alumni accounts are not allowed. " +
+                                "Only students enrolled from " + MIN_YEAR +
+                                " onwards can register.");
+                tvStudentIdError.setText(
+                        "Your Student ID year (" + startYear + ") is below " +
+                                MIN_YEAR + ". Alumni cannot sign up.");
+                tvStudentIdError.setVisibility(View.VISIBLE);
+                valid = false;
+            } else if (startYear > currentYear) {
+                tilStudentId.setError(
+                        "Invalid year. Starting year cannot be in the future.");
+                tvStudentIdError.setVisibility(View.VISIBLE);
+                valid = false;
+            } else {
+                tvStudentIdError.setVisibility(View.GONE);
+            }
         }
 
-        // Course — position 0 is the "Select course" prompt
+        // ── School Year ───────────────────────────────────────
+        if (spinnerSchoolYear.getSelectedItemPosition() == 0) {
+            tvSchoolYearError.setText("Please select your school year.");
+            tvSchoolYearError.setVisibility(View.VISIBLE);
+            valid = false;
+        } else {
+            String selectedYear = spinnerSchoolYear.getSelectedItem().toString();
+            String studentId2   = getText(etStudentId).toUpperCase();
+            if (studentId2.length() >= 4) {
+                String idYear = studentId2.substring(0, 4);
+                if (!idYear.equals(selectedYear)) {
+                    tvSchoolYearError.setText(
+                            "School year (" + selectedYear +
+                                    ") does not match Student ID year (" + idYear + ").");
+                    tvSchoolYearError.setVisibility(View.VISIBLE);
+                    valid = false;
+                } else {
+                    tvSchoolYearError.setVisibility(View.GONE);
+                }
+            } else {
+                tvSchoolYearError.setVisibility(View.GONE);
+            }
+        }
+
+        // ── Department ────────────────────────────────────────
+        if (spinnerDepartment.getSelectedItemPosition() == 0) {
+            tvDepartmentError.setVisibility(View.VISIBLE);
+            valid = false;
+        } else {
+            tvDepartmentError.setVisibility(View.GONE);
+        }
+
+        // ── Course ────────────────────────────────────────────
         if (spinnerCourse.getSelectedItemPosition() == 0) {
             tvCourseError.setVisibility(View.VISIBLE);
             valid = false;
@@ -245,10 +587,14 @@ public class SignUpPage1Activity extends AppCompatActivity {
         return valid;
     }
 
+    // ════════════════════════════════════════════════════════
+    //  HELPERS
+    // ════════════════════════════════════════════════════════
+
     private void clearErrorOnType(TextInputEditText et, TextInputLayout til) {
         et.addTextChangedListener(new TextWatcher() {
-            @Override public void beforeTextChanged(CharSequence s, int start, int count, int after) {}
-            @Override public void onTextChanged(CharSequence s, int start, int before, int count) {
+            @Override public void beforeTextChanged(CharSequence s, int st, int c, int a) {}
+            @Override public void onTextChanged(CharSequence s, int st, int b, int c) {
                 til.setError(null);
                 if (til.getId() == R.id.tilStudentId) {
                     tvStudentIdError.setVisibility(View.GONE);
@@ -258,9 +604,7 @@ public class SignUpPage1Activity extends AppCompatActivity {
         });
     }
 
-    private boolean isEmpty(TextInputEditText et) {
-        return getText(et).isEmpty();
-    }
+    private boolean isEmpty(TextInputEditText et) { return getText(et).isEmpty(); }
 
     private String getText(TextInputEditText et) {
         return et.getText() != null ? et.getText().toString().trim() : "";

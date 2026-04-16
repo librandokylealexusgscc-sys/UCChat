@@ -1,7 +1,6 @@
 package com.example.uccchat;
 
 import android.content.Intent;
-import android.net.Uri;
 import android.os.Bundle;
 
 import androidx.activity.result.ActivityResultLauncher;
@@ -26,8 +25,8 @@ public class SignUpPage2Activity extends AppCompatActivity {
                 if (uri != null) {
                     UserSession.profilePicUri = uri;
                     ivProfilePreview.setImageURI(uri);
-                    ivProfilePreview.setVisibility(android.view.View.VISIBLE);
-                    tvPlusIcon.setVisibility(android.view.View.GONE);
+                    ivProfilePreview.setVisibility(View.VISIBLE);
+                    tvPlusIcon.setVisibility(View.GONE);
                 }
             });
 
@@ -40,7 +39,6 @@ public class SignUpPage2Activity extends AppCompatActivity {
         ivProfilePreview = findViewById(R.id.ivProfilePreview);
         tvPlusIcon       = findViewById(R.id.tvPlusIcon);
 
-        // Tap box to pick image
         FrameLayout imagePickerBox = findViewById(R.id.imagePickerBox);
         imagePickerBox.setOnClickListener(v ->
                 imagePickerLauncher.launch("image/*"));
@@ -51,21 +49,30 @@ public class SignUpPage2Activity extends AppCompatActivity {
         MaterialButton btnContinue = findViewById(R.id.btnContinue);
         btnContinue.setOnClickListener(v ->
                 startActivity(new Intent(SignUpPage2Activity.this, SignUpPage3Activity.class)));
+    }
 
-        // Pre-fill profile pic from Google
+    @Override
+    protected void onResume() {
+        super.onResume();
+
         if (UserSession.isFromGoogle && UserSession.googlePhotoUrl != null) {
             tvPlusIcon.setVisibility(View.GONE);
             ivProfilePreview.setVisibility(View.VISIBLE);
-            // Load Google photo URL into ImageView
-            new Thread(() -> {
-                try {
-                    java.net.URL url = new java.net.URL(UserSession.googlePhotoUrl);
-                    android.graphics.Bitmap bitmap = android.graphics.BitmapFactory.decodeStream(url.openStream());
-                    runOnUiThread(() -> ivProfilePreview.setImageBitmap(bitmap));
-                } catch (Exception e) {
-                    e.printStackTrace();
-                }
-            }).start();
+            if (ivProfilePreview.getDrawable() == null) {
+                new Thread(() -> {
+                    try {
+                        java.net.URL url = new java.net.URL(UserSession.googlePhotoUrl);
+                        android.graphics.Bitmap bitmap = android.graphics.BitmapFactory.decodeStream(url.openStream());
+                        runOnUiThread(() -> ivProfilePreview.setImageBitmap(bitmap));
+                    } catch (Exception e) {
+                        e.printStackTrace();
+                    }
+                }).start();
+            }
+        } else if (UserSession.profilePicUri != null) {
+            ivProfilePreview.setImageURI(UserSession.profilePicUri);
+            ivProfilePreview.setVisibility(View.VISIBLE);
+            tvPlusIcon.setVisibility(View.GONE);
         }
     }
 }

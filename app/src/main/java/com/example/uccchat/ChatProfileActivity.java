@@ -788,7 +788,7 @@ public class ChatProfileActivity extends AppCompatActivity {
                     root.setOrientation(android.widget.LinearLayout.VERTICAL);
                     android.graphics.drawable.GradientDrawable bg =
                             new android.graphics.drawable.GradientDrawable();
-                    bg.setColor(0xFFFFFFFF);
+                    bg.setColor(ChatProfileActivity.this.getColor(R.color.bg_card));
                     bg.setCornerRadius(42f);
                     root.setBackground(bg);
                     root.setClipToOutline(true);
@@ -798,7 +798,7 @@ public class ChatProfileActivity extends AppCompatActivity {
                     tvTitle.setText("Group Members (" + participantList.size() + ")");
                     tvTitle.setTextSize(17f);
                     tvTitle.setTypeface(null, android.graphics.Typeface.BOLD);
-                    tvTitle.setTextColor(0xFF000000);
+                    tvTitle.setTextColor(getColor(R.color.text_primary)); // ✅ was 0xFF000000
                     tvTitle.setGravity(android.view.Gravity.CENTER);
                     tvTitle.setPadding(48, 0, 48, 24);
                     root.addView(tvTitle);
@@ -807,7 +807,7 @@ public class ChatProfileActivity extends AppCompatActivity {
                     android.view.View topDiv = new android.view.View(this);
                     topDiv.setLayoutParams(new android.widget.LinearLayout.LayoutParams(
                             android.widget.LinearLayout.LayoutParams.MATCH_PARENT, 1));
-                    topDiv.setBackgroundColor(0xFFE0E0E0);
+                    topDiv.setBackgroundColor(getColor(R.color.divider_color));
                     root.addView(topDiv);
 
                     // Scrollable list
@@ -930,7 +930,7 @@ public class ChatProfileActivity extends AppCompatActivity {
                         tvMemberName.setText((memberName != null ? memberName : "Unknown")
                                 + (isMe ? " (You)" : ""));
                         tvMemberName.setTextSize(15f);
-                        tvMemberName.setTextColor(0xFF000000);
+                        tvMemberName.setTextColor(getColor(R.color.text_primary)); // ✅ was 0xFF000000
                         nameCol.addView(tvMemberName);
 
                         if (isCreator) {
@@ -962,7 +962,7 @@ public class ChatProfileActivity extends AppCompatActivity {
                         android.view.View div = new android.view.View(this);
                         div.setLayoutParams(new android.widget.LinearLayout.LayoutParams(
                                 android.widget.LinearLayout.LayoutParams.MATCH_PARENT, 1));
-                        div.setBackgroundColor(0xFFEEEEEE);
+                        div.setBackgroundColor(getColor(R.color.divider_color));    // ✅
                         membersContainer.addView(div);
                     }
 
@@ -973,14 +973,14 @@ public class ChatProfileActivity extends AppCompatActivity {
                     android.view.View botDiv = new android.view.View(this);
                     botDiv.setLayoutParams(new android.widget.LinearLayout.LayoutParams(
                             android.widget.LinearLayout.LayoutParams.MATCH_PARENT, 1));
-                    botDiv.setBackgroundColor(0xFFE0E0E0);
+                    botDiv.setBackgroundColor(getColor(R.color.divider_color)); // ✅
                     root.addView(botDiv);
 
                     android.widget.TextView btnClose =
                             new android.widget.TextView(this);
                     btnClose.setText("Close");
                     btnClose.setTextSize(16f);
-                    btnClose.setTextColor(0xFF4CAF50);
+                    btnClose.setTextColor(getColor(R.color.text_primary)); // ✅ was hardcoded
                     btnClose.setGravity(android.view.Gravity.CENTER);
                     btnClose.setPadding(0, 36, 0, 36);
                     btnClose.setLayoutParams(new android.widget.LinearLayout.LayoutParams(

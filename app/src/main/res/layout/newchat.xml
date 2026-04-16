@@ -8,7 +8,7 @@
     android:orientation="vertical"
     android:paddingLeft="10dp"
     android:paddingRight="10dp"
-    android:background="@color/bg_main">
+    android:background="@color/bg_secondary">
 
     <LinearLayout
         android:layout_width="match_parent"
@@ -123,7 +123,10 @@
                 android:paddingStart="16dp"
                 android:paddingTop="10dp"
                 android:paddingEnd="16dp"
+                android:backgroundTint="@color/bg_card"
                 android:paddingBottom="10dp">
+
+
 
                 <ImageView
                     android:id="@+id/userProfile"

@@ -669,7 +669,15 @@ public class ChatActivity extends AppCompatActivity {
                     List<MessageModel> msgs = new ArrayList<>();
                     for (DocumentSnapshot doc : snapshots.getDocuments()) {
                         MessageModel msg = doc.toObject(MessageModel.class);
-                        if (msg != null) msgs.add(msg);
+                        if (msg != null) {
+                            // ✅ Always set messageId from document ID as fallback
+                            if (msg.getMessageId() == null || msg.getMessageId().isEmpty()) {
+                                msg.setMessageId(doc.getId());
+                            }
+                            // ✅ Skip messages deleted for this user permanently
+                            if (msg.isDeletedFor(myUid)) continue;
+                            msgs.add(msg);
+                        }
                     }
 
                     messageAdapter.setMessages(msgs);

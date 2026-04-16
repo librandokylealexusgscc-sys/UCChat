@@ -258,7 +258,7 @@ public class NewGroupChatActivity extends AppCompatActivity {
         if (!selectedUsers.isEmpty()) {
             TextView tvSelected = new TextView(this);
             tvSelected.setText("Selected: " + selectedUsers.size() + " member(s)");
-            tvSelected.setTextColor(0xFF4CAF50);
+            tvSelected.setTextColor(getColor(R.color.text_primary)); // ✅
             tvSelected.setTypeface(null, android.graphics.Typeface.BOLD);
             tvSelected.setPadding(32, 12, 32, 12);
             containerResults.addView(tvSelected);
@@ -267,7 +267,7 @@ public class NewGroupChatActivity extends AppCompatActivity {
         if (displayed.isEmpty()) {
             TextView tvEmpty = new TextView(this);
             tvEmpty.setText("No users found.");
-            tvEmpty.setTextColor(0xFF888888);
+            tvEmpty.setTextColor(getColor(R.color.text_secondary)); // ✅
             tvEmpty.setPadding(32, 24, 32, 24);
             containerResults.addView(tvEmpty);
             return;
@@ -290,7 +290,9 @@ public class NewGroupChatActivity extends AppCompatActivity {
 
             // Highlight background if selected
             itemView.setBackgroundColor(
-                    isSelected ? 0xFFE8F5E9 : 0xFFFFFFFF);
+                    isSelected
+                            ? NewGroupChatActivity.this.getColor(R.color.bubble_sent)
+                            : NewGroupChatActivity.this.getColor(R.color.bg_card));
 
             // Profile photo
             if (user.getPhotoUrl() != null && !user.getPhotoUrl().isEmpty()) {
@@ -304,20 +306,24 @@ public class NewGroupChatActivity extends AppCompatActivity {
             }
 
             // Toggle selection on tap
+            // Also in the toggle click:
             itemView.setOnClickListener(v -> {
                 if (selectedUsers.contains(user)) {
                     selectedUsers.remove(user);
                     rbSelect.setChecked(false);
-                    itemView.setBackgroundColor(0xFFFFFFFF);
+                    itemView.setBackgroundColor(
+                            getColor(R.color.bg_card)); // ✅
                 } else {
                     selectedUsers.add(user);
                     rbSelect.setChecked(true);
-                    itemView.setBackgroundColor(0xFFE8F5E9);
+                    itemView.setBackgroundColor(
+                            getColor(R.color.bubble_sent)); // ✅
                 }
-                // Refresh selected count header only
                 renderUserList();
             });
 
+
+            // Selected count TextView:
             containerResults.addView(itemView);
         }
     }

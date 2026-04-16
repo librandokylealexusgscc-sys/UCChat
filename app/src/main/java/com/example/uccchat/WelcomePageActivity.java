@@ -408,7 +408,7 @@ public class WelcomePageActivity extends AppCompatActivity {
                         "account creation and identification within the app.\n\n" +
                         "How We Use Your Information\n" +
                         "Your information is used solely to provide the UCChat messaging service " +
-                        "to University of Cebu students and staff.\n\n" +
+                        "to University of Caloocan City students and staff.\n\n" +
                         "Data Storage\n" +
                         "Your data is stored securely using Google Firebase services.\n\n" +
                         "Third Party Services\n" +
@@ -418,7 +418,7 @@ public class WelcomePageActivity extends AppCompatActivity {
                         "You may delete your account and all associated data at any time " +
                         "through Menu → Delete Account.\n\n" +
                         "Contact\n" +
-                        "For questions, contact: librandokylealexusgscc@gmail.com\n\n" +
+                        "For questions, contact: universityofcaloocancity@gmail.com\n\n" +
                         "By tapping Agree, you confirm that you have read and agree to our " +
                         "Privacy Policy and Terms of Use."
         );

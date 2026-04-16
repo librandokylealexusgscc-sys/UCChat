@@ -216,7 +216,7 @@ public class FirestoreHelper {
 
         WriteBatch batch = db.batch();
         batch.set(msgRef, message);
-        batch.update(chatRef, chatUpdates);
+        batch.set(chatRef, chatUpdates, com.google.firebase.firestore.SetOptions.merge());
         batch.commit()
                 .addOnSuccessListener(u -> callback.onSent(msgRef.getId()))
                 .addOnFailureListener(e -> callback.onFailure(e.getMessage()));
@@ -280,7 +280,8 @@ public class FirestoreHelper {
 
         WriteBatch batch = db.batch();
         batch.set(msgRef, message);
-        batch.update(chatRef, chatUpdates);
+// ✅ Use set+merge instead of update — prevents race condition on first message
+        batch.set(chatRef, chatUpdates, com.google.firebase.firestore.SetOptions.merge());
         batch.commit()
                 .addOnSuccessListener(u -> callback.onSent(msgRef.getId()))
                 .addOnFailureListener(e -> callback.onFailure(e.getMessage()));
@@ -337,10 +338,10 @@ public class FirestoreHelper {
         for (String uid : otherParticipants) {
             chatUpdates.put("unreadCount." + uid, FieldValue.increment(1));
         }
-
         WriteBatch batch = db.batch();
         batch.set(msgRef, message);
-        batch.update(chatRef, chatUpdates);
+// ✅ Use set+merge instead of update — prevents race condition on first message
+        batch.set(chatRef, chatUpdates, com.google.firebase.firestore.SetOptions.merge());
         batch.commit()
                 .addOnSuccessListener(u -> callback.onSent(msgRef.getId()))
                 .addOnFailureListener(e -> callback.onFailure(e.getMessage()));
@@ -397,7 +398,8 @@ public class FirestoreHelper {
 
         WriteBatch batch = db.batch();
         batch.set(msgRef, message);
-        batch.update(chatRef, chatUpdates);
+// ✅ Use set+merge instead of update — prevents race condition on first message
+        batch.set(chatRef, chatUpdates, com.google.firebase.firestore.SetOptions.merge());
         batch.commit()
                 .addOnSuccessListener(u -> callback.onSent(msgRef.getId()))
                 .addOnFailureListener(e -> callback.onFailure(e.getMessage()));
@@ -658,7 +660,8 @@ public class FirestoreHelper {
 
         WriteBatch batch = db.batch();
         batch.set(msgRef, message);
-        batch.update(chatRef, chatUpdates);
+        batch.set(chatRef, chatUpdates, com.google.firebase.firestore.SetOptions.merge());
+
         batch.commit();
     }
     public interface OnUserFetched {
