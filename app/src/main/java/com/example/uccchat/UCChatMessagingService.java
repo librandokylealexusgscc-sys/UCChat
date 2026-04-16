@@ -9,6 +9,8 @@ import androidx.core.app.NotificationCompat;
 import com.google.firebase.messaging.FirebaseMessagingService;
 import com.google.firebase.messaging.RemoteMessage;
 
+import java.util.List;
+
 public class UCChatMessagingService extends FirebaseMessagingService {
 
     @Override
@@ -35,11 +37,10 @@ public class UCChatMessagingService extends FirebaseMessagingService {
                 .get()
                 .addOnSuccessListener(doc -> {
                     Object data = doc.get("mutedChats");
-                    if (data instanceof java.util.Map) {
-                        java.util.Map<String, Boolean> mutedChats =
-                                (java.util.Map<String, Boolean>) data;
-                        if (Boolean.TRUE.equals(mutedChats.get(chatId))) {
-                            return; // Chat is muted — suppress notification
+                    if (data instanceof List) {
+                        List<String> mutedChats = (List<String>) data;
+                        if (mutedChats.contains(chatId)) {
+                            return; // muted — suppress notification
                         }
                     }
                     // Not muted — show it

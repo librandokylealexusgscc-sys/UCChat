@@ -64,16 +64,19 @@ public class ChatNotificationService extends Service {
         }
     }
     private void loadMutedChats() {
-        // Use addSnapshotListener instead of .get() so it updates in real-time
         FirebaseFirestore.getInstance()
                 .collection(FirestoreHelper.COL_USERS)
                 .document(myUid)
                 .addSnapshotListener((doc, error) -> {
                     if (error != null || doc == null) return;
                     Object data = doc.get("mutedChats");
-                    if (data instanceof Map) {
-                        mutedChats.clear();
-                        mutedChats.putAll((Map<String, Boolean>) data);
+                    mutedChats.clear();
+                    if (data instanceof List) {
+                        for (Object item : (List<?>) data) {
+                            if (item instanceof String) {
+                                mutedChats.put((String) item, true);
+                            }
+                        }
                     }
                 });
     }
