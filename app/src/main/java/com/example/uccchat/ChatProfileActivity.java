@@ -720,23 +720,56 @@ public class ChatProfileActivity extends AppCompatActivity {
                             })).show();
         }
     }
-
     private void deleteConversation() {
-        FirestoreHelper.get().deleteConversation(chatId, myUid, participants,
-                new FirestoreHelper.OnActionComplete() {
-                    @Override public void onSuccess() {
-                        Toast.makeText(ChatProfileActivity.this,
-                                "Conversation deleted.", Toast.LENGTH_SHORT).show();
-                        Intent intent = new Intent(ChatProfileActivity.this, ChatHomeActivity.class);
-                        intent.setFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP);
-                        startActivity(intent); finish();
+        // ✅ Fetch participants fresh from Firestore instead of using
+        //    the possibly-empty cached list loaded asynchronously
+        FirebaseFirestore.getInstance()
+                .collection(FirestoreHelper.COL_CHATS)
+                .document(chatId)
+                .get()
+                .addOnSuccessListener(doc -> {
+                    if (!doc.exists()) {
+                        Toast.makeText(this,
+                                "Chat not found.", Toast.LENGTH_SHORT).show();
+                        return;
                     }
-                    @Override public void onFailure(String e) {
-                        Toast.makeText(ChatProfileActivity.this,
-                                "Failed to delete.", Toast.LENGTH_SHORT).show();
-                    }
-                });
-    }
+
+                    List<String> freshParticipants =
+                            (List<String>) doc.get("participants");
+                    if (freshParticipants == null) freshParticipants = new ArrayList<>();
+
+                    final List<String> participantsFinal = freshParticipants;
+
+                    FirestoreHelper.get().deleteConversation(
+                            chatId, myUid, participantsFinal,
+                            new FirestoreHelper.OnActionComplete() {
+                                @Override
+                                public void onSuccess() {
+                                    Toast.makeText(ChatProfileActivity.this,
+                                            "Conversation deleted.",
+                                            Toast.LENGTH_SHORT).show();
+                                    Intent intent = new Intent(
+                                            ChatProfileActivity.this,
+                                            ChatHomeActivity.class);
+                                    intent.setFlags(
+                                            Intent.FLAG_ACTIVITY_CLEAR_TOP);
+                                    startActivity(intent);
+                                    finish();
+                                }
+
+                                @Override
+                                public void onFailure(String e) {
+                                    Toast.makeText(ChatProfileActivity.this,
+                                            "Failed to delete.",
+                                            Toast.LENGTH_SHORT).show();
+                                }
+                            });
+                })
+                .addOnFailureListener(e ->
+                        Toast.makeText(this,
+                                "Error: " + e.getMessage(),
+                                Toast.LENGTH_SHORT).show());
+    }   
 
     // ════════════════════════════════════════════════════════
     //  GROUP MODE

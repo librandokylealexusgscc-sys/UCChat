@@ -30,8 +30,8 @@ public class SignUpPage1Activity extends AppCompatActivity {
             tilLastName, tilFirstName, tilPhone, tilEmail, tilStudentId;
     private TextInputEditText etUsername, etPassword, etConfirmPassword,
             etLastName, etFirstName, etPhone, etEmail, etStudentId;
-    private Spinner spinnerDepartment, spinnerCourse, spinnerSchoolYear;
-    private TextView tvStudentIdError, tvCourseError, tvDepartmentError, tvSchoolYearError;
+    private Spinner spinnerDepartment, spinnerCourse;
+    private TextView tvStudentIdError, tvCourseError, tvDepartmentError;
 
     private static final int MIN_YEAR = 2020;
 
@@ -115,55 +115,10 @@ public class SignUpPage1Activity extends AppCompatActivity {
 
         spinnerDepartment  = findViewById(R.id.spinnerDepartment);
         spinnerCourse      = findViewById(R.id.spinnerCourse);
-        spinnerSchoolYear  = findViewById(R.id.spinnerSchoolYear);
 
         tvStudentIdError   = findViewById(R.id.tvStudentIdError);
         tvCourseError      = findViewById(R.id.tvCourseError);
         tvDepartmentError  = findViewById(R.id.tvDepartmentError);
-        tvSchoolYearError  = findViewById(R.id.tvSchoolYearError);
-
-        // ── School Year Spinner ───────────────────────────────
-        int currentYear = Calendar.getInstance().get(Calendar.YEAR);
-        List<String> schoolYears = new ArrayList<>();
-        schoolYears.add("Select school year");
-        for (int y = currentYear; y >= MIN_YEAR; y--) {
-            schoolYears.add(String.valueOf(y));
-        }
-
-        ArrayAdapter<String> yearAdapter = new ArrayAdapter<String>(
-                this, android.R.layout.simple_spinner_item, schoolYears) {
-            @Override
-            public View getView(int position, View convertView, ViewGroup parent) {
-                View view = super.getView(position, convertView, parent);
-                TextView tv = view.findViewById(android.R.id.text1);
-                tv.setTextColor(0xFF000000);
-                tv.setBackgroundColor(0xFFFFFFFF);
-                tv.setTextSize(14f);
-                tv.setPadding(16, 0, 16, 0);
-                return view;
-            }
-            @Override
-            public View getDropDownView(int position, View convertView, ViewGroup parent) {
-                View view = super.getDropDownView(position, convertView, parent);
-                TextView tv = view.findViewById(android.R.id.text1);
-                tv.setTextColor(0xFF000000);
-                tv.setBackgroundColor(0xFFFFFFFF);
-                tv.setTextSize(14f);
-                tv.setPadding(32, 24, 32, 24);
-                return view;
-            }
-        };
-        yearAdapter.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item);
-        spinnerSchoolYear.setAdapter(yearAdapter);
-
-        spinnerSchoolYear.setOnItemSelectedListener(new AdapterView.OnItemSelectedListener() {
-            @Override
-            public void onItemSelected(AdapterView<?> parent, View view,
-                                       int position, long id) {
-                if (position > 0) tvSchoolYearError.setVisibility(View.GONE);
-            }
-            @Override public void onNothingSelected(AdapterView<?> parent) {}
-        });
 
         // ── Department Spinner ────────────────────────────────
         List<String> departments = new ArrayList<>();
@@ -343,7 +298,6 @@ public class SignUpPage1Activity extends AppCompatActivity {
             com.google.firebase.firestore.FirebaseFirestore db =
                     com.google.firebase.firestore.FirebaseFirestore.getInstance();
 
-            // ── Check 1: Username ──────────────────────────────
             db.collection("users").whereEqualTo("username", enteredUsername)
                     .limit(1).get()
                     .addOnSuccessListener(snap -> {
@@ -352,7 +306,6 @@ public class SignUpPage1Activity extends AppCompatActivity {
                     })
                     .addOnFailureListener(e -> onAllChecksComplete.run());
 
-            // ── Check 2: Student ID ────────────────────────────
             db.collection("users").whereEqualTo("studentId", enteredStudentId)
                     .limit(1).get()
                     .addOnSuccessListener(snap -> {
@@ -361,9 +314,6 @@ public class SignUpPage1Activity extends AppCompatActivity {
                     })
                     .addOnFailureListener(e -> onAllChecksComplete.run());
 
-            // ── Check 3: First + Last Name + Course combo ──────
-            // ✅ Same name allowed if different course
-            // ✅ Only reject if name AND course are both identical
             db.collection("users")
                     .whereEqualTo("firstName", enteredFirstName)
                     .whereEqualTo("lastName",  enteredLastName)
@@ -375,7 +325,6 @@ public class SignUpPage1Activity extends AppCompatActivity {
                     })
                     .addOnFailureListener(e -> onAllChecksComplete.run());
 
-            // ── Check 4: Email ─────────────────────────────────
             db.collection("users").whereEqualTo("email", enteredEmail)
                     .limit(1).get()
                     .addOnSuccessListener(snap -> {
@@ -432,13 +381,11 @@ public class SignUpPage1Activity extends AppCompatActivity {
     private boolean validateFields() {
         boolean valid = true;
 
-        // ── Username ──────────────────────────────────────────
         if (isEmpty(etUsername)) {
             tilUsername.setError("Username is required");
             valid = false;
         }
 
-        // ── Password ──────────────────────────────────────────
         String password = getText(etPassword);
         if (password.isEmpty()) {
             tilPassword.setError("Password is required");
@@ -457,7 +404,6 @@ public class SignUpPage1Activity extends AppCompatActivity {
             valid = false;
         }
 
-        // ── Confirm Password ──────────────────────────────────
         if (isEmpty(etConfirmPassword)) {
             tilConfirmPassword.setError("Please confirm your password");
             valid = false;
@@ -466,7 +412,6 @@ public class SignUpPage1Activity extends AppCompatActivity {
             valid = false;
         }
 
-        // ── Last Name ─────────────────────────────────────────
         if (isEmpty(etLastName)) {
             tilLastName.setError("Last name is required");
             valid = false;
@@ -475,7 +420,6 @@ public class SignUpPage1Activity extends AppCompatActivity {
             valid = false;
         }
 
-        // ── First Name ────────────────────────────────────────
         if (isEmpty(etFirstName)) {
             tilFirstName.setError("First name is required");
             valid = false;
@@ -484,7 +428,6 @@ public class SignUpPage1Activity extends AppCompatActivity {
             valid = false;
         }
 
-        // ── Phone ─────────────────────────────────────────────
         String phone = getText(etPhone);
         if (phone.isEmpty()) {
             tilPhone.setError("Phone number is required");
@@ -500,7 +443,6 @@ public class SignUpPage1Activity extends AppCompatActivity {
             valid = false;
         }
 
-        // ── Email ─────────────────────────────────────────────
         if (isEmpty(etEmail)) {
             tilEmail.setError("Email is required");
             valid = false;
@@ -544,31 +486,6 @@ public class SignUpPage1Activity extends AppCompatActivity {
             }
         }
 
-        // ── School Year ───────────────────────────────────────
-        if (spinnerSchoolYear.getSelectedItemPosition() == 0) {
-            tvSchoolYearError.setText("Please select your school year.");
-            tvSchoolYearError.setVisibility(View.VISIBLE);
-            valid = false;
-        } else {
-            String selectedYear = spinnerSchoolYear.getSelectedItem().toString();
-            String studentId2   = getText(etStudentId).toUpperCase();
-            if (studentId2.length() >= 4) {
-                String idYear = studentId2.substring(0, 4);
-                if (!idYear.equals(selectedYear)) {
-                    tvSchoolYearError.setText(
-                            "School year (" + selectedYear +
-                                    ") does not match Student ID year (" + idYear + ").");
-                    tvSchoolYearError.setVisibility(View.VISIBLE);
-                    valid = false;
-                } else {
-                    tvSchoolYearError.setVisibility(View.GONE);
-                }
-            } else {
-                tvSchoolYearError.setVisibility(View.GONE);
-            }
-        }
-
-        // ── Department ────────────────────────────────────────
         if (spinnerDepartment.getSelectedItemPosition() == 0) {
             tvDepartmentError.setVisibility(View.VISIBLE);
             valid = false;
@@ -576,7 +493,6 @@ public class SignUpPage1Activity extends AppCompatActivity {
             tvDepartmentError.setVisibility(View.GONE);
         }
 
-        // ── Course ────────────────────────────────────────────
         if (spinnerCourse.getSelectedItemPosition() == 0) {
             tvCourseError.setVisibility(View.VISIBLE);
             valid = false;

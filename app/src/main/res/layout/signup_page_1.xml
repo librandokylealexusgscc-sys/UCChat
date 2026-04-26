@@ -377,47 +377,6 @@
             android:layout_marginBottom="12dp"
             android:visibility="gone" />
 
-        <!-- School Year Label -->
-        <TextView
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:text="School Year"
-            android:textSize="13sp"
-            android:textColor="#000000"
-            android:layout_marginBottom="6dp" />
-
-        <!-- School Year Spinner -->
-        <LinearLayout
-            android:id="@+id/spinnerSchoolYearContainer"
-            android:layout_width="match_parent"
-            android:layout_height="55dp"
-            android:orientation="horizontal"
-            android:gravity="center_vertical"
-            android:background="@drawable/spinner_border"
-            android:paddingStart="4dp"
-            android:paddingEnd="4dp"
-            android:layout_marginBottom="4dp">
-            <Spinner
-                android:id="@+id/spinnerSchoolYear"
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:background="@null"
-                android:popupBackground="#FFFFFF"
-                android:textSize="14sp"
-                android:spinnerMode="dropdown" />
-        </LinearLayout>
-
-        <!-- School Year Error -->
-        <TextView
-            android:id="@+id/tvSchoolYearError"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:text="Please select your school year."
-            android:textSize="12sp"
-            android:textColor="#E53935"
-            android:layout_marginBottom="12dp"
-            android:visibility="gone" />
-
         <!-- Department Label -->
         <TextView
             android:layout_width="wrap_content"

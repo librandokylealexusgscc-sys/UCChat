@@ -29,11 +29,15 @@ import java.io.File;
 import java.io.FileOutputStream;
 import java.io.InputStream;
 import java.util.ArrayList;
+import java.util.Calendar;
+import java.util.Date;
 import java.util.Map;
 import java.util.HashMap;
+import java.util.concurrent.TimeUnit;
 
 import androidx.appcompat.app.AppCompatActivity;
 
+import com.google.firebase.Timestamp;
 import com.google.firebase.auth.FirebaseAuth;
 import com.google.firebase.auth.FirebaseUser;
 import com.google.firebase.firestore.FirebaseFirestore;
@@ -46,19 +50,26 @@ public class PersonalDetailsActivity extends AppCompatActivity {
     private Button btnUpdateProfile;
     private LinearLayout btnTabChats, btnTabSearch, btnTabMenu;
     private TextView tvFirstNameEditsLeft, tvLastNameEditsLeft;
+    private TextView tvCourseHint; // ✅ Course change hint
 
     private FirebaseFirestore db;
     private FirebaseUser currentUser;
     private String userId;
 
-    // ✅ Name edit tracking
+    // ── Name edit tracking ────────────────────────────────
     private int firstNameEditCount = 0;
     private int lastNameEditCount  = 0;
     private static final int MAX_NAME_EDITS = 3;
+    private static final int MIN_NAME_LENGTH = 3;
+    private static final int MAX_NAME_LENGTH = 36;
 
-    // ✅ Original values to detect actual changes
+    // ── Original values ───────────────────────────────────
     private String originalFirstName = "";
     private String originalLastName  = "";
+
+    // ── Course change tracking ────────────────────────────
+    private Date lastCourseChangedDate = null;
+    private boolean canChangeCourse    = true;
 
     private boolean isNavigating = false;
 
@@ -98,7 +109,7 @@ public class PersonalDetailsActivity extends AppCompatActivity {
     };
 
     private ImageButton btnProfilePicture;
-    private Uri newProfilePicUri = null;
+    private Uri newProfilePicUri  = null;
     private String currentPhotoUrl = null;
 
     private final ActivityResultLauncher<String> imagePickerLauncher =
@@ -111,6 +122,10 @@ public class PersonalDetailsActivity extends AppCompatActivity {
                             .into(btnProfilePicture);
                 }
             });
+
+    // ════════════════════════════════════════════════════════
+    //  LIFECYCLE
+    // ════════════════════════════════════════════════════════
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -142,6 +157,7 @@ public class PersonalDetailsActivity extends AppCompatActivity {
         btnProfilePicture = findViewById(R.id.btnProfilePicture);
         tvFirstNameEditsLeft = findViewById(R.id.tvFirstNameEditsLeft);
         tvLastNameEditsLeft  = findViewById(R.id.tvLastNameEditsLeft);
+        tvCourseHint         = findViewById(R.id.tvCourseHint);
 
         // ✅ Student ID permanently read-only
         etStudentId.setFocusable(false);
@@ -192,10 +208,8 @@ public class PersonalDetailsActivity extends AppCompatActivity {
     // ════════════════════════════════════════════════════════
 
     private void setListeners() {
-        btnTabChats.setOnClickListener(v ->
-                navigateTo(ChatHomeActivity.class, false));
-        btnTabSearch.setOnClickListener(v ->
-                navigateTo(SearchActivity.class, false));
+        btnTabChats.setOnClickListener(v -> navigateTo(ChatHomeActivity.class, false));
+        btnTabSearch.setOnClickListener(v -> navigateTo(SearchActivity.class, false));
         btnTabMenu.setOnClickListener(v -> { });
     }
 
@@ -203,12 +217,10 @@ public class PersonalDetailsActivity extends AppCompatActivity {
         if (isNavigating) return;
         if (this.getClass().equals(destination)) return;
         isNavigating = true;
-
         Intent intent = new Intent(this, destination);
         if (clearStack) {
-            intent.setFlags(
-                    Intent.FLAG_ACTIVITY_NEW_TASK |
-                            Intent.FLAG_ACTIVITY_CLEAR_TASK);
+            intent.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK |
+                    Intent.FLAG_ACTIVITY_CLEAR_TASK);
         } else {
             intent.addFlags(Intent.FLAG_ACTIVITY_REORDER_TO_FRONT);
         }
@@ -228,8 +240,7 @@ public class PersonalDetailsActivity extends AppCompatActivity {
                     currentPhotoUrl = doc.getString("photoUrl");
                     if (currentPhotoUrl != null && !currentPhotoUrl.isEmpty()) {
                         Glide.with(this)
-                                .load(currentPhotoUrl + "?t=" +
-                                        System.currentTimeMillis())
+                                .load(currentPhotoUrl + "?t=" + System.currentTimeMillis())
                                 .transform(new CircleCrop())
                                 .placeholder(R.drawable.bg_circle_gray)
                                 .into(btnProfilePicture);
@@ -245,27 +256,19 @@ public class PersonalDetailsActivity extends AppCompatActivity {
                     etUsername.setText(doc.getString("username"));
                     etPhoneNumber.setText(doc.getString("phone"));
                     etEmail.setText(doc.getString("email"));
-
-                    // ✅ Student ID shown but not editable
                     etStudentId.setText(doc.getString("studentId"));
 
-                    // ✅ Load edit counts
+                    // ── Name edit counts ──────────────────────────────
                     Long fnEdits = doc.getLong("firstNameEditCount");
                     Long lnEdits = doc.getLong("lastNameEditCount");
                     firstNameEditCount = fnEdits != null ? fnEdits.intValue() : 0;
                     lastNameEditCount  = lnEdits != null ? lnEdits.intValue() : 0;
-
                     updateEditCountLabels();
 
-                    // ✅ Disable name fields if limit reached
-                    if (firstNameEditCount >= MAX_NAME_EDITS) {
-                        lockField(etFirstName);
-                    }
-                    if (lastNameEditCount >= MAX_NAME_EDITS) {
-                        lockField(etLastName);
-                    }
+                    if (firstNameEditCount >= MAX_NAME_EDITS) lockField(etFirstName);
+                    if (lastNameEditCount  >= MAX_NAME_EDITS) lockField(etLastName);
 
-                    // ✅ Match course to spinner
+                    // ── Course ────────────────────────────────────────
                     String savedCourse = doc.getString("course");
                     if (savedCourse != null) {
                         for (int i = 0; i < PROGRAMS.length; i++) {
@@ -275,11 +278,56 @@ public class PersonalDetailsActivity extends AppCompatActivity {
                             }
                         }
                     }
+
+                    // ── Course change date ────────────────────────────
+                    Timestamp courseChangedTs = doc.getTimestamp("lastCourseChangedAt");
+                    if (courseChangedTs != null) {
+                        lastCourseChangedDate = courseChangedTs.toDate();
+                        long daysSince = TimeUnit.MILLISECONDS.toDays(
+                                new Date().getTime() - lastCourseChangedDate.getTime());
+                        canChangeCourse = daysSince >= 365;
+                        updateCourseHint(daysSince);
+                    } else {
+                        // ✅ Never changed before — allowed
+                        canChangeCourse = true;
+                        updateCourseHint(-1);
+                    }
+
+                    // ✅ Disable spinner if course change not allowed
+                    spinnerProgram.setEnabled(canChangeCourse);
+                    spinnerProgram.setAlpha(canChangeCourse ? 1.0f : 0.4f);
                 })
                 .addOnFailureListener(e ->
                         Toast.makeText(this, "Failed to load profile",
                                 Toast.LENGTH_SHORT).show());
     }
+
+    // ════════════════════════════════════════════════════════
+    //  COURSE HINT
+    // ════════════════════════════════════════════════════════
+
+    private void updateCourseHint(long daysSince) {
+        if (tvCourseHint == null) return;
+        if (daysSince < 0) {
+            // Never changed
+            tvCourseHint.setText("You can change your course once a year.");
+            tvCourseHint.setTextColor(0xFF888888);
+        } else if (daysSince >= 365) {
+            // Allowed
+            tvCourseHint.setText("✅ You can change your course now.");
+            tvCourseHint.setTextColor(0xFF4CAF50);
+        } else {
+            // Locked
+            long daysLeft = 365 - daysSince;
+            tvCourseHint.setText("🔒 Course locked. You can change it again in "
+                    + daysLeft + " day" + (daysLeft == 1 ? "" : "s") + ".");
+            tvCourseHint.setTextColor(0xFFE53935);
+        }
+    }
+
+    // ════════════════════════════════════════════════════════
+    //  NAME FIELD HELPERS
+    // ════════════════════════════════════════════════════════
 
     private void lockField(EditText et) {
         et.setFocusable(false);
@@ -293,26 +341,24 @@ public class PersonalDetailsActivity extends AppCompatActivity {
         if (tvFirstNameEditsLeft != null) {
             int left = MAX_NAME_EDITS - firstNameEditCount;
             if (left <= 0) {
-                tvFirstNameEditsLeft.setText(
-                        "First name cannot be changed anymore");
+                tvFirstNameEditsLeft.setText("First name cannot be changed anymore");
                 tvFirstNameEditsLeft.setTextColor(0xFFE53935);
             } else {
-                tvFirstNameEditsLeft.setText(
-                        "You can change first name " + left +
-                                " more time" + (left == 1 ? "" : "s"));
+                tvFirstNameEditsLeft.setText("You can change first name " + left
+                        + " more time" + (left == 1 ? "" : "s")
+                        + "  •  min 3, max 36 characters");
                 tvFirstNameEditsLeft.setTextColor(0xFF888888);
             }
         }
         if (tvLastNameEditsLeft != null) {
             int left = MAX_NAME_EDITS - lastNameEditCount;
             if (left <= 0) {
-                tvLastNameEditsLeft.setText(
-                        "Last name cannot be changed anymore");
+                tvLastNameEditsLeft.setText("Last name cannot be changed anymore");
                 tvLastNameEditsLeft.setTextColor(0xFFE53935);
             } else {
-                tvLastNameEditsLeft.setText(
-                        "You can change last name " + left +
-                                " more time" + (left == 1 ? "" : "s"));
+                tvLastNameEditsLeft.setText("You can change last name " + left
+                        + " more time" + (left == 1 ? "" : "s")
+                        + "  •  min 3, max 36 characters");
                 tvLastNameEditsLeft.setTextColor(0xFF888888);
             }
         }
@@ -369,7 +415,6 @@ public class PersonalDetailsActivity extends AppCompatActivity {
             });
         };
 
-        // ── Username (exclude self) ────────────────────────────
         db.collection("users").whereEqualTo("username", enteredUsername)
                 .limit(1).get()
                 .addOnSuccessListener(snap -> {
@@ -387,7 +432,6 @@ public class PersonalDetailsActivity extends AppCompatActivity {
                 })
                 .addOnFailureListener(e -> onDone.run());
 
-        // ── Email (exclude self) ───────────────────────────────
         db.collection("users").whereEqualTo("email", enteredEmail)
                 .limit(1).get()
                 .addOnSuccessListener(snap -> {
@@ -405,7 +449,6 @@ public class PersonalDetailsActivity extends AppCompatActivity {
                 })
                 .addOnFailureListener(e -> onDone.run());
 
-        // ── Name + Course combo (exclude self) ─────────────────
         db.collection("users")
                 .whereEqualTo("firstName", enteredFirstName)
                 .whereEqualTo("lastName",  enteredLastName)
@@ -442,7 +485,6 @@ public class PersonalDetailsActivity extends AppCompatActivity {
         String email     = etEmail.getText().toString().trim();
         String course    = spinnerProgram.getSelectedItem().toString();
 
-        // ✅ Only increment if actually changed
         if (!firstName.equals(originalFirstName)) firstNameEditCount++;
         if (!lastName.equals(originalLastName))   lastNameEditCount++;
 
@@ -455,8 +497,27 @@ public class PersonalDetailsActivity extends AppCompatActivity {
         updates.put("course",             course);
         updates.put("firstNameEditCount", firstNameEditCount);
         updates.put("lastNameEditCount",  lastNameEditCount);
-        // ✅ studentId is intentionally NOT included — can never be changed
 
+        // ✅ If course was changed, save the timestamp
+        String savedCourse = (String) updates.get("course");
+        boolean courseChanged = canChangeCourse
+                && spinnerProgram.getSelectedItemPosition() > 0;
+        // Detect actual course change by comparing with original
+        db.collection("users").document(userId).get()
+                .addOnSuccessListener(doc -> {
+                    String originalCourse = doc.getString("course");
+                    boolean actuallyChanged = !course.equals(originalCourse)
+                            && !course.equals("Select course");
+                    if (actuallyChanged && canChangeCourse) {
+                        updates.put("lastCourseChangedAt", Timestamp.now());
+                    }
+                    proceedWithUpload(updates, firstName, lastName);
+                })
+                .addOnFailureListener(e -> proceedWithUpload(updates, firstName, lastName));
+    }
+
+    private void proceedWithUpload(Map<String, Object> updates,
+                                   String firstName, String lastName) {
         if (newProfilePicUri != null) {
             File file = uriToFile(newProfilePicUri);
             if (file == null) {
@@ -471,15 +532,14 @@ public class PersonalDetailsActivity extends AppCompatActivity {
 
             MediaManager.get()
                     .upload(file.getAbsolutePath())
-                    .option("public_id", "profile_pictures/" + userId)
-                    .option("overwrite", true)
-                    .option("invalidate", true)
+                    .option("public_id",    "profile_pictures/" + userId)
+                    .option("overwrite",    true)
+                    .option("invalidate",   true)
                     .option("upload_preset", "ucchat_profiles")
                     .callback(new UploadCallback() {
-                        @Override public void onStart(String requestId) {}
-                        @Override public void onProgress(String requestId,
-                                                         long bytes,
-                                                         long totalBytes) {}
+                        @Override public void onStart(String r) {}
+                        @Override public void onProgress(String r, long b, long t) {}
+                        @Override public void onReschedule(String r, ErrorInfo e) {}
 
                         @Override
                         public void onSuccess(String requestId, Map resultData) {
@@ -501,9 +561,6 @@ public class PersonalDetailsActivity extends AppCompatActivity {
                                     Toast.LENGTH_SHORT).show();
                             saveUpdatesToFirestore(updates);
                         }
-
-                        @Override public void onReschedule(String requestId,
-                                                           ErrorInfo error) {}
                     })
                     .dispatch();
         } else {
@@ -530,21 +587,17 @@ public class PersonalDetailsActivity extends AppCompatActivity {
                                 for (com.google.firebase.firestore.DocumentSnapshot doc
                                         : querySnapshot.getDocuments()) {
 
-                                    // ✅ Update participant name
                                     doc.getReference().update(
                                             "participantNames." + userId, fullName);
 
-                                    // ✅ Update participant photo if changed
                                     if (updates.containsKey("photoUrl")) {
                                         doc.getReference().update(
                                                 "participantPhotos." + userId,
                                                 updates.get("photoUrl"));
                                     }
 
-                                    // ✅ Auto-update group name if not manually named
-                                    Boolean isGroup = doc.getBoolean("isGroup");
-                                    Boolean manuallyNamed =
-                                            doc.getBoolean("manuallyNamed");
+                                    Boolean isGroup       = doc.getBoolean("isGroup");
+                                    Boolean manuallyNamed = doc.getBoolean("manuallyNamed");
                                     if (Boolean.TRUE.equals(isGroup)
                                             && !Boolean.TRUE.equals(manuallyNamed)) {
                                         java.util.Map<String, String> pNames =
@@ -559,20 +612,16 @@ public class PersonalDetailsActivity extends AppCompatActivity {
                                             for (String uid : pUids) {
                                                 String n = uid.equals(userId)
                                                         ? fullName : pNames.get(uid);
-                                                if (n != null && !n.isEmpty()) {
+                                                if (n != null && !n.isEmpty())
                                                     firstNames.add(n.split(" ")[0]);
-                                                }
                                             }
-                                            String newGroupName =
+                                            doc.getReference().update("groupName",
                                                     android.text.TextUtils.join(
-                                                            ", ", firstNames);
-                                            doc.getReference().update(
-                                                    "groupName", newGroupName);
+                                                            ", ", firstNames));
                                         }
                                     }
                                 }
 
-                                // ✅ Update originals
                                 originalFirstName = firstName;
                                 originalLastName  = lastName;
                                 updateEditCountLabels();
@@ -607,6 +656,12 @@ public class PersonalDetailsActivity extends AppCompatActivity {
         if (TextUtils.isEmpty(firstName)) {
             etFirstName.setError("First name is required");
             valid = false;
+        } else if (firstName.length() < MIN_NAME_LENGTH) {
+            etFirstName.setError("First name must be at least 3 characters");
+            valid = false;
+        } else if (firstName.length() > MAX_NAME_LENGTH) {
+            etFirstName.setError("First name must be at most 36 characters");
+            valid = false;
         } else if (!firstName.matches("^[A-Za-z]+(\\s[A-Za-z]+){0,2}$")) {
             etFirstName.setError("Letters only — no numbers or special characters");
             valid = false;
@@ -620,6 +675,12 @@ public class PersonalDetailsActivity extends AppCompatActivity {
         // ── Last Name ─────────────────────────────────────────
         if (TextUtils.isEmpty(lastName)) {
             etLastName.setError("Last name is required");
+            valid = false;
+        } else if (lastName.length() < MIN_NAME_LENGTH) {
+            etLastName.setError("Last name must be at least 3 characters");
+            valid = false;
+        } else if (lastName.length() > MAX_NAME_LENGTH) {
+            etLastName.setError("Last name must be at most 36 characters");
             valid = false;
         } else if (!lastName.matches("^[A-Za-z]+(\\s[A-Za-z]+){0,2}$")) {
             etLastName.setError("Letters only — no numbers or special characters");

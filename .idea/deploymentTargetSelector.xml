@@ -7,10 +7,10 @@
       </SelectionState>
       <SelectionState runConfigName="4-4-UI-UCChat.Search&amp;Menu.app">
         <option name="selectionMode" value="DROPDOWN" />
-        <DropdownSelection timestamp="2026-04-16T02:19:11.029296300Z">
+        <DropdownSelection timestamp="2026-04-16T06:05:19.201901400Z">
           <Target type="DEFAULT_BOOT">
             <handle>
-              <DeviceId pluginId="PhysicalDevice" identifier="serial=IZAEVSM7RGSGFEFI" />
+              <DeviceId pluginId="PhysicalDevice" identifier="serial=11222373CP000934" />
             </handle>
           </Target>
         </DropdownSelection>

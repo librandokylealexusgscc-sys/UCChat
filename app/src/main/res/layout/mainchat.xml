@@ -173,7 +173,22 @@
 
         <include layout="@layout/layout_reply_bar" />
 
+        <!-- ✅ Blocked Banner — shown when either user blocked the other -->
+        <TextView
+            android:id="@+id/tvBlockedBanner"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:gravity="center"
+            android:padding="16dp"
+            android:textSize="13sp"
+            android:fontFamily="@font/regular"
+            android:textColor="#FFFFFF"
+            android:background="#CC333333"
+            android:visibility="gone" />
+
+        <!-- ✅ Input bar — hidden when blocked -->
         <LinearLayout
+            android:id="@+id/inputBar"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:background="@color/bg_main"
@@ -220,7 +235,7 @@
         </LinearLayout>
     </LinearLayout>
 
-    <!-- Full Screen Image Viewer — intentionally black, leave as-is -->
+    <!-- Full Screen Image Viewer -->
     <LinearLayout
         android:id="@+id/viewImageLayout"
         android:layout_width="match_parent"

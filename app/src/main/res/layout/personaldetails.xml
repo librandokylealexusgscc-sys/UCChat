@@ -9,7 +9,6 @@
     android:paddingLeft="0dp"
     android:paddingRight="0dp">
 
-
     <TextView
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
@@ -21,19 +20,17 @@
         android:layout_marginLeft="16dp"
         android:textStyle="bold" />
 
-
     <ScrollView
         android:layout_width="match_parent"
         android:layout_height="0dp"
         android:layout_weight="1"
         android:fillViewport="true">
+
         <LinearLayout
             android:layout_width="match_parent"
-            android:layout_height="0dp"
-            android:layout_weight="1"
+            android:layout_height="wrap_content"
             android:orientation="vertical"
             android:padding="16dp">
-
 
             <LinearLayout
                 android:layout_width="match_parent"
@@ -50,7 +47,6 @@
                     android:contentDescription="Profile Picture" />
             </LinearLayout>
 
-
             <TextView
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
@@ -61,7 +57,6 @@
                 android:textColor="@color/text_hint"
                 android:textSize="14sp" />
 
-
             <LinearLayout
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
@@ -71,7 +66,6 @@
                 android:paddingTop="4dp"
                 android:paddingEnd="14dp"
                 android:paddingBottom="4dp">
-
 
                 <!-- First Name -->
                 <LinearLayout
@@ -97,7 +91,6 @@
                         android:paddingBottom="4dp"
                         android:textColor="@color/text_primary"
                         android:textSize="15sp" />
-                    <!-- ✅ Edit count label -->
                     <TextView
                         android:id="@+id/tvFirstNameEditsLeft"
                         android:layout_width="wrap_content"
@@ -135,7 +128,6 @@
                         android:paddingBottom="4dp"
                         android:textColor="@color/text_primary"
                         android:textSize="15sp" />
-                    <!-- ✅ Edit count label -->
                     <TextView
                         android:id="@+id/tvLastNameEditsLeft"
                         android:layout_width="wrap_content"
@@ -179,7 +171,6 @@
                         android:background="@color/divider_color" />
                 </LinearLayout>
 
-
                 <!-- Phone Number -->
                 <LinearLayout
                     android:layout_width="match_parent"
@@ -209,7 +200,6 @@
                         android:layout_height="1dp"
                         android:background="@color/divider_color" />
                 </LinearLayout>
-
 
                 <!-- Email -->
                 <LinearLayout
@@ -241,7 +231,6 @@
                         android:background="@color/divider_color" />
                 </LinearLayout>
 
-
                 <!-- Student ID -->
                 <LinearLayout
                     android:layout_width="match_parent"
@@ -270,7 +259,6 @@
                         android:paddingBottom="4dp"
                         android:textColor="@color/text_secondary"
                         android:textSize="15sp" />
-                    <!-- ✅ Lock warning -->
                     <TextView
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
@@ -284,8 +272,7 @@
                         android:background="@color/divider_color" />
                 </LinearLayout>
 
-
-                <!-- Program -->
+                <!-- Program / Course -->
                 <LinearLayout
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
@@ -303,7 +290,7 @@
                         android:layout_width="match_parent"
                         android:layout_height="wrap_content"
                         android:paddingTop="4dp"
-                        android:paddingBottom="8dp">
+                        android:paddingBottom="4dp">
                         <Spinner
                             android:id="@+id/spinnerProgram"
                             android:layout_width="match_parent"
@@ -312,15 +299,25 @@
                             android:spinnerMode="dropdown"
                             android:textSize="15sp" />
                     </LinearLayout>
+
+                    <!-- ✅ Course change hint -->
+                    <TextView
+                        android:id="@+id/tvCourseHint"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:textSize="11sp"
+                        android:textColor="#888888"
+                        android:paddingBottom="4dp" />
+
                     <View
                         android:layout_width="match_parent"
                         android:layout_height="1dp"
                         android:background="@color/divider_color" />
                 </LinearLayout>
+
             </LinearLayout>
         </LinearLayout>
     </ScrollView>
-
 
     <Button
         android:id="@+id/btnUpdateProfile"
@@ -334,12 +331,10 @@
         android:layout_marginRight="30dp"
         android:textColor="#FFFFFF" />
 
-
     <View
         android:layout_width="match_parent"
         android:layout_height="1dp"
         android:background="@color/divider_color" />
-
 
     <LinearLayout
         android:layout_width="match_parent"

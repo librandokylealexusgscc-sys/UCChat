@@ -408,7 +408,7 @@ public class WelcomePageActivity extends AppCompatActivity {
                         "account creation and identification within the app.\n\n" +
                         "How We Use Your Information\n" +
                         "Your information is used solely to provide the UCChat messaging service " +
-                        "to University of Caloocan City students and staff.\n\n" +
+                        "to University of Caloocan City students.\n\n" +
                         "Data Storage\n" +
                         "Your data is stored securely using Google Firebase services.\n\n" +
                         "Third Party Services\n" +
@@ -507,8 +507,8 @@ public class WelcomePageActivity extends AppCompatActivity {
     // ════════════════════════════════════════════════════════
 
     private void showTermsModal() {
-        dimBackground.setVisibility(View.VISIBLE);
-        cardModal.setVisibility(View.VISIBLE);
+        dimBackground.setVisibility(View.GONE);
+        cardModal.setVisibility(View.GONE);
     }
 
     private void hideTermsModal() {

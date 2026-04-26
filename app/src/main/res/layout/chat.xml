@@ -19,14 +19,6 @@
         android:layout_marginTop="20dp"
         android:paddingBottom="12dp">
 
-<!--        <ImageView-->
-<!--            android:layout_width="36dp"-->
-<!--            android:layout_height="36dp"-->
-<!--            android:src="@mipmap/ic_launcher"-->
-<!--            android:scaleType="fitCenter"-->
-<!--            android:layout_marginEnd="8dp"-->
-<!--            android:contentDescription="UCC Logo" />-->
-
         <TextView
             android:id="@+id/textViewTitle"
             android:layout_width="0dp"
@@ -49,6 +41,7 @@
             android:contentDescription="Add Button" />
     </LinearLayout>
 
+    <!-- Tab Row -->
     <LinearLayout
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
@@ -57,6 +50,7 @@
         android:paddingEnd="16dp"
         android:paddingBottom="8dp">
 
+        <!-- All Tab -->
         <TextView
             android:id="@+id/btnAllChat"
             android:layout_width="0dp"
@@ -72,6 +66,7 @@
             android:textSize="13sp"
             android:textStyle="bold" />
 
+        <!-- Group Tab -->
         <TextView
             android:id="@+id/btnGroup"
             android:layout_width="0dp"
@@ -86,19 +81,38 @@
             android:textColor="@color/text_secondary"
             android:textSize="13sp" />
 
-        <TextView
-            android:id="@+id/btnUnread"
+        <!-- ✅ Unread Tab with green dot indicator -->
+        <FrameLayout
             android:layout_width="0dp"
             android:layout_height="wrap_content"
-            android:layout_weight="1"
-            android:background="@drawable/tab_unselected_bg"
-            android:fontFamily="@font/regular"
-            android:gravity="center"
-            android:paddingTop="6dp"
-            android:paddingBottom="6dp"
-            android:text="Unread"
-            android:textColor="@color/text_secondary"
-            android:textSize="13sp" />
+            android:layout_weight="1">
+
+            <TextView
+                android:id="@+id/btnUnread"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:background="@drawable/tab_unselected_bg"
+                android:fontFamily="@font/regular"
+                android:gravity="center"
+                android:paddingTop="6dp"
+                android:paddingBottom="6dp"
+                android:text="Unread"
+                android:textColor="@color/text_secondary"
+                android:textSize="13sp" />
+
+            <!-- ✅ Green dot — visible when there are unread messages -->
+            <View
+                android:id="@+id/dotUnread"
+                android:layout_width="8dp"
+                android:layout_height="8dp"
+                android:layout_gravity="top|end"
+                android:layout_marginTop="4dp"
+                android:layout_marginEnd="12dp"
+                android:background="@drawable/circle_green_bg"
+                android:visibility="gone" />
+
+        </FrameLayout>
+
     </LinearLayout>
 
     <View

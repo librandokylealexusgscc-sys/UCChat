@@ -34,13 +34,11 @@ public class FirestoreHelper {
     }
 
     // ════════════════════════════════════════════════════════
-    //  USER OPERATIONS
+    //  USER
     // ════════════════════════════════════════════════════════
 
     public void getUser(String uid, OnUserFetched callback) {
-        db.collection(COL_USERS)
-                .document(uid)
-                .get()
+        db.collection(COL_USERS).document(uid).get()
                 .addOnSuccessListener(doc -> {
                     if (doc.exists()) {
                         UserModel user = doc.toObject(UserModel.class);
@@ -54,7 +52,7 @@ public class FirestoreHelper {
     }
 
     // ════════════════════════════════════════════════════════
-    //  CHAT OPERATIONS
+    //  CHAT CREATION
     // ════════════════════════════════════════════════════════
 
     public void getOrCreateChat(UserModel currentUser,
@@ -69,8 +67,7 @@ public class FirestoreHelper {
                 .addOnSuccessListener(querySnapshot -> {
                     for (DocumentSnapshot doc : querySnapshot.getDocuments()) {
                         ChatModel chat = doc.toObject(ChatModel.class);
-                        if (chat != null
-                                && !chat.isGroup()
+                        if (chat != null && !chat.isGroup()
                                 && chat.getParticipants() != null
                                 && chat.getParticipants().contains(otherUid)) {
                             callback.onReady(doc.getId());
@@ -89,13 +86,14 @@ public class FirestoreHelper {
         String otherUid = otherUser.getUid();
 
         Map<String, String> names = new HashMap<>();
-        names.put(myUid,    currentUser.getFirstName());
-        names.put(otherUid, otherUser.getFirstName());
+        names.put(myUid,    currentUser.getFirstName() + " " + currentUser.getLastName());
+        names.put(otherUid, otherUser.getFirstName()   + " " + otherUser.getLastName());
 
         Map<String, String> photos = new HashMap<>();
         photos.put(myUid,    currentUser.getPhotoUrl() != null ? currentUser.getPhotoUrl() : "");
         photos.put(otherUid, otherUser.getPhotoUrl()   != null ? otherUser.getPhotoUrl()   : "");
 
+        // ✅ Initialize unreadCount as a proper MAP with 0 for both users
         Map<String, Long> unread = new HashMap<>();
         unread.put(myUid,    0L);
         unread.put(otherUid, 0L);
@@ -105,12 +103,12 @@ public class FirestoreHelper {
         chat.put("participantNames",  names);
         chat.put("participantPhotos", photos);
         chat.put("lastMessage",       "");
-        chat.put("lastMessageTime",   Timestamp.now());
-        chat.put("lastSenderId",      myUid);
+        chat.put("lastMessageTime",   null);
+        chat.put("lastSenderId",      "");
         chat.put("isGroup",           false);
         chat.put("groupName",         null);
         chat.put("groupPhoto",        null);
-        chat.put("unreadCount",       unread);
+        chat.put("unreadCount",       unread); // ✅ stored as nested map
 
         db.collection(COL_CHATS)
                 .add(chat)
@@ -126,6 +124,7 @@ public class FirestoreHelper {
                                 String currentUserUid,
                                 OnChatReady callback) {
 
+        // ✅ Initialize unreadCount as nested map
         Map<String, Long> unread = new HashMap<>();
         for (String uid : participantUids) unread.put(uid, 0L);
 
@@ -134,14 +133,14 @@ public class FirestoreHelper {
         chat.put("participantNames",  participantNames);
         chat.put("participantPhotos", participantPhotos);
         chat.put("lastMessage",       "");
-        chat.put("lastMessageTime",   Timestamp.now());
-        chat.put("lastSenderId",      currentUserUid);
+        chat.put("lastMessageTime",   null);
+        chat.put("lastSenderId",      "");
         chat.put("isGroup",           true);
         chat.put("groupName",         groupName);
         chat.put("groupPhoto",        null);
         chat.put("unreadCount",       unread);
         chat.put("createdBy",         currentUserUid);
-        chat.put("manuallyNamed",     manuallyNamed); // ✅ NEW
+        chat.put("manuallyNamed",     manuallyNamed);
 
         db.collection(COL_CHATS)
                 .add(chat)
@@ -155,14 +154,11 @@ public class FirestoreHelper {
     }
 
     // ════════════════════════════════════════════════════════
-    //  MESSAGE OPERATIONS
+    //  SEND TEXT
     // ════════════════════════════════════════════════════════
 
-    public void sendTextMessage(String chatId,
-                                String senderId,
-                                String text,
-                                String chatName,
-                                String myUid,
+    public void sendTextMessage(String chatId, String senderId, String text,
+                                String chatName, String myUid,
                                 MessageModel replySnapshot,
                                 List<String> otherParticipants,
                                 OnMessageSent callback) {
@@ -170,12 +166,8 @@ public class FirestoreHelper {
                 replySnapshot, otherParticipants, false, callback);
     }
 
-    // Overload that accepts forwarded flag
-    public void sendTextMessage(String chatId,
-                                String senderId,
-                                String text,
-                                String chatName,
-                                String myUid,
+    public void sendTextMessage(String chatId, String senderId, String text,
+                                String chatName, String myUid,
                                 MessageModel replySnapshot,
                                 List<String> otherParticipants,
                                 boolean forwarded,
@@ -194,7 +186,7 @@ public class FirestoreHelper {
         message.put("imageUrl",   null);
         message.put("seen",       false);
         message.put("seenBy",     Arrays.asList(senderId));
-        message.put("deletedFor", Arrays.asList());
+        message.put("deletedFor", new ArrayList<>());
         message.put("deleted",    false);
         message.put("forwarded",  forwarded);
 
@@ -206,42 +198,51 @@ public class FirestoreHelper {
                     ? "You" : chatName);
         }
 
-        Map<String, Object> chatUpdates = new HashMap<>();
-        chatUpdates.put("lastMessage",     forwarded ? "➡ " + text : text);
-        chatUpdates.put("lastMessageTime", now);
-        chatUpdates.put("lastSenderId",    senderId);
+        // ✅ Step 1: metadata only — no dotted keys — safe for set+merge
+        Map<String, Object> chatMeta = new HashMap<>();
+        chatMeta.put("lastMessage",     forwarded ? "➡ " + text : text);
+        chatMeta.put("lastMessageTime", now);
+        chatMeta.put("lastSenderId",    senderId);
+
+        // ✅ Step 2: unread increments — dotted keys — MUST use update()
+        Map<String, Object> unreadInc = new HashMap<>();
         for (String uid : otherParticipants) {
-            chatUpdates.put("unreadCount." + uid, FieldValue.increment(1));
+            unreadInc.put("unreadCount." + uid, FieldValue.increment(1));
         }
 
         WriteBatch batch = db.batch();
         batch.set(msgRef, message);
-        batch.set(chatRef, chatUpdates, com.google.firebase.firestore.SetOptions.merge());
+        batch.set(chatRef, chatMeta,
+                com.google.firebase.firestore.SetOptions.merge());
+
         batch.commit()
-                .addOnSuccessListener(u -> callback.onSent(msgRef.getId()))
+                .addOnSuccessListener(u -> {
+                    // ✅ update() correctly handles dotted nested paths
+                    if (!unreadInc.isEmpty()) {
+                        chatRef.update(unreadInc);
+                    }
+                    callback.onSent(msgRef.getId());
+                })
                 .addOnFailureListener(e -> callback.onFailure(e.getMessage()));
     }
 
-    public void sendImageMessage(String chatId,
-                                 String senderId,
-                                 String imageUrl,
+    // ════════════════════════════════════════════════════════
+    //  SEND IMAGE
+    // ════════════════════════════════════════════════════════
+
+    public void sendImageMessage(String chatId, String senderId, String imageUrl,
                                  List<String> otherParticipants,
                                  MessageModel replySnapshot,
-                                 String chatName,
-                                 String myUid,
+                                 String chatName, String myUid,
                                  OnMessageSent callback) {
         sendImageMessage(chatId, senderId, imageUrl, otherParticipants,
                 replySnapshot, chatName, myUid, false, callback);
     }
 
-    // Overload that accepts forwarded flag
-    public void sendImageMessage(String chatId,
-                                 String senderId,
-                                 String imageUrl,
+    public void sendImageMessage(String chatId, String senderId, String imageUrl,
                                  List<String> otherParticipants,
                                  MessageModel replySnapshot,
-                                 String chatName,
-                                 String myUid,
+                                 String chatName, String myUid,
                                  boolean forwarded,
                                  OnMessageSent callback) {
 
@@ -258,7 +259,7 @@ public class FirestoreHelper {
         message.put("imageUrl",   imageUrl);
         message.put("seen",       false);
         message.put("seenBy",     Arrays.asList(senderId));
-        message.put("deletedFor", Arrays.asList());
+        message.put("deletedFor", new ArrayList<>());
         message.put("deleted",    false);
         message.put("forwarded",  forwarded);
 
@@ -270,42 +271,44 @@ public class FirestoreHelper {
                     ? "You" : chatName);
         }
 
-        Map<String, Object> chatUpdates = new HashMap<>();
-        chatUpdates.put("lastMessage",     "📷 Photo");
-        chatUpdates.put("lastMessageTime", now);
-        chatUpdates.put("lastSenderId",    senderId);
+        Map<String, Object> chatMeta = new HashMap<>();
+        chatMeta.put("lastMessage",     "📷 Photo");
+        chatMeta.put("lastMessageTime", now);
+        chatMeta.put("lastSenderId",    senderId);
+
+        Map<String, Object> unreadInc = new HashMap<>();
         for (String uid : otherParticipants) {
-            chatUpdates.put("unreadCount." + uid, FieldValue.increment(1));
+            unreadInc.put("unreadCount." + uid, FieldValue.increment(1));
         }
 
         WriteBatch batch = db.batch();
         batch.set(msgRef, message);
-// ✅ Use set+merge instead of update — prevents race condition on first message
-        batch.set(chatRef, chatUpdates, com.google.firebase.firestore.SetOptions.merge());
+        batch.set(chatRef, chatMeta,
+                com.google.firebase.firestore.SetOptions.merge());
         batch.commit()
-                .addOnSuccessListener(u -> callback.onSent(msgRef.getId()))
+                .addOnSuccessListener(u -> {
+                    if (!unreadInc.isEmpty()) chatRef.update(unreadInc);
+                    callback.onSent(msgRef.getId());
+                })
                 .addOnFailureListener(e -> callback.onFailure(e.getMessage()));
     }
 
-    public void sendFileMessage(String chatId,
-                                String senderId,
-                                String fileUrl,
-                                String fileName,
-                                String fileSize,
-                                String fileType,
+    // ════════════════════════════════════════════════════════
+    //  SEND FILE
+    // ════════════════════════════════════════════════════════
+
+    public void sendFileMessage(String chatId, String senderId,
+                                String fileUrl, String fileName,
+                                String fileSize, String fileType,
                                 List<String> otherParticipants,
                                 OnMessageSent callback) {
         sendFileMessage(chatId, senderId, fileUrl, fileName, fileSize,
                 fileType, otherParticipants, false, callback);
     }
 
-    // Overload that accepts forwarded flag
-    public void sendFileMessage(String chatId,
-                                String senderId,
-                                String fileUrl,
-                                String fileName,
-                                String fileSize,
-                                String fileType,
+    public void sendFileMessage(String chatId, String senderId,
+                                String fileUrl, String fileName,
+                                String fileSize, String fileType,
                                 List<String> otherParticipants,
                                 boolean forwarded,
                                 OnMessageSent callback) {
@@ -327,30 +330,38 @@ public class FirestoreHelper {
         message.put("fileType",   fileType);
         message.put("seen",       false);
         message.put("seenBy",     Arrays.asList(senderId));
-        message.put("deletedFor", Arrays.asList());
+        message.put("deletedFor", new ArrayList<>());
         message.put("deleted",    false);
         message.put("forwarded",  forwarded);
 
-        Map<String, Object> chatUpdates = new HashMap<>();
-        chatUpdates.put("lastMessage",     "📎 " + fileName);
-        chatUpdates.put("lastMessageTime", now);
-        chatUpdates.put("lastSenderId",    senderId);
+        Map<String, Object> chatMeta = new HashMap<>();
+        chatMeta.put("lastMessage",     "📎 " + fileName);
+        chatMeta.put("lastMessageTime", now);
+        chatMeta.put("lastSenderId",    senderId);
+
+        Map<String, Object> unreadInc = new HashMap<>();
         for (String uid : otherParticipants) {
-            chatUpdates.put("unreadCount." + uid, FieldValue.increment(1));
+            unreadInc.put("unreadCount." + uid, FieldValue.increment(1));
         }
+
         WriteBatch batch = db.batch();
         batch.set(msgRef, message);
-// ✅ Use set+merge instead of update — prevents race condition on first message
-        batch.set(chatRef, chatUpdates, com.google.firebase.firestore.SetOptions.merge());
+        batch.set(chatRef, chatMeta,
+                com.google.firebase.firestore.SetOptions.merge());
         batch.commit()
-                .addOnSuccessListener(u -> callback.onSent(msgRef.getId()))
+                .addOnSuccessListener(u -> {
+                    if (!unreadInc.isEmpty()) chatRef.update(unreadInc);
+                    callback.onSent(msgRef.getId());
+                })
                 .addOnFailureListener(e -> callback.onFailure(e.getMessage()));
     }
 
-    public void sendVideoMessage(String chatId,
-                                 String senderId,
-                                 String videoUrl,
-                                 String thumbnailUrl,
+    // ════════════════════════════════════════════════════════
+    //  SEND VIDEO
+    // ════════════════════════════════════════════════════════
+
+    public void sendVideoMessage(String chatId, String senderId,
+                                 String videoUrl, String thumbnailUrl,
                                  String videoDuration,
                                  List<String> otherParticipants,
                                  OnMessageSent callback) {
@@ -358,11 +369,8 @@ public class FirestoreHelper {
                 videoDuration, otherParticipants, false, callback);
     }
 
-    // Overload that accepts forwarded flag
-    public void sendVideoMessage(String chatId,
-                                 String senderId,
-                                 String videoUrl,
-                                 String thumbnailUrl,
+    public void sendVideoMessage(String chatId, String senderId,
+                                 String videoUrl, String thumbnailUrl,
                                  String videoDuration,
                                  List<String> otherParticipants,
                                  boolean forwarded,
@@ -384,24 +392,29 @@ public class FirestoreHelper {
         message.put("videoDuration", videoDuration);
         message.put("seen",          false);
         message.put("seenBy",        Arrays.asList(senderId));
-        message.put("deletedFor",    Arrays.asList());
+        message.put("deletedFor",    new ArrayList<>());
         message.put("deleted",       false);
         message.put("forwarded",     forwarded);
 
-        Map<String, Object> chatUpdates = new HashMap<>();
-        chatUpdates.put("lastMessage",     "🎥 Video");
-        chatUpdates.put("lastMessageTime", now);
-        chatUpdates.put("lastSenderId",    senderId);
+        Map<String, Object> chatMeta = new HashMap<>();
+        chatMeta.put("lastMessage",     "🎥 Video");
+        chatMeta.put("lastMessageTime", now);
+        chatMeta.put("lastSenderId",    senderId);
+
+        Map<String, Object> unreadInc = new HashMap<>();
         for (String uid : otherParticipants) {
-            chatUpdates.put("unreadCount." + uid, FieldValue.increment(1));
+            unreadInc.put("unreadCount." + uid, FieldValue.increment(1));
         }
 
         WriteBatch batch = db.batch();
         batch.set(msgRef, message);
-// ✅ Use set+merge instead of update — prevents race condition on first message
-        batch.set(chatRef, chatUpdates, com.google.firebase.firestore.SetOptions.merge());
+        batch.set(chatRef, chatMeta,
+                com.google.firebase.firestore.SetOptions.merge());
         batch.commit()
-                .addOnSuccessListener(u -> callback.onSent(msgRef.getId()))
+                .addOnSuccessListener(u -> {
+                    if (!unreadInc.isEmpty()) chatRef.update(unreadInc);
+                    callback.onSent(msgRef.getId());
+                })
                 .addOnFailureListener(e -> callback.onFailure(e.getMessage()));
     }
 
@@ -412,36 +425,27 @@ public class FirestoreHelper {
                 .orderBy("timestamp", Query.Direction.ASCENDING);
     }
 
+    // ✅ update() — dotted keys MUST use update() not set()
     public void markChatAsRead(String chatId, String uid) {
         db.collection(COL_CHATS)
                 .document(chatId)
-                .update("unreadCount." + uid, 0);
+                .update("unreadCount." + uid, 0L);
     }
 
-    // ── KEY CHANGE: instead of hiding the message, mark deleted=true ──
-    // This makes BOTH sides see "🚫 Message was deleted" in place of the bubble
-    public void deleteMessageFor(String chatId,
-                                 String messageId,
-                                 String uid) {
+    public void deleteMessageFor(String chatId, String messageId, String uid) {
         Map<String, Object> updates = new HashMap<>();
         updates.put("deletedFor", FieldValue.arrayUnion(uid));
-        updates.put("deleted", true);
-
-        db.collection(COL_CHATS)
-                .document(chatId)
-                .collection(COL_MESSAGES)
-                .document(messageId)
+        updates.put("deleted",    true);
+        db.collection(COL_CHATS).document(chatId)
+                .collection(COL_MESSAGES).document(messageId)
                 .update(updates);
     }
 
-    public void deleteMessagePermanently(String chatId,
-                                         String messageId,
+    public void deleteMessagePermanently(String chatId, String messageId,
                                          Runnable onSuccess,
                                          Consumer<String> onFailure) {
-        db.collection(COL_CHATS)
-                .document(chatId)
-                .collection(COL_MESSAGES)
-                .document(messageId)
+        db.collection(COL_CHATS).document(chatId)
+                .collection(COL_MESSAGES).document(messageId)
                 .delete()
                 .addOnSuccessListener(a -> { if (onSuccess != null) onSuccess.run(); })
                 .addOnFailureListener(e -> { if (onFailure != null) onFailure.accept(e.getMessage()); });
@@ -466,8 +470,7 @@ public class FirestoreHelper {
     }
 
     public void isUserBlocked(String myUid, String otherUid, OnBlockChecked callback) {
-        db.collection(COL_USERS).document(myUid)
-                .get()
+        db.collection(COL_USERS).document(myUid).get()
                 .addOnSuccessListener(doc -> {
                     if (!doc.exists()) { callback.onResult(false); return; }
                     List<String> blocked = (List<String>) doc.get("blockedUsers");
@@ -495,8 +498,7 @@ public class FirestoreHelper {
     }
 
     public void isChatMuted(String myUid, String chatId, OnMuteChecked callback) {
-        db.collection(COL_USERS).document(myUid)
-                .get()
+        db.collection(COL_USERS).document(myUid).get()
                 .addOnSuccessListener(doc -> {
                     if (!doc.exists()) { callback.onResult(false); return; }
                     List<String> muted = (List<String>) doc.get("mutedChats");
@@ -513,20 +515,36 @@ public class FirestoreHelper {
                                    String myUid,
                                    List<String> participants,
                                    OnActionComplete callback) {
+
+        // ✅ Remove myUid from participants so the chat disappears
+        // from the list immediately (listenToChats uses
+        // whereArrayContains("participants", myUid))
+        // Also mark deletedFor so we know who deleted it
+        Map<String, Object> updates = new HashMap<>();
+        updates.put("participants", FieldValue.arrayRemove(myUid));
+        updates.put("deletedFor",   FieldValue.arrayUnion(myUid));
+
         db.collection(COL_CHATS).document(chatId)
-                .update("deletedFor", FieldValue.arrayUnion(myUid))
+                .update(updates)
                 .addOnSuccessListener(u -> {
+                    // ✅ If nobody is left in participants, hard delete
+                    // the entire chat + messages
                     db.collection(COL_CHATS).document(chatId)
                             .get()
                             .addOnSuccessListener(doc -> {
-                                if (!doc.exists()) { callback.onSuccess(); return; }
-                                List<String> deletedFor = (List<String>) doc.get("deletedFor");
-                                if (deletedFor != null && deletedFor.containsAll(participants)) {
+                                if (!doc.exists()) {
+                                    callback.onSuccess();
+                                    return;
+                                }
+                                List<String> remaining =
+                                        (List<String>) doc.get("participants");
+                                if (remaining == null || remaining.isEmpty()) {
                                     hardDeleteChat(chatId, callback);
                                 } else {
                                     callback.onSuccess();
                                 }
-                            });
+                            })
+                            .addOnFailureListener(e -> callback.onSuccess());
                 })
                 .addOnFailureListener(e -> callback.onFailure(e.getMessage()));
     }
@@ -535,39 +553,34 @@ public class FirestoreHelper {
         db.collection(COL_CHATS).document(chatId)
                 .collection(COL_MESSAGES).get()
                 .addOnSuccessListener(snap -> {
-                    for (DocumentSnapshot doc : snap.getDocuments()) {
+                    for (DocumentSnapshot doc : snap.getDocuments())
                         doc.getReference().delete();
-                    }
-                    db.collection(COL_CHATS).document(chatId)
-                            .delete()
+                    db.collection(COL_CHATS).document(chatId).delete()
                             .addOnSuccessListener(u -> callback.onSuccess())
                             .addOnFailureListener(e -> callback.onFailure(e.getMessage()));
                 });
     }
 
     // ════════════════════════════════════════════════════════
-    //  GROUP PHOTO UPDATE
+    //  GROUP PHOTO
     // ════════════════════════════════════════════════════════
 
     public void updateGroupPhoto(String chatId, String photoUrl,
                                  OnActionComplete callback) {
         db.collection(COL_CHATS).document(chatId)
-                .update("groupPhoto", photoUrl)  // ✅ must be "groupPhoto"
+                .update("groupPhoto", photoUrl)
                 .addOnSuccessListener(u -> callback.onSuccess())
                 .addOnFailureListener(e -> callback.onFailure(e.getMessage()));
     }
 
     // ════════════════════════════════════════════════════════
-    //  ADD MEMBER TO GROUP
+    //  ADD / KICK MEMBER
     // ════════════════════════════════════════════════════════
 
-    public void addMemberToGroup(String chatId,
-                                 UserModel newMember,
+    public void addMemberToGroup(String chatId, UserModel newMember,
                                  String adderFullName,
                                  OnActionComplete callback) {
-
-        db.collection(COL_CHATS).document(chatId)
-                .get()
+        db.collection(COL_CHATS).document(chatId).get()
                 .addOnSuccessListener(doc -> {
                     if (!doc.exists()) { callback.onFailure("Chat not found"); return; }
 
@@ -582,8 +595,6 @@ public class FirestoreHelper {
                             newMember.getPhotoUrl() != null ? newMember.getPhotoUrl() : "");
                     updates.put("unreadCount." + newMember.getUid(), 0L);
 
-                    // ✅ If group has NO custom name yet (auto-generated),
-                    // add new member's first name to the existing name
                     if (!Boolean.TRUE.equals(manuallyNamed)) {
                         String currentName = doc.getString("groupName");
                         String newGroupName = (currentName != null && !currentName.isEmpty())
@@ -591,52 +602,42 @@ public class FirestoreHelper {
                                 : newMember.getFirstName();
                         updates.put("groupName", newGroupName);
                     }
-                    // ✅ If group already has a custom/manually set name → don't touch it
-
-                    // ✅ Once a member is added, lock the name permanently
                     updates.put("manuallyNamed", true);
 
-                    db.collection(COL_CHATS).document(chatId)
-                            .update(updates)
+                    db.collection(COL_CHATS).document(chatId).update(updates)
                             .addOnSuccessListener(u -> {
-                                String systemText = adderFullName + " added "
+                                sendSystemMessage(chatId, adderFullName + " added "
                                         + newMember.getFirstName() + " "
-                                        + newMember.getLastName() + " to the group";
-                                sendSystemMessage(chatId, systemText);
+                                        + newMember.getLastName() + " to the group");
                                 callback.onSuccess();
                             })
                             .addOnFailureListener(e -> callback.onFailure(e.getMessage()));
                 })
                 .addOnFailureListener(e -> callback.onFailure(e.getMessage()));
     }
-    public void kickMemberFromGroup(String chatId,
-                                    String kickerFullName,
-                                    UserModel member,
-                                    OnActionComplete callback) {
-        Map<String, Object> updates = new HashMap<>();
-        updates.put("participants",
-                FieldValue.arrayRemove(member.getUid()));
-        updates.put("unreadCount." + member.getUid(),
-                FieldValue.delete());
-        updates.put("participantNames." + member.getUid(),
-                FieldValue.delete());
-        updates.put("participantPhotos." + member.getUid(),
-                FieldValue.delete());
 
-        db.collection(COL_CHATS).document(chatId)
-                .update(updates)
+    public void kickMemberFromGroup(String chatId, String kickerFullName,
+                                    UserModel member, OnActionComplete callback) {
+        Map<String, Object> updates = new HashMap<>();
+        updates.put("participants",           FieldValue.arrayRemove(member.getUid()));
+        updates.put("unreadCount."            + member.getUid(), FieldValue.delete());
+        updates.put("participantNames."       + member.getUid(), FieldValue.delete());
+        updates.put("participantPhotos."      + member.getUid(), FieldValue.delete());
+
+        db.collection(COL_CHATS).document(chatId).update(updates)
                 .addOnSuccessListener(u -> {
-                    String systemText = kickerFullName + " kicked "
+                    sendSystemMessage(chatId, kickerFullName + " kicked "
                             + member.getFirstName() + " "
-                            + member.getLastName() + " from the group";
-                    sendSystemMessage(chatId, systemText);
+                            + member.getLastName() + " from the group");
                     callback.onSuccess();
                 })
                 .addOnFailureListener(e -> callback.onFailure(e.getMessage()));
     }
+
     // ════════════════════════════════════════════════════════
-    //  CALLBACKS
+    //  SYSTEM MESSAGE
     // ════════════════════════════════════════════════════════
+
     public void sendSystemMessage(String chatId, String text) {
         DocumentReference chatRef = db.collection(COL_CHATS).document(chatId);
         DocumentReference msgRef  = chatRef.collection(COL_MESSAGES).document();
@@ -653,41 +654,41 @@ public class FirestoreHelper {
         message.put("deletedFor", new ArrayList<>());
         message.put("deleted",    false);
 
-        Map<String, Object> chatUpdates = new HashMap<>();
-        chatUpdates.put("lastMessage",     text);
-        chatUpdates.put("lastMessageTime", now);
-        chatUpdates.put("lastSenderId",    "system");
+        Map<String, Object> chatMeta = new HashMap<>();
+        chatMeta.put("lastMessage",     text);
+        chatMeta.put("lastMessageTime", now);
+        chatMeta.put("lastSenderId",    "system");
 
         WriteBatch batch = db.batch();
         batch.set(msgRef, message);
-        batch.set(chatRef, chatUpdates, com.google.firebase.firestore.SetOptions.merge());
-
+        batch.set(chatRef, chatMeta,
+                com.google.firebase.firestore.SetOptions.merge());
         batch.commit();
     }
+
+    // ════════════════════════════════════════════════════════
+    //  INTERFACES
+    // ════════════════════════════════════════════════════════
+
     public interface OnUserFetched {
         void onSuccess(UserModel user);
         void onFailure(String error);
     }
-
     public interface OnChatReady {
         void onReady(String chatId);
         void onFailure(String error);
     }
-
     public interface OnMessageSent {
         void onSent(String messageId);
         void onFailure(String error);
     }
-
     public interface OnActionComplete {
         void onSuccess();
         void onFailure(String error);
     }
-
     public interface OnBlockChecked {
         void onResult(boolean isBlocked);
     }
-
     public interface OnMuteChecked {
         void onResult(boolean isMuted);
     }

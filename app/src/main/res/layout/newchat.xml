@@ -8,7 +8,7 @@
     android:orientation="vertical"
     android:paddingLeft="10dp"
     android:paddingRight="10dp"
-    android:background="@color/bg_secondary">
+    android:background="@color/bg_main">
 
     <LinearLayout
         android:layout_width="match_parent"
@@ -29,7 +29,7 @@
             android:scaleType="centerCrop"
             android:src="@drawable/back"
             android:paddingTop="13dp"
-            app:color="@color/text_primary"/>
+            app:tint="@color/text_primary"/>
 
         <TextView
             android:layout_width="wrap_content"
@@ -56,7 +56,7 @@
             android:id="@+id/ForwardMessage"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:background="@null"
+            android:backgroundTint="@color/bg_secondary"
             android:fontFamily="@font/regular"
             android:hint="Group name (optional)"
             android:inputType="text"

@@ -10,8 +10,6 @@ import android.net.Uri;
 import android.os.Build;
 import android.os.Bundle;
 import android.os.Environment;
-import android.os.Handler;
-import android.os.Looper;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.widget.EditText;
@@ -89,17 +87,22 @@ public class ChatActivity extends AppCompatActivity {
     private ImageView btnCloseReply;
     private MessageModel replyingTo = null;
 
-    // ── Long press state ──────────────────────────────────────
+    // ── Long press ────────────────────────────────────────────
     private MessageModel selectedMessage;
 
     // ── Adapter ───────────────────────────────────────────────
     private MessageAdapter messageAdapter;
     private ListenerRegistration messageListener;
 
+    // ── Block ─────────────────────────────────────────────────
+    private LinearLayout inputBar;
+    private TextView tvBlockedBanner;
+    private ListenerRegistration blockListener; // ✅ declared ONCE only
+
     // ── Undo ──────────────────────────────────────────────────
     private String lastSentMessageId = null;
 
-    // ── Image / file pickers ──────────────────────────────────
+    // ── Pickers ───────────────────────────────────────────────
     private final ActivityResultLauncher<String> imagePicker =
             registerForActivityResult(new ActivityResultContracts.GetContent(),
                     uri -> { if (uri != null) uploadImageAndSend(uri); });
@@ -126,6 +129,7 @@ public class ChatActivity extends AppCompatActivity {
         chatPhoto          = getIntent().getStringExtra("chatPhoto");
         isGroup            = getIntent().getBooleanExtra("isGroup", false);
         highlightMessageId = getIntent().getStringExtra("highlightMessageId");
+        otherUid           = getIntent().getStringExtra("otherUid");
 
         myUid = FirebaseAuth.getInstance().getCurrentUser() != null
                 ? FirebaseAuth.getInstance().getCurrentUser().getUid() : null;
@@ -136,35 +140,56 @@ public class ChatActivity extends AppCompatActivity {
             return;
         }
 
+        ChatNotificationService.activeChatId = chatId;
+
         bindViews();
         setupReplyBar();
         setupImageViewer();
         replaceScrollViewWithRecyclerView();
         setupHeader();
         setupInputBar();
-        startListeningToMessages();
+
         FirestoreHelper.get().markChatAsRead(chatId, myUid);
+
+        // ✅ Block check — 1-on-1 only
+        if (!isGroup && otherUid != null) {
+            checkBlockStatus();
+            startBlockListener();
+        }
     }
 
     @Override
-    protected void onActivityResult(int requestCode, int resultCode, Intent data) {
-        super.onActivityResult(requestCode, resultCode, data);
-        if (requestCode == REQ_CHAT_PROFILE && resultCode == RESULT_OK && data != null) {
-            String updatedName = data.getStringExtra("updatedChatName");
-            if (updatedName != null) { chatName = updatedName; tvName.setText(updatedName); }
+    protected void onStart() {
+        super.onStart();
+        if (chatId != null && myUid != null) {
+            startListeningToMessages();
+        }
+    }
+
+    @Override
+    protected void onStop() {
+        super.onStop();
+        if (messageListener != null) {
+            messageListener.remove();
+            messageListener = null;
         }
     }
 
     @Override
     protected void onResume() {
         super.onResume();
-        // ✅ Re-fetch fresh data every time we return
-        // (e.g. after changing group photo in ChatProfileActivity)
+        ChatNotificationService.activeChatId = chatId;
+        if (chatId != null && myUid != null) {
+            FirestoreHelper.get().markChatAsRead(chatId, myUid);
+        }
         if (chatId != null) {
             fetchFreshChatData();
         }
+        // ✅ Re-check block on resume in case it changed
+        if (!isGroup && otherUid != null) {
+            checkBlockStatus();
+        }
     }
-
 
     @Override
     protected void onPause() {
@@ -177,12 +202,28 @@ public class ChatActivity extends AppCompatActivity {
         super.onDestroy();
         if (messageListener  != null) messageListener.remove();
         if (presenceListener != null) presenceListener.remove();
+        if (blockListener    != null) blockListener.remove();
+        ChatNotificationService.activeChatId = null;
         App.setOnlineStatus(false);
     }
 
     @Override
+    protected void onActivityResult(int requestCode, int resultCode, Intent data) {
+        super.onActivityResult(requestCode, resultCode, data);
+        if (requestCode == REQ_CHAT_PROFILE
+                && resultCode == RESULT_OK && data != null) {
+            String updatedName = data.getStringExtra("updatedChatName");
+            if (updatedName != null) {
+                chatName = updatedName;
+                tvName.setText(updatedName);
+            }
+        }
+    }
+
+    @Override
     public void onBackPressed() {
-        if (viewImageLayout != null && viewImageLayout.getVisibility() == View.VISIBLE) {
+        if (viewImageLayout != null
+                && viewImageLayout.getVisibility() == View.VISIBLE) {
             closeImageViewer();
         } else {
             super.onBackPressed();
@@ -204,6 +245,9 @@ public class ChatActivity extends AppCompatActivity {
         btnBack                 = findViewById(R.id.btnviewImageback);
         onlineDot               = findViewById(R.id.onlineDot);
         tvProgramId             = findViewById(R.id.tvProgramId);
+        // ✅ Block UI
+        inputBar                = findViewById(R.id.inputBar);
+        tvBlockedBanner         = findViewById(R.id.tvBlockedBanner);
     }
 
     // ════════════════════════════════════════════════════════
@@ -215,10 +259,8 @@ public class ChatActivity extends AppCompatActivity {
         tvReplyName    = findViewById(R.id.tvReplyName);
         tvReplyPreview = findViewById(R.id.tvReplyPreview);
         btnCloseReply  = findViewById(R.id.btnCloseReply);
-
-        if (btnCloseReply != null) {
+        if (btnCloseReply != null)
             btnCloseReply.setOnClickListener(v -> cancelReply());
-        }
     }
 
     private void startReply(MessageModel msg) {
@@ -226,7 +268,8 @@ public class ChatActivity extends AppCompatActivity {
         if (replyBar != null) {
             replyBar.setVisibility(View.VISIBLE);
             if (tvReplyName != null)
-                tvReplyName.setText(msg.getSenderId().equals(myUid) ? "You" : chatName);
+                tvReplyName.setText(
+                        msg.getSenderId().equals(myUid) ? "You" : chatName);
             if (tvReplyPreview != null)
                 tvReplyPreview.setText(msg.getPreviewText());
             etTypingBox.requestFocus();
@@ -236,6 +279,76 @@ public class ChatActivity extends AppCompatActivity {
     private void cancelReply() {
         replyingTo = null;
         if (replyBar != null) replyBar.setVisibility(View.GONE);
+    }
+
+    // ════════════════════════════════════════════════════════
+    //  BLOCK CHECK — declared ONCE
+    // ════════════════════════════════════════════════════════
+
+    private void checkBlockStatus() {
+        if (otherUid == null) return;
+        FirebaseFirestore db = FirebaseFirestore.getInstance();
+
+        db.collection(FirestoreHelper.COL_USERS)
+                .document(myUid)
+                .get()
+                .addOnSuccessListener(myDoc -> {
+                    List<String> myBlocked =
+                            (List<String>) myDoc.get("blockedUsers");
+                    boolean iBlockedThem = myBlocked != null
+                            && myBlocked.contains(otherUid);
+
+                    db.collection(FirestoreHelper.COL_USERS)
+                            .document(otherUid)
+                            .get()
+                            .addOnSuccessListener(theirDoc -> {
+                                List<String> theirBlocked =
+                                        (List<String>) theirDoc.get("blockedUsers");
+                                boolean theyBlockedMe = theirBlocked != null
+                                        && theirBlocked.contains(myUid);
+
+                                runOnUiThread(() ->
+                                        updateBlockUI(iBlockedThem, theyBlockedMe));
+                            });
+                });
+    }
+
+    // ✅ declared ONCE
+    private void updateBlockUI(boolean iBlockedThem, boolean theyBlockedMe) {
+        if (iBlockedThem) {
+            if (inputBar != null)
+                inputBar.setVisibility(View.GONE);
+            if (tvBlockedBanner != null) {
+                tvBlockedBanner.setVisibility(View.VISIBLE);
+                tvBlockedBanner.setText(
+                        "You blocked " + chatName + ". Unblock to send messages.");
+            }
+        } else if (theyBlockedMe) {
+            if (inputBar != null)
+                inputBar.setVisibility(View.GONE);
+            if (tvBlockedBanner != null) {
+                tvBlockedBanner.setVisibility(View.VISIBLE);
+                String name = chatName != null ? chatName : "This user";
+                tvBlockedBanner.setText(name + " blocked you.");
+            }
+        } else {
+            if (inputBar != null)
+                inputBar.setVisibility(View.VISIBLE);
+            if (tvBlockedBanner != null)
+                tvBlockedBanner.setVisibility(View.GONE);
+        }
+    }
+
+    // ✅ declared ONCE
+    private void startBlockListener() {
+        if (isGroup || otherUid == null) return;
+        blockListener = FirebaseFirestore.getInstance()
+                .collection(FirestoreHelper.COL_USERS)
+                .document(myUid)
+                .addSnapshotListener((doc, error) -> {
+                    if (error != null || doc == null) return;
+                    checkBlockStatus();
+                });
     }
 
     // ════════════════════════════════════════════════════════
@@ -258,7 +371,6 @@ public class ChatActivity extends AppCompatActivity {
             container.addView(recyclerMessages);
         }
 
-
         LinearLayoutManager lm = new LinearLayoutManager(this);
         lm.setStackFromEnd(true);
         recyclerMessages.setLayoutManager(lm);
@@ -266,22 +378,19 @@ public class ChatActivity extends AppCompatActivity {
         messageAdapter = new MessageAdapter(this, chatPhoto);
         recyclerMessages.setAdapter(messageAdapter);
 
-        messageAdapter.setOnImageClickListener((message, imageUrl) ->
-                openImageViewer(message, imageUrl));
-
+        messageAdapter.setOnImageClickListener(
+                (message, imageUrl) -> openImageViewer(message, imageUrl));
 
         messageAdapter.setOnMessageLongClickListener((message, anchor) -> {
             selectedMessage = message;
             showTextOptionsDialog(message);
         });
 
-        // ── Updated: now receives isMine flag ──
         messageAdapter.setOnImageLongClickListener((message, anchor, isMine) -> {
             selectedMessage = message;
             showMediaOptionsDialog(message, isMine);
         });
 
-// ✅ If group chat, load all member photos
         if (isGroup) {
             messageAdapter.setGroupChat(true);
             loadGroupMemberPhotos();
@@ -295,70 +404,62 @@ public class ChatActivity extends AppCompatActivity {
                 .get()
                 .addOnSuccessListener(doc -> {
                     if (!doc.exists()) return;
-
-                    // participantPhotos is a Map<String, String>
-                    // uid → photoUrl
                     java.util.Map<String, Object> rawPhotos =
                             (java.util.Map<String, Object>) doc.get("participantPhotos");
-
                     if (rawPhotos != null) {
-                        java.util.Map<String, String> photos =
-                                new java.util.HashMap<>();
+                        java.util.Map<String, String> photos = new java.util.HashMap<>();
                         for (java.util.Map.Entry<String, Object> entry
                                 : rawPhotos.entrySet()) {
-                            if (entry.getValue() != null) {
+                            if (entry.getValue() != null)
                                 photos.put(entry.getKey(),
                                         entry.getValue().toString());
-                            }
                         }
                         messageAdapter.setMemberPhotos(photos);
-                        // Refresh adapter with new photos
                         messageAdapter.notifyDataSetChanged();
                     }
                 });
     }
 
     // ════════════════════════════════════════════════════════
-    //  LONG PRESS: TEXT OPTIONS DIALOG
+    //  LONG PRESS: TEXT OPTIONS
     // ════════════════════════════════════════════════════════
 
     private void showTextOptionsDialog(MessageModel msg) {
         android.app.Dialog dialog = new android.app.Dialog(this);
         dialog.requestWindowFeature(android.view.Window.FEATURE_NO_TITLE);
-        View v = LayoutInflater.from(this).inflate(R.layout.dialog_message_options, null);
+        View v = LayoutInflater.from(this)
+                .inflate(R.layout.dialog_message_options, null);
         dialog.setContentView(v);
-        if (dialog.getWindow() != null) {
+        if (dialog.getWindow() != null)
             dialog.getWindow().setBackgroundDrawable(
-                    new android.graphics.drawable.ColorDrawable(android.graphics.Color.TRANSPARENT));
-        }
+                    new android.graphics.drawable.ColorDrawable(
+                            android.graphics.Color.TRANSPARENT));
 
-        // Reply
         v.findViewById(R.id.optionReply).setOnClickListener(x -> {
             dialog.dismiss();
             startReply(msg);
         });
 
-        // Copy (text messages only)
         View optionCopy = v.findViewById(R.id.optionCopy);
         if (msg.isTextMessage()) {
             optionCopy.setVisibility(View.VISIBLE);
             optionCopy.setOnClickListener(x -> {
                 dialog.dismiss();
-                ClipboardManager cb = (ClipboardManager) getSystemService(Context.CLIPBOARD_SERVICE);
-                cb.setPrimaryClip(ClipData.newPlainText("message", msg.getText()));
+                ClipboardManager cb = (ClipboardManager)
+                        getSystemService(Context.CLIPBOARD_SERVICE);
+                cb.setPrimaryClip(
+                        ClipData.newPlainText("message", msg.getText()));
                 Toast.makeText(this, "Copied!", Toast.LENGTH_SHORT).show();
             });
         } else {
             optionCopy.setVisibility(View.GONE);
         }
 
-        // Forward
         v.findViewById(R.id.optionForward).setOnClickListener(x -> {
             dialog.dismiss();
             openForwardScreen(msg);
         });
 
-        // Delete (only my messages)
         View optionDelete = v.findViewById(R.id.optionDelete);
         if (msg.getSenderId().equals(myUid)) {
             optionDelete.setVisibility(View.VISIBLE);
@@ -370,7 +471,6 @@ public class ChatActivity extends AppCompatActivity {
             optionDelete.setVisibility(View.GONE);
         }
 
-        // Undo Send
         View optionUndo = v.findViewById(R.id.optionUndo);
         if (optionUndo != null) {
             boolean isUndoable = msg.getSenderId().equals(myUid)
@@ -384,11 +484,12 @@ public class ChatActivity extends AppCompatActivity {
                             chatId, lastSentMessageId,
                             () -> runOnUiThread(() -> {
                                 lastSentMessageId = null;
-                                Toast.makeText(this, "Message unsent.", Toast.LENGTH_SHORT).show();
+                                Toast.makeText(this, "Message unsent.",
+                                        Toast.LENGTH_SHORT).show();
                             }),
                             err -> runOnUiThread(() ->
-                                    Toast.makeText(this, "Could not undo.", Toast.LENGTH_SHORT).show())
-                    );
+                                    Toast.makeText(this, "Could not undo.",
+                                            Toast.LENGTH_SHORT).show()));
                 });
             }
         }
@@ -397,45 +498,41 @@ public class ChatActivity extends AppCompatActivity {
     }
 
     // ════════════════════════════════════════════════════════
-    //  LONG PRESS: MEDIA OPTIONS DIALOG
-    //  isMine = true  → show Delete option
-    //  isMine = false → hide Delete option
+    //  LONG PRESS: MEDIA OPTIONS
     // ════════════════════════════════════════════════════════
 
     private void showMediaOptionsDialog(MessageModel msg, boolean isMine) {
         android.app.Dialog dialog = new android.app.Dialog(this);
         dialog.requestWindowFeature(android.view.Window.FEATURE_NO_TITLE);
-        View v = LayoutInflater.from(this).inflate(R.layout.dialog_image_options, null);
+        View v = LayoutInflater.from(this)
+                .inflate(R.layout.dialog_image_options, null);
         dialog.setContentView(v);
-        if (dialog.getWindow() != null) {
+        if (dialog.getWindow() != null)
             dialog.getWindow().setBackgroundDrawable(
-                    new android.graphics.drawable.ColorDrawable(android.graphics.Color.TRANSPARENT));
-        }
+                    new android.graphics.drawable.ColorDrawable(
+                            android.graphics.Color.TRANSPARENT));
 
-        // Reply
         v.findViewById(R.id.optionReply).setOnClickListener(x -> {
             dialog.dismiss();
             startReply(msg);
         });
 
-        // Copy link
         v.findViewById(R.id.optionCopy).setOnClickListener(x -> {
             dialog.dismiss();
             String url = msg.isImageMessage() ? msg.getImageUrl() : msg.getFileUrl();
             if (url != null) {
-                ClipboardManager cb = (ClipboardManager) getSystemService(Context.CLIPBOARD_SERVICE);
+                ClipboardManager cb = (ClipboardManager)
+                        getSystemService(Context.CLIPBOARD_SERVICE);
                 cb.setPrimaryClip(ClipData.newPlainText("link", url));
                 Toast.makeText(this, "Link copied!", Toast.LENGTH_SHORT).show();
             }
         });
 
-        // Forward
         v.findViewById(R.id.optionForward).setOnClickListener(x -> {
             dialog.dismiss();
             openForwardScreen(msg);
         });
 
-        // Delete — only shown for my own messages
         View optionDelete = v.findViewById(R.id.optionDelete);
         if (optionDelete != null) {
             if (isMine) {
@@ -463,8 +560,10 @@ public class ChatActivity extends AppCompatActivity {
                 .setOkText("Delete")
                 .setDestructive()
                 .onOk(() -> {
-                    FirestoreHelper.get().deleteMessageFor(chatId, msg.getMessageId(), myUid);
-                    Toast.makeText(this, "Message deleted.", Toast.LENGTH_SHORT).show();
+                    FirestoreHelper.get().deleteMessageFor(
+                            chatId, msg.getMessageId(), myUid);
+                    Toast.makeText(this, "Message deleted.",
+                            Toast.LENGTH_SHORT).show();
                 })
                 .show();
     }
@@ -492,9 +591,6 @@ public class ChatActivity extends AppCompatActivity {
     private void setupHeader() {
         tvName.setText(chatName != null ? chatName : "Chat");
         btnBack.setOnClickListener(v -> finish());
-
-        // ✅ Always fetch fresh data from Firestore
-        // instead of relying on potentially stale Intent extras
         fetchFreshChatData();
 
         imgProfile.setOnClickListener(v -> {
@@ -503,16 +599,14 @@ public class ChatActivity extends AppCompatActivity {
             intent.putExtra("chatName",  chatName);
             intent.putExtra("chatPhoto", chatPhoto);
             intent.putExtra("isGroup",   isGroup);
-            if (!isGroup && otherUid != null) {
+            if (!isGroup && otherUid != null)
                 intent.putExtra("otherUid", otherUid);
-            }
             startActivity(intent);
         });
     }
 
     private void fetchFreshChatData() {
         if (isGroup) {
-            // For group chats — fetch groupPhoto and groupName
             FirebaseFirestore.getInstance()
                     .collection(FirestoreHelper.COL_CHATS)
                     .document(chatId)
@@ -520,14 +614,12 @@ public class ChatActivity extends AppCompatActivity {
                     .addOnSuccessListener(doc -> {
                         if (!doc.exists()) return;
 
-                        // ✅ Fresh group name
                         String freshName = doc.getString("groupName");
                         if (freshName != null && !freshName.isEmpty()) {
                             chatName = freshName;
                             tvName.setText(freshName);
                         }
 
-                        // ✅ Fresh group photo
                         String freshPhoto = doc.getString("groupPhoto");
                         if (freshPhoto != null && !freshPhoto.isEmpty()) {
                             chatPhoto = freshPhoto;
@@ -540,7 +632,6 @@ public class ChatActivity extends AppCompatActivity {
                             imgProfile.setImageResource(R.drawable.circle_grey_bg);
                         }
 
-                        // Load member count
                         java.util.List<String> p =
                                 (java.util.List<String>) doc.get("participants");
                         if (p != null && tvProgramId != null) {
@@ -548,22 +639,20 @@ public class ChatActivity extends AppCompatActivity {
                             tvProgramId.setVisibility(View.VISIBLE);
                         }
 
-                        // Load member photos for avatars in messages
                         loadGroupMemberPhotos();
-
                         tvStatus.setText("Group Chat");
                         tvStatus.setTextColor(0xFF888888);
                         if (onlineDot != null) onlineDot.setVisibility(View.GONE);
                     });
         } else {
-            // For 1-on-1 chats — fetch other user's data
-            otherUid = getIntent().getStringExtra("otherUid");
+            if (otherUid == null)
+                otherUid = getIntent().getStringExtra("otherUid");
+
             if (otherUid != null) {
                 FirestoreHelper.get().getUser(otherUid,
                         new FirestoreHelper.OnUserFetched() {
                             @Override
                             public void onSuccess(UserModel user) {
-                                // ✅ Fresh photo
                                 String freshPhoto = user.getPhotoUrl();
                                 if (freshPhoto != null && !freshPhoto.isEmpty()) {
                                     chatPhoto = freshPhoto;
@@ -577,79 +666,43 @@ public class ChatActivity extends AppCompatActivity {
                                             R.drawable.circle_grey_bg);
                                 }
 
-                                // Program · StudentID
                                 if (tvProgramId != null) {
                                     String info = "";
                                     if (user.getCourse() != null
-                                            && !user.getCourse().isEmpty()) {
+                                            && !user.getCourse().isEmpty())
                                         info += user.getCourse();
-                                    }
                                     if (user.getStudentId() != null
-                                            && !user.getStudentId().isEmpty()) {
+                                            && !user.getStudentId().isEmpty())
                                         info += (info.isEmpty() ? "" : " · ")
                                                 + user.getStudentId();
-                                    }
                                     if (!info.isEmpty()) {
                                         tvProgramId.setText(info);
                                         tvProgramId.setVisibility(View.VISIBLE);
                                     }
                                 }
                             }
-                            @Override
-                            public void onFailure(String error) {}
+                            @Override public void onFailure(String error) {}
                         });
 
-                // Start presence listener
                 startPresenceListener(otherUid);
             }
         }
     }
 
-    private void loadOtherUserInfo(String uid) {
-        FirestoreHelper.get().getUser(uid, new FirestoreHelper.OnUserFetched() {
-            @Override public void onSuccess(UserModel user) {
-                if (tvProgramId != null) {
-                    String info = "";
-                    if (user.getCourse()    != null && !user.getCourse().isEmpty())
-                        info += user.getCourse();
-                    if (user.getStudentId() != null && !user.getStudentId().isEmpty())
-                        info += (info.isEmpty() ? "" : " · ") + user.getStudentId();
-                    if (!info.isEmpty()) {
-                        tvProgramId.setText(info);
-                        tvProgramId.setVisibility(View.VISIBLE);
-                    }
-                }
-            }
-            @Override public void onFailure(String error) {}
-        });
-    }
-
     private void startPresenceListener(String uid) {
+        if (presenceListener != null) presenceListener.remove();
         presenceListener = PresenceHelper.listenToPresence(uid,
                 (isOnline, statusText) -> runOnUiThread(() -> {
                     tvStatus.setText(statusText);
-                    if (onlineDot != null) onlineDot.setVisibility(isOnline ? View.VISIBLE : View.GONE);
+                    if (onlineDot != null)
+                        onlineDot.setVisibility(isOnline ? View.VISIBLE : View.GONE);
                     tvStatus.setTextColor(isOnline ? 0xFF4CAF50 : 0xFF888888);
                 }));
-    }
-
-    private void loadGroupMemberCount() {
-        FirebaseFirestore.getInstance()
-                .collection(FirestoreHelper.COL_CHATS).document(chatId).get()
-                .addOnSuccessListener(doc -> {
-                    if (!doc.exists()) return;
-                    List<String> p = (List<String>) doc.get("participants");
-                    if (p != null && tvProgramId != null) {
-                        tvProgramId.setText(p.size() + " members");
-                        tvProgramId.setVisibility(View.VISIBLE);
-                    }
-                });
     }
 
     // ════════════════════════════════════════════════════════
     //  INPUT BAR
     // ════════════════════════════════════════════════════════
-// Wherever you call Firestore to toggle mute:
 
     private void setupInputBar() {
         btnSendMessage.setOnClickListener(v -> sendTextMessage());
@@ -657,10 +710,15 @@ public class ChatActivity extends AppCompatActivity {
     }
 
     // ════════════════════════════════════════════════════════
-    //  FIRESTORE — REAL TIME MESSAGES
+    //  REAL TIME MESSAGES
     // ════════════════════════════════════════════════════════
 
     private void startListeningToMessages() {
+        if (messageListener != null) {
+            messageListener.remove();
+            messageListener = null;
+        }
+
         messageListener = FirestoreHelper.get()
                 .listenToMessages(chatId)
                 .addSnapshotListener((snapshots, error) -> {
@@ -670,13 +728,13 @@ public class ChatActivity extends AppCompatActivity {
                     for (DocumentSnapshot doc : snapshots.getDocuments()) {
                         MessageModel msg = doc.toObject(MessageModel.class);
                         if (msg != null) {
-                            // ✅ Always set messageId from document ID as fallback
-                            if (msg.getMessageId() == null || msg.getMessageId().isEmpty()) {
+                            if (msg.getMessageId() == null
+                                    || msg.getMessageId().isEmpty()) {
                                 msg.setMessageId(doc.getId());
                             }
-                            // ✅ Skip messages deleted for this user permanently
-                            if (msg.isDeletedFor(myUid)) continue;
-                            msgs.add(msg);
+                            if (!msg.isDeletedFor(myUid)) {
+                                msgs.add(msg);
+                            }
                         }
                     }
 
@@ -689,16 +747,21 @@ public class ChatActivity extends AppCompatActivity {
                         emptyConversationLayout.setVisibility(View.GONE);
                         recyclerMessages.setVisibility(View.VISIBLE);
 
-                        if (highlightMessageId != null) {
-                            int position = messageAdapter.getPositionByMessageId(highlightMessageId);
-                            if (position != -1) {
-                                recyclerMessages.scrollToPosition(position);
-                                messageAdapter.setHighlightedMessage(highlightMessageId);
-                                highlightMessageId = null;
+                        // ✅ post() defers scroll until after RecyclerView layout pass
+                        recyclerMessages.post(() -> {
+                            if (highlightMessageId != null) {
+                                int pos = messageAdapter
+                                        .getPositionByMessageId(highlightMessageId);
+                                if (pos != -1) {
+                                    recyclerMessages.scrollToPosition(pos);
+                                    messageAdapter.setHighlightedMessage(
+                                            highlightMessageId);
+                                    highlightMessageId = null;
+                                }
+                            } else {
+                                recyclerMessages.scrollToPosition(msgs.size() - 1);
                             }
-                        } else {
-                            recyclerMessages.scrollToPosition(msgs.size() - 1);
-                        }
+                        });
                     }
 
                     FirestoreHelper.get().markChatAsRead(chatId, myUid);
@@ -717,22 +780,31 @@ public class ChatActivity extends AppCompatActivity {
         final MessageModel replySnapshot = replyingTo;
         cancelReply();
 
-        String replySenderLabel = (replySnapshot != null && replySnapshot.getSenderId().equals(myUid))
+        String replySenderLabel = (replySnapshot != null
+                && replySnapshot.getSenderId().equals(myUid))
                 ? "You" : chatName;
 
-        getOtherParticipants(otherUids ->
-                FirestoreHelper.get().sendTextMessage(
-                        chatId, myUid, text, replySenderLabel, myUid, replySnapshot, otherUids,
-                        new FirestoreHelper.OnMessageSent() {
-                            @Override public void onSent(String messageId) {
-                                runOnUiThread(() -> lastSentMessageId = messageId);
-                            }
-                            @Override public void onFailure(String e) {
-                                runOnUiThread(() ->
-                                        Toast.makeText(ChatActivity.this,
-                                                "Failed to send.", Toast.LENGTH_SHORT).show());
-                            }
-                        }));
+        getOtherParticipants(otherUids -> {
+            if (otherUids.isEmpty()) {
+                android.util.Log.w("ChatActivity",
+                        "otherParticipants is empty! chatId=" + chatId);
+            }
+            FirestoreHelper.get().sendTextMessage(
+                    chatId, myUid, text,
+                    replySenderLabel, myUid,
+                    replySnapshot, otherUids,
+                    new FirestoreHelper.OnMessageSent() {
+                        @Override public void onSent(String messageId) {
+                            runOnUiThread(() -> lastSentMessageId = messageId);
+                        }
+                        @Override public void onFailure(String e) {
+                            runOnUiThread(() ->
+                                    Toast.makeText(ChatActivity.this,
+                                            "Failed to send.",
+                                            Toast.LENGTH_SHORT).show());
+                        }
+                    });
+        });
     }
 
     // ════════════════════════════════════════════════════════
@@ -757,10 +829,12 @@ public class ChatActivity extends AppCompatActivity {
                         String url = (String) resultData.get("secure_url");
                         getOtherParticipants(otherUids ->
                                 FirestoreHelper.get().sendImageMessage(
-                                        chatId, myUid, url, otherUids, replySnapshot, chatName, myUid,
+                                        chatId, myUid, url, otherUids,
+                                        replySnapshot, chatName, myUid,
                                         new FirestoreHelper.OnMessageSent() {
                                             @Override public void onSent(String id) {
-                                                runOnUiThread(() -> lastSentMessageId = id);
+                                                runOnUiThread(() ->
+                                                        lastSentMessageId = id);
                                             }
                                             @Override public void onFailure(String e) {
                                                 runOnUiThread(() ->
@@ -775,7 +849,8 @@ public class ChatActivity extends AppCompatActivity {
                     public void onError(String r, ErrorInfo e) {
                         runOnUiThread(() ->
                                 Toast.makeText(ChatActivity.this,
-                                        "Upload failed.", Toast.LENGTH_SHORT).show());
+                                        "Upload failed.",
+                                        Toast.LENGTH_SHORT).show());
                     }
                 })
                 .dispatch();
@@ -793,32 +868,38 @@ public class ChatActivity extends AppCompatActivity {
                 .upload(uri)
                 .option("resource_type", "video")
                 .option("upload_preset", "ucchat_profiles")
-                .option("public_id", "videos/" + chatId + "/" + System.currentTimeMillis())
+                .option("public_id", "videos/" + chatId + "/"
+                        + System.currentTimeMillis())
                 .callback(new UploadCallback() {
                     @Override public void onStart(String r) {}
                     @Override public void onReschedule(String r, ErrorInfo e) {}
-                    @Override public void onProgress(String requestId, long bytes, long totalBytes) {
+                    @Override public void onProgress(String requestId,
+                                                     long bytes, long totalBytes) {
                         int percent = (int) ((bytes * 100) / totalBytes);
                         runOnUiThread(() ->
                                 Toast.makeText(ChatActivity.this,
                                         "Uploading... " + percent + "%",
                                         Toast.LENGTH_SHORT).show());
                     }
+
                     @Override
                     public void onSuccess(String requestId, Map resultData) {
-                        String videoUrl     = (String) resultData.get("secure_url");
+                        String videoUrl = (String) resultData.get("secure_url");
                         String thumbnailUrl = videoUrl
                                 .replace("/upload/", "/upload/w_400,h_300,c_fill/")
-                                .replace(".mp4", ".jpg").replace(".mov", ".jpg");
+                                .replace(".mp4", ".jpg")
+                                .replace(".mov", ".jpg");
 
                         getOtherParticipants(otherUids ->
                                 FirestoreHelper.get().sendVideoMessage(
-                                        chatId, myUid, videoUrl, thumbnailUrl, videoDuration, otherUids,
+                                        chatId, myUid, videoUrl,
+                                        thumbnailUrl, videoDuration, otherUids,
                                         new FirestoreHelper.OnMessageSent() {
                                             @Override public void onSent(String id) {
                                                 runOnUiThread(() ->
                                                         Toast.makeText(ChatActivity.this,
-                                                                "Video sent! ✅", Toast.LENGTH_SHORT).show());
+                                                                "Video sent! ✅",
+                                                                Toast.LENGTH_SHORT).show());
                                             }
                                             @Override public void onFailure(String e) {
                                                 runOnUiThread(() ->
@@ -828,10 +909,12 @@ public class ChatActivity extends AppCompatActivity {
                                             }
                                         }));
                     }
+
                     @Override public void onError(String r, ErrorInfo e) {
                         runOnUiThread(() ->
                                 Toast.makeText(ChatActivity.this,
-                                        "Upload failed.", Toast.LENGTH_SHORT).show());
+                                        "Upload failed.",
+                                        Toast.LENGTH_SHORT).show());
                     }
                 })
                 .dispatch();
@@ -845,28 +928,33 @@ public class ChatActivity extends AppCompatActivity {
         String fileName = getFileName(uri);
         String fileSize = getFileSize(uri);
         String fileType = getFileExtension(fileName);
-        Toast.makeText(this, "Uploading " + fileName + "...", Toast.LENGTH_SHORT).show();
+        Toast.makeText(this, "Uploading " + fileName + "...",
+                Toast.LENGTH_SHORT).show();
 
         MediaManager.get()
                 .upload(uri)
                 .option("resource_type", "raw")
                 .option("upload_preset", "ucchat_profiles")
-                .option("public_id", "files/" + chatId + "/" + System.currentTimeMillis() + "_" + fileName)
+                .option("public_id", "files/" + chatId + "/"
+                        + System.currentTimeMillis() + "_" + fileName)
                 .callback(new UploadCallback() {
                     @Override public void onStart(String r) {}
                     @Override public void onProgress(String r, long b, long t) {}
                     @Override public void onReschedule(String r, ErrorInfo e) {}
+
                     @Override
                     public void onSuccess(String requestId, Map resultData) {
                         String fileUrl = (String) resultData.get("secure_url");
                         getOtherParticipants(otherUids ->
                                 FirestoreHelper.get().sendFileMessage(
-                                        chatId, myUid, fileUrl, fileName, fileSize, fileType, otherUids,
+                                        chatId, myUid, fileUrl,
+                                        fileName, fileSize, fileType, otherUids,
                                         new FirestoreHelper.OnMessageSent() {
                                             @Override public void onSent(String id) {
                                                 runOnUiThread(() ->
                                                         Toast.makeText(ChatActivity.this,
-                                                                "File sent! ✅", Toast.LENGTH_SHORT).show());
+                                                                "File sent! ✅",
+                                                                Toast.LENGTH_SHORT).show());
                                             }
                                             @Override public void onFailure(String e) {
                                                 runOnUiThread(() ->
@@ -876,6 +964,7 @@ public class ChatActivity extends AppCompatActivity {
                                             }
                                         }));
                     }
+
                     @Override public void onError(String r, ErrorInfo e) {
                         runOnUiThread(() ->
                                 Toast.makeText(ChatActivity.this,
@@ -893,16 +982,22 @@ public class ChatActivity extends AppCompatActivity {
     private void showAttachmentDialog() {
         android.app.Dialog dialog = new android.app.Dialog(this);
         dialog.requestWindowFeature(android.view.Window.FEATURE_NO_TITLE);
-        View dialogView = LayoutInflater.from(this).inflate(R.layout.dialog_attachment, null);
+        View dialogView = LayoutInflater.from(this)
+                .inflate(R.layout.dialog_attachment, null);
         dialog.setContentView(dialogView);
-        if (dialog.getWindow() != null) {
+        if (dialog.getWindow() != null)
             dialog.getWindow().setBackgroundDrawable(
-                    new android.graphics.drawable.ColorDrawable(android.graphics.Color.TRANSPARENT));
-        }
+                    new android.graphics.drawable.ColorDrawable(
+                            android.graphics.Color.TRANSPARENT));
+
         dialogView.findViewById(R.id.btnAttachImage).setOnClickListener(v -> {
-            dialog.dismiss(); imagePicker.launch("image/*"); });
+            dialog.dismiss();
+            imagePicker.launch("image/*");
+        });
         dialogView.findViewById(R.id.btnAttachVideo).setOnClickListener(v -> {
-            dialog.dismiss(); videoPicker.launch("video/*"); });
+            dialog.dismiss();
+            videoPicker.launch("video/*");
+        });
         dialogView.findViewById(R.id.btnAttachFile).setOnClickListener(v -> {
             dialog.dismiss();
             filePicker.launch(new String[]{
@@ -915,7 +1010,8 @@ public class ChatActivity extends AppCompatActivity {
                     "text/plain", "application/zip"
             });
         });
-        dialogView.findViewById(R.id.btnAttachCancel).setOnClickListener(v -> dialog.dismiss());
+        dialogView.findViewById(R.id.btnAttachCancel)
+                .setOnClickListener(v -> dialog.dismiss());
         dialog.show();
     }
 
@@ -928,14 +1024,13 @@ public class ChatActivity extends AppCompatActivity {
         imgViewFull     = findViewById(R.id.imgViewFull);
         imgViewBackBtn  = findViewById(R.id.imgViewBackBtn);
 
-        if (imgViewBackBtn != null) {
+        if (imgViewBackBtn != null)
             imgViewBackBtn.setOnClickListener(v -> closeImageViewer());
-        }
 
         View btnSave = findViewById(R.id.btnSaveDoc);
-        if (btnSave != null) {
-            btnSave.setOnClickListener(v -> saveImageToGallery(currentViewedImageUrl));
-        }
+        if (btnSave != null)
+            btnSave.setOnClickListener(v ->
+                    saveImageToGallery(currentViewedImageUrl));
 
         View btnForwardImg = findViewById(R.id.btnForwardViewImage);
         if (btnForwardImg != null) {
@@ -956,7 +1051,6 @@ public class ChatActivity extends AppCompatActivity {
         if (viewImageLayout == null || imgViewFull == null) return;
         currentViewedImageUrl = imageUrl;
         selectedMessage       = msg;
-
         Glide.with(this).load(imageUrl)
                 .placeholder(R.drawable.circle_grey_bg).into(imgViewFull);
         viewImageLayout.setVisibility(View.VISIBLE);
@@ -968,7 +1062,7 @@ public class ChatActivity extends AppCompatActivity {
     }
 
     // ════════════════════════════════════════════════════════
-    //  SAVE IMAGE TO GALLERY
+    //  SAVE IMAGE
     // ════════════════════════════════════════════════════════
 
     private void saveImageToGallery(String imageUrl) {
@@ -978,7 +1072,8 @@ public class ChatActivity extends AppCompatActivity {
         }
 
         if (Build.VERSION.SDK_INT < Build.VERSION_CODES.Q) {
-            if (ContextCompat.checkSelfPermission(this, Manifest.permission.WRITE_EXTERNAL_STORAGE)
+            if (ContextCompat.checkSelfPermission(this,
+                    Manifest.permission.WRITE_EXTERNAL_STORAGE)
                     != PackageManager.PERMISSION_GRANTED) {
                 ActivityCompat.requestPermissions(this,
                         new String[]{Manifest.permission.WRITE_EXTERNAL_STORAGE},
@@ -998,35 +1093,40 @@ public class ChatActivity extends AppCompatActivity {
                 String fileName = "UccChat_" + System.currentTimeMillis() + ".jpg";
 
                 if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
-                    android.content.ContentValues values = new android.content.ContentValues();
-                    values.put(android.provider.MediaStore.Images.Media.DISPLAY_NAME, fileName);
-                    values.put(android.provider.MediaStore.Images.Media.MIME_TYPE, "image/jpeg");
+                    android.content.ContentValues values =
+                            new android.content.ContentValues();
+                    values.put(android.provider.MediaStore.Images.Media.DISPLAY_NAME,
+                            fileName);
+                    values.put(android.provider.MediaStore.Images.Media.MIME_TYPE,
+                            "image/jpeg");
                     values.put(android.provider.MediaStore.Images.Media.RELATIVE_PATH,
                             Environment.DIRECTORY_PICTURES + "/UccChat");
                     Uri uri = getContentResolver().insert(
-                            android.provider.MediaStore.Images.Media.EXTERNAL_CONTENT_URI, values);
+                            android.provider.MediaStore.Images.Media.EXTERNAL_CONTENT_URI,
+                            values);
                     if (uri != null) {
-                        try (java.io.OutputStream os = getContentResolver().openOutputStream(uri)) {
+                        try (java.io.OutputStream os =
+                                     getContentResolver().openOutputStream(uri)) {
                             byte[] buffer = new byte[4096];
                             int bytesRead;
-                            while ((bytesRead = input.read(buffer)) != -1) {
+                            while ((bytesRead = input.read(buffer)) != -1)
                                 if (os != null) os.write(buffer, 0, bytesRead);
-                            }
                         }
                     }
                 } else {
-                    File dir = new File(Environment.getExternalStoragePublicDirectory(
-                            Environment.DIRECTORY_PICTURES), "UccChat");
+                    File dir = new File(
+                            Environment.getExternalStoragePublicDirectory(
+                                    Environment.DIRECTORY_PICTURES), "UccChat");
                     if (!dir.exists()) dir.mkdirs();
                     File file = new File(dir, fileName);
                     try (FileOutputStream fos = new FileOutputStream(file)) {
                         byte[] buffer = new byte[4096];
                         int bytesRead;
-                        while ((bytesRead = input.read(buffer)) != -1) {
+                        while ((bytesRead = input.read(buffer)) != -1)
                             fos.write(buffer, 0, bytesRead);
-                        }
                     }
-                    sendBroadcast(new Intent(Intent.ACTION_MEDIA_SCANNER_SCAN_FILE,
+                    sendBroadcast(new Intent(
+                            Intent.ACTION_MEDIA_SCANNER_SCAN_FILE,
                             Uri.fromFile(new File(
                                     Environment.getExternalStoragePublicDirectory(
                                             Environment.DIRECTORY_PICTURES),
@@ -1064,15 +1164,38 @@ public class ChatActivity extends AppCompatActivity {
 
     private void getOtherParticipants(OnParticipantsFetched callback) {
         FirebaseFirestore.getInstance()
-                .collection(FirestoreHelper.COL_CHATS).document(chatId).get()
+                .collection(FirestoreHelper.COL_CHATS)
+                .document(chatId)
+                .get()
                 .addOnSuccessListener(doc -> {
-                    if (!doc.exists()) return;
-                    List<String> participants = (List<String>) doc.get("participants");
                     List<String> others = new ArrayList<>();
-                    if (participants != null) {
-                        for (String uid : participants) {
-                            if (!uid.equals(myUid)) others.add(uid);
+
+                    if (doc.exists()) {
+                        // ✅ Normal case — doc is in cache, get participants
+                        List<String> participants =
+                                (List<String>) doc.get("participants");
+                        if (participants != null) {
+                            for (String uid : participants) {
+                                if (!uid.equals(myUid)) others.add(uid);
+                            }
                         }
+                    }
+
+                    // ✅ Fallback — doc not in cache yet on first message
+                    // of a brand new chat, use otherUid from Intent instead
+                    if (others.isEmpty() && otherUid != null
+                            && !otherUid.isEmpty()) {
+                        others.add(otherUid);
+                    }
+
+                    // ✅ ALWAYS fire the callback — never silently drop
+                    callback.onFetched(others);
+                })
+                .addOnFailureListener(e -> {
+                    // ✅ Network error fallback
+                    List<String> others = new ArrayList<>();
+                    if (otherUid != null && !otherUid.isEmpty()) {
+                        others.add(otherUid);
                     }
                     callback.onFetched(others);
                 });
@@ -1088,7 +1211,8 @@ public class ChatActivity extends AppCompatActivity {
             try (android.database.Cursor cursor =
                          getContentResolver().query(uri, null, null, null, null)) {
                 if (cursor != null && cursor.moveToFirst()) {
-                    int idx = cursor.getColumnIndex(android.provider.OpenableColumns.DISPLAY_NAME);
+                    int idx = cursor.getColumnIndex(
+                            android.provider.OpenableColumns.DISPLAY_NAME);
                     if (idx >= 0) result = cursor.getString(idx);
                 }
             } catch (Exception e) { e.printStackTrace(); }
@@ -1105,15 +1229,17 @@ public class ChatActivity extends AppCompatActivity {
         try (android.database.Cursor cursor =
                      getContentResolver().query(uri, null, null, null, null)) {
             if (cursor != null && cursor.moveToFirst()) {
-                int idx = cursor.getColumnIndex(android.provider.OpenableColumns.SIZE);
+                int idx = cursor.getColumnIndex(
+                        android.provider.OpenableColumns.SIZE);
                 if (idx >= 0) {
                     long bytes = cursor.getLong(idx);
-                    if (bytes < 1024)
-                        return bytes + " B";
+                    if (bytes < 1024) return bytes + " B";
                     else if (bytes < 1024 * 1024)
-                        return String.format(java.util.Locale.getDefault(), "%.1f KB", bytes / 1024.0);
+                        return String.format(java.util.Locale.getDefault(),
+                                "%.1f KB", bytes / 1024.0);
                     else
-                        return String.format(java.util.Locale.getDefault(), "%.1f MB", bytes / (1024.0 * 1024));
+                        return String.format(java.util.Locale.getDefault(),
+                                "%.1f MB", bytes / (1024.0 * 1024));
                 }
             }
         } catch (Exception e) { e.printStackTrace(); }
@@ -1138,7 +1264,8 @@ public class ChatActivity extends AppCompatActivity {
                 long totalSecs = Long.parseLong(durationMs) / 1000;
                 long mins = totalSecs / 60;
                 long secs = totalSecs % 60;
-                return String.format(java.util.Locale.getDefault(), "%d:%02d", mins, secs);
+                return String.format(java.util.Locale.getDefault(),
+                        "%d:%02d", mins, secs);
             }
         } catch (Exception e) { e.printStackTrace(); }
         return "";

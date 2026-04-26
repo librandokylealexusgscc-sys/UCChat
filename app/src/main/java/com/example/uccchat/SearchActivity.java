@@ -35,19 +35,36 @@ public class SearchActivity extends AppCompatActivity {
     private boolean isNavigating = false;
 
     private final String[] COURSES = {
-            "All",
-            "Information Technology",
-            "Computer Science",
-            "Psychology",
-            "Education",
-            "Nursing",
-            "Accountancy",
-            "Business Administration",
-            "Civil Engineering",
-            "Architecture",
-            "Criminology",
-            "Social Work",
-            "Tourism Management"
+            "All Courses",
+            "Bachelor of Science in Accountancy",
+            "Bachelor of Science in Accounting Information System",
+            "Bachelor of Science in Business Administration, Major in Financial Management",
+            "Bachelor of Science in Business Administration, Major in Human Resource Management",
+            "Bachelor of Science in Business Administration, Major in Marketing Management",
+            "Bachelor of Science in Entrepreneurship",
+            "Bachelor of Science in Hospitality Management",
+            "Bachelor of Science in Office Administration",
+            "Bachelor of Science in Criminology",
+            "Bachelor of Science in Industrial Security Management",
+            "Bachelor in Secondary Education Major in English",
+            "Bachelor in Secondary Education Major in English - Chinese",
+            "Bachelor in Secondary Education Major in Science",
+            "Bachelor in Secondary Education Major in Technology and Livelihood Education",
+            "Bachelor of Early Childhood Education",
+            "Bachelor of Science in Computer Engineering",
+            "Bachelor of Science in Electrical Engineering",
+            "Bachelor of Science in Electronics Engineering",
+            "Bachelor of Science in Industrial Engineering",
+            "AB Political Science",
+            "BA Communication",
+            "Bachelor of Public Administration",
+            "Bachelor of Public Administration (SPECIAL PROGRAM)",
+            "Bachelor of Science in Computer Science",
+            "Bachelor of Science in Entertainment and Multimedia Computing",
+            "Bachelor of Science in Information System",
+            "Bachelor of Science in Information Technology",
+            "Bachelor of Science in Mathematics",
+            "Bachelor of Science in Psychology"
     };
 
     @Override
@@ -100,7 +117,6 @@ public class SearchActivity extends AppCompatActivity {
         searchResultsContainer.removeAllViews();
         String currentUid = FirebaseAuth.getInstance().getCurrentUser().getUid();
 
-        // ✅ Run both searches in parallel, then combine results
         final boolean[] usersDone  = {false};
         final boolean[] groupsDone = {false};
         final boolean[] foundAny   = {false};
@@ -122,14 +138,13 @@ public class SearchActivity extends AppCompatActivity {
         };
 
         // ══════════════════════════════════════════
-        // SEARCH 1: Users (existing logic)
+        // SEARCH 1: Users
         // ══════════════════════════════════════════
         db.collection("users")
                 .get()
                 .addOnSuccessListener(queryDocumentSnapshots -> {
                     for (QueryDocumentSnapshot doc : queryDocumentSnapshots) {
 
-                        // ✅ Skip yourself in results
                         if (doc.getId().equals(currentUid)) continue;
 
                         String firstName    = doc.getString("firstName");
@@ -142,15 +157,22 @@ public class SearchActivity extends AppCompatActivity {
 
                         String fullName = firstName + " " + lastName;
 
-                        boolean matchesName      = fullName.toLowerCase().contains(query.toLowerCase());
-                        boolean matchesStudentId = studentId != null && studentId.toLowerCase().contains(query.toLowerCase());
-                        boolean matchesCourse    = selectedCourse.equals("All") || selectedCourse.equals(course);
+                        boolean matchesName      = fullName.toLowerCase()
+                                .contains(query.toLowerCase());
+                        boolean matchesStudentId = studentId != null
+                                && studentId.toLowerCase().contains(query.toLowerCase());
+
+                        // ✅ FIX: "All Courses" shows everyone;
+                        //         otherwise match the selected course exactly
+                        boolean matchesCourse = selectedCourse.equals("All Courses")
+                                || selectedCourse.equals(course);
 
                         if ((matchesName || matchesStudentId) && matchesCourse) {
                             foundAny[0] = true;
 
                             View itemView = LayoutInflater.from(this)
-                                    .inflate(R.layout.item_search_result, searchResultsContainer, false);
+                                    .inflate(R.layout.item_search_result,
+                                            searchResultsContainer, false);
 
                             TextView tvName     = itemView.findViewById(R.id.studentName);
                             ImageView ivProfile = itemView.findViewById(R.id.ImgProfile);
@@ -170,49 +192,57 @@ public class SearchActivity extends AppCompatActivity {
                             String otherUid = doc.getId();
 
                             itemView.setOnClickListener(v -> {
-                                FirestoreHelper.get().getUser(currentUid, new FirestoreHelper.OnUserFetched() {
-                                    @Override
-                                    public void onSuccess(UserModel currentUser) {
-                                        FirestoreHelper.get().getUser(otherUid, new FirestoreHelper.OnUserFetched() {
+                                FirestoreHelper.get().getUser(currentUid,
+                                        new FirestoreHelper.OnUserFetched() {
                                             @Override
-                                            public void onSuccess(UserModel otherUser) {
-                                                FirestoreHelper.get().getOrCreateChat(currentUser, otherUser,
-                                                        new FirestoreHelper.OnChatReady() {
+                                            public void onSuccess(UserModel currentUser) {
+                                                FirestoreHelper.get().getUser(otherUid,
+                                                        new FirestoreHelper.OnUserFetched() {
                                                             @Override
-                                                            public void onReady(String chatId) {
-                                                                Intent intent = new Intent(SearchActivity.this, ChatActivity.class);
-                                                                intent.putExtra("chatId",    chatId);
-                                                                intent.putExtra("chatName",  fullName);
-                                                                intent.putExtra("chatPhoto", profileImage);
-                                                                intent.putExtra("otherUid",  otherUid);
-                                                                intent.putExtra("isGroup",   false);
-                                                                startActivity(intent);
+                                                            public void onSuccess(UserModel otherUser) {
+                                                                FirestoreHelper.get().getOrCreateChat(
+                                                                        currentUser, otherUser,
+                                                                        new FirestoreHelper.OnChatReady() {
+                                                                            @Override
+                                                                            public void onReady(String chatId) {
+                                                                                Intent intent = new Intent(
+                                                                                        SearchActivity.this,
+                                                                                        ChatActivity.class);
+                                                                                intent.putExtra("chatId",    chatId);
+                                                                                intent.putExtra("chatName",  fullName);
+                                                                                intent.putExtra("chatPhoto", profileImage);
+                                                                                intent.putExtra("otherUid",  otherUid);
+                                                                                intent.putExtra("isGroup",   false);
+                                                                                startActivity(intent);
 
-                                                                edittxtSearchStudent.setText("");
-                                                                emptySearchLayout.setVisibility(View.VISIBLE);
-                                                                searchResultsScrollView.setVisibility(View.GONE);
-                                                                notFoundLayout.setVisibility(View.GONE);
+                                                                                edittxtSearchStudent.setText("");
+                                                                                emptySearchLayout.setVisibility(View.VISIBLE);
+                                                                                searchResultsScrollView.setVisibility(View.GONE);
+                                                                                notFoundLayout.setVisibility(View.GONE);
+                                                                            }
+                                                                            @Override
+                                                                            public void onFailure(String error) {
+                                                                                Toast.makeText(SearchActivity.this,
+                                                                                        "Could not open chat.",
+                                                                                        Toast.LENGTH_SHORT).show();
+                                                                            }
+                                                                        });
                                                             }
                                                             @Override
                                                             public void onFailure(String error) {
                                                                 Toast.makeText(SearchActivity.this,
-                                                                        "Could not open chat.", Toast.LENGTH_SHORT).show();
+                                                                        "Could not find user.",
+                                                                        Toast.LENGTH_SHORT).show();
                                                             }
                                                         });
                                             }
                                             @Override
                                             public void onFailure(String error) {
                                                 Toast.makeText(SearchActivity.this,
-                                                        "Could not find user.", Toast.LENGTH_SHORT).show();
+                                                        "Could not load your profile.",
+                                                        Toast.LENGTH_SHORT).show();
                                             }
                                         });
-                                    }
-                                    @Override
-                                    public void onFailure(String error) {
-                                        Toast.makeText(SearchActivity.this,
-                                                "Could not load your profile.", Toast.LENGTH_SHORT).show();
-                                    }
-                                });
                             });
 
                             searchResultsContainer.addView(itemView);
@@ -242,21 +272,21 @@ public class SearchActivity extends AppCompatActivity {
 
                         if (groupName == null) continue;
 
-                        // ✅ Only show groups matching the search query
                         if (!groupName.toLowerCase().contains(query.toLowerCase())) continue;
 
-                        // ✅ Course filter doesn't apply to groups
-                        if (!selectedCourse.equals("All")) continue;
+                        // ✅ Groups only show when "All Courses" is selected —
+                        //    course filter doesn't apply to group chats
+                        if (!selectedCourse.equals("All Courses")) continue;
 
                         foundAny[0] = true;
 
                         View itemView = LayoutInflater.from(this)
-                                .inflate(R.layout.item_search_result, searchResultsContainer, false);
+                                .inflate(R.layout.item_search_result,
+                                        searchResultsContainer, false);
 
                         TextView tvName     = itemView.findViewById(R.id.studentName);
                         ImageView ivProfile = itemView.findViewById(R.id.ImgProfile);
 
-                        // ✅ Show group name with a label
                         tvName.setText("👥 " + groupName);
 
                         if (groupPhoto != null && !groupPhoto.isEmpty()) {
@@ -269,9 +299,9 @@ public class SearchActivity extends AppCompatActivity {
                             ivProfile.setImageResource(R.drawable.circle_grey_bg);
                         }
 
-                        // ✅ Open group chat directly — chatId already exists
                         itemView.setOnClickListener(v -> {
-                            Intent intent = new Intent(SearchActivity.this, ChatActivity.class);
+                            Intent intent = new Intent(SearchActivity.this,
+                                    ChatActivity.class);
                             intent.putExtra("chatId",    chatId);
                             intent.putExtra("chatName",  groupName);
                             intent.putExtra("chatPhoto", groupPhoto);
